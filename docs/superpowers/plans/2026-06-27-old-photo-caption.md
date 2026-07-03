@@ -590,7 +590,7 @@ git commit -m "feat(old-photo-caption): 实现老照片加字核心功能（上�
 打开 `sitemap.xml`，定位到 `id-photo` 行（约 148 行），在其附近（图片处理工具组）新增：
 
 ```xml
-  <url><loc>https://tool.fologde.com/old-photo-caption</loc><changefreq>monthly</changefreq><priority>0.5</priority><lastmod>2026-06-27T00:00:00+00:00</lastmod></url>
+  <url><loc>https://youngbar.com/old-photo-caption</loc><changefreq>monthly</changefreq><priority>0.5</priority><lastmod>2026-06-27T00:00:00+00:00</lastmod></url>
 ```
 
 - [ ] **Step 2: 在 `README.md` 中添加功能日志条目**

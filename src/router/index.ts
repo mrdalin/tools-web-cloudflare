@@ -2,6 +2,9 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import { constantRoute } from './router'
 
+const appTitle = import.meta.env.VITE_APP_TITLE || 'Youngbar工具箱'
+const appDesc = import.meta.env.VITE_APP_DESC || '一个轻量的在线工具箱'
+
 //创建路由器
 const router = createRouter({
   history: createWebHistory(),
@@ -15,7 +18,7 @@ const router = createRouter({
 
 router.beforeEach((to, _from, next) => {
   if (to.meta.title) {
-    document.title = <string>to.meta.title + '-' + import.meta.env.VITE_APP_TITLE
+    document.title = `${to.meta.title as string}-${appTitle}`
   }
   next()
 })
@@ -25,9 +28,9 @@ router.afterEach((to) => {
   const { title, keywords, description } = to.meta
 
   if (title) {
-    document.title = title + '-' + import.meta.env.VITE_APP_TITLE
+    document.title = `${title as string}-${appTitle}`
   } else {
-    document.title = import.meta.env.VITE_APP_TITLE + '-' + import.meta.env.VITE_APP_DESC
+    document.title = `${appTitle}-${appDesc}`
   }
 
   // 批量更新 meta 标签

@@ -1,10 +1,9 @@
-<script setup lang="ts">
+﻿<script setup lang="ts">
 import { ref, computed, onMounted } from 'vue';
 import { useToolsStore } from '@/store/modules/tools';
 const gitUrl = ref(import.meta.env.VITE_GIT_URL || '')
 const rawGitUrl = ref(import.meta.env.VITE_RAW_GIT_URL || '')
 const appTitle = ref(import.meta.env.VITE_APP_TITLE || '')
-const siteAddr = ref(import.meta.env.VITE_MY_SITE_ADDR || '')
 const toolsStore = useToolsStore()
 
 // 计算工具总数
@@ -50,25 +49,6 @@ onMounted(async () => {
       <p>
         <el-text>如果您发现了 Bug，或者某些功能未能按预期工作，请在 GitHub 仓库的 <el-link type="primary" target="_blank" :href="gitUrl + '/issues/new'" class="">issues</el-link> 中提交错误报告。</el-text>
       </p>
-      <template v-if="siteAddr">
-      <h1 class="text-2xl font-bold mt-6 mb-6">站长信息</h1>
-      <p>
-          <el-text>站长个人网站：<el-link type="primary" target="_blank" :href="siteAddr" class="">{{siteAddr}}</el-link></el-text>
-        </p>
-         <p class="mt-2">
-          <el-text>公众号：<el-text type="primary" class="font-medium">《全栈缝合车间》</el-text></el-text>
-        </p>
-        <div class="mt-3 flex items-center gap-4">
-          <img
-            src="https://tool-r2.fologde.com/qrcode_for_gh_ab396f4a9554_344.jpg"
-            alt="公众号《全栈缝合车间》二维码"
-            class="w-36 h-36 rounded-md border border-gray-200 shadow-sm bg-white"
-            referrerpolicy="no-referrer"
-            loading="lazy"
-          />
-          <el-text class="text-sm text-gray-500 leading-6">扫码关注<br />获取更多工具更新与开发动态</el-text>
-        </div>
-      </template>
 
       <h1 class="text-2xl font-bold mt-6 mb-6">友情链接</h1>
       <p>

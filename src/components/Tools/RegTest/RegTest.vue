@@ -14,7 +14,7 @@ const info = reactive({
 邮箱1：demo@163.com
 邮箱2：demo2@163.com
 手机号：18899990000
-url: https://tool.fologde.com、https://fologde.com
+url: https://youngbar.com、https://youngbar.com
 IP: 192.168.0.1
 时间：2025-08-08
 `,

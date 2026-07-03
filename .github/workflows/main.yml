@@ -11,4 +11,4 @@ jobs:
     steps:
       - name: 请求 Cloudflare Pages Function
         run: |
-          curl -X GET "https://tool.fologde.com/cron/test"
+          curl -X GET "https://youngbar.com/cron/test"

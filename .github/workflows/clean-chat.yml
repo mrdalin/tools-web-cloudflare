@@ -12,4 +12,4 @@ jobs:
     steps:
       - name: 清理一个月前的聊天消息
         run: |
-          curl -X GET "https://tool.fologde.com/cron/clean-chat"
+          curl -X GET "https://youngbar.com/cron/clean-chat"

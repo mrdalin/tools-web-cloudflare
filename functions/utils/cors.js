@@ -1,6 +1,6 @@
 // 允许的前端来源配置
 export const allowedOrigins = [
-  'https://tool.fologde.com',  // 生产环境前端
+  'https://youngbar.com',  // 生产环境前端
   'http://127.0.0.1:5173',    // 本地开发调试
   'http://127.0.0.1:8788',    // 本地开发调试  
   'http://localhost:5173'      // 本地开发调试

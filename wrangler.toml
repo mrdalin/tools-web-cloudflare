@@ -4,6 +4,8 @@ pages_build_output_dir = "dist"
 
 [vars]
 NODE_ENV = "production"
+VITE_APP_TITLE = "Youngbar工具箱"
+VITE_APP_DESC = "一个轻量的在线工具箱"
 VITE_SITE_URL = "https://youngbar.com"
 VITE_FUNCTIONS_BASE_URL = ""
 SITE_URL = "https://youngbar.com"
@@ -12,7 +14,6 @@ SITE_URL = "https://youngbar.com"
 binding = "DB"
 database_name = "tools-web-db"
 database_id = "22853d57-00aa-44dc-ac09-ba40d3e3cea8"
-
 
 # Cloudflare Pages deployment notes:
 # - D1 bindings and non-secret variables are managed here.

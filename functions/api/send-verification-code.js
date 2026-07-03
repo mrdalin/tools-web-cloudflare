@@ -121,11 +121,11 @@ export async function onRequest(context) {
 
     // 发送邮件
     const typeText = { register: '注册', login: '登录', reset: '重置密码' }[type]
-    const subject = `【一方工具箱】${typeText}验证码`
+    const subject = `【Youngbar工具箱】${typeText}验证码`
     const text = `您的${typeText}验证码是：${code}，有效期5分钟，请勿泄露。`
     const html = `
       <div style="font-family: Arial, sans-serif; padding: 20px; max-width: 600px; margin: 0 auto;">
-        <h2 style="color: #333;">【一方工具箱】${typeText}验证码</h2>
+        <h2 style="color: #333;">【Youngbar工具箱】${typeText}验证码</h2>
         <p style="font-size: 16px; color: #666;">您正在进行${typeText}操作，验证码为：</p>
         <div style="background: #f5f5f5; padding: 15px; border-radius: 5px; text-align: center; margin: 20px 0;">
           <span style="font-size: 32px; font-weight: bold; color: #409EFF; letter-spacing: 5px;">${code}</span>

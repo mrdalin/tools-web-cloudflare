@@ -15,11 +15,11 @@
 [![vue](https://img.shields.io/badge/any_text-3.3.10-origin?label=vue)](vue)
 [![tailwindcss](https://img.shields.io/badge/any_text-3.3.5-yellow?label=tailwindcss)](tailwindcss)
 [![elementplus](https://img.shields.io/badge/any_text-2.7-blue?label=element-plus)](elementplus)
-[![license](https://img.shields.io/github/license/naroat/tools-web)](LICENSE)
+[![license](https://img.shields.io/github/license/ideajoker/tools-web-cloudflare)](LICENSE)
 
 </div>
 
-本仓库fork于：<a href="https://github.com/naroat/tools-web" target="_blank">Tools-Web</a>，感谢naroat做出的贡献！能让我方便在此基础上添加新功能。
+本仓库用于 Youngbar 工具箱的 Cloudflare 部署与维护：<a href="https://github.com/ideajoker/tools-web-cloudflare" target="_blank">tools-web-cloudflare</a>。
 
 一站式在线工具箱：覆盖开发运维、文本处理、图片处理、数据图表、趣味互动、选择随机、教育学术与 AI 工具；提供 JSON/CSV/TSV 互转、随机密码/UUID、时间戳与进制转换、单位换算、URL 编解码/参数解析、正则测试、Markdown、文本对比/去重、哈希校验、文件大小转换、HTTP 状态码、JWT 解析、Cron 表达式、HTML 实体、二维码生成与识别、在线图片编辑/分割/转 Base64、文本转图片、色板取色器、柱状/折线/饼/散点图、摩斯电码，以及贪吃蛇/2048/俄罗斯方块/扫雷/打地鼠/数字华容道/数独等小游戏，另含 IP 查询、网站信息获取、AI 起名/变量名/文生图/翻译与在线请求调试等实用功能。
 
@@ -35,7 +35,7 @@
 
 ## 功能展示
 
-在线站点：<a href="https://tool.fologde.com/" target="_blank">Tools-Web</a>
+在线站点：<a href="https://youngbar.com/" target="_blank">Tools-Web</a>
 
 ## 网站效果图
 <img width="1896" height="939" alt="image" src="https://github.com/user-attachments/assets/a84b26dc-561f-41b9-92a3-5c8ec8c34828" />
@@ -69,7 +69,7 @@ npm install pnpm -g
 
 克隆
 ```
-git clone https://github.com/2424004764/tools-web.git
+git clone https://github.com/ideajoker/tools-web-cloudflare.git
 ```
 
 安装
@@ -316,7 +316,7 @@ wrangler pages dev .
 
 ```env
 # 站点信息
-VITE_APP_TITLE=一方工具箱
+VITE_APP_TITLE=Youngbar工具箱
 VITE_SITE_URL=https://your-domain.com
 
 # Google OAuth（用户登录功能需要）
