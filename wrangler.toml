@@ -2,6 +2,12 @@ name = "tools-web"
 compatibility_date = "2024-09-23"
 pages_build_output_dir = "dist"
 
+[vars]
+NODE_ENV = "production"
+VITE_SITE_URL = "https://tools-web-cloudflare.pages.dev"
+VITE_FUNCTIONS_BASE_URL = ""
+SITE_URL = "https://tools-web-cloudflare.pages.dev"
+
 [[d1_databases]]
 binding = "DB"
 database_name = "tools-web-db"
@@ -9,8 +15,6 @@ database_id = "22853d57-00aa-44dc-ac09-ba40d3e3cea8"
 
 
 # Cloudflare Pages deployment notes:
-# - Do not put account_id, database_id, JWT, email keys, or OAuth secrets here.
-# - Bind the D1 database in Cloudflare Pages dashboard:
-#   Settings -> Functions -> D1 database bindings
-#   Variable name: DB
-# - Put runtime secrets in Cloudflare Pages environment variables.
+# - D1 bindings and non-secret variables are managed here.
+# - Do not put JWT, email keys, or OAuth secrets here.
+# - Put runtime secrets in Cloudflare Pages encrypted variables.
