@@ -102,7 +102,7 @@ const showFilterDialog = ref(false)
 const sortField = ref('updateTime')
 const sortOrder = ref('desc')
 const filterOptions = reactive({
-  salaryRange: { min: '', max: '' },
+  salaryRange: { min: null as number | null, max: null as number | null },
   location: '',
   workDays: '',
   hasBenefits: false
@@ -161,8 +161,8 @@ const filteredAndSortedCompanies = computed(() => {
       const max = match[2] ? parseInt(match[2]) : min
       const avg = (min + max) / 2
       
-      if (filterOptions.salaryRange.min && avg < parseInt(filterOptions.salaryRange.min)) return false
-      if (filterOptions.salaryRange.max && avg > parseInt(filterOptions.salaryRange.max)) return false
+      if (filterOptions.salaryRange.min !== null && avg < filterOptions.salaryRange.min) return false
+      if (filterOptions.salaryRange.max !== null && avg > filterOptions.salaryRange.max) return false
       return true
     })
   }
@@ -544,7 +544,7 @@ const showFilters = () => {
 }
 
 const clearFilters = () => {
-  filterOptions.salaryRange = { min: '', max: '' }
+  filterOptions.salaryRange = { min: null, max: null }
   filterOptions.location = ''
   filterOptions.workDays = ''
   filterOptions.hasBenefits = false

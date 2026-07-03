@@ -1,3 +1,5 @@
+import { getCORSHeaders } from '../utils/cors.js'
+
 // 用户收藏AI应用 API
 // GET    /api/favorite-apps          获取当前用户所有收藏（联表 ai_apps 返回完整应用信息）
 // GET    /api/favorite-apps?ids=1    获取当前用户收藏的 app_id 列表（轻量，用于前端判断红心状态）
@@ -5,13 +7,9 @@
 // DELETE /api/favorite-apps?app_id=  删除收藏
 export async function onRequest(context) {
   const { request, env } = context
+  const origin = request.headers.get('Origin')
 
-  // CORS headers
-  const corsHeaders = {
-    'Access-Control-Allow-Origin': '*',
-    'Access-Control-Allow-Methods': 'GET, POST, DELETE, OPTIONS',
-    'Access-Control-Allow-Headers': 'Content-Type, Authorization',
-  }
+  const corsHeaders = getCORSHeaders(origin)
 
   if (request.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders })

@@ -401,7 +401,7 @@ const togglePreview = () => {
       <!-- 右侧：实时预览 -->
       <div
         class="p-4 rounded-2xl bg-white"
-        :class="state.showPreview || 'hidden lg:block'"
+        :class="state.showPreview ? '' : 'hidden lg:block'"
       >
         <h3 class="text-lg font-medium text-gray-800 mb-4">实时预览</h3>
 

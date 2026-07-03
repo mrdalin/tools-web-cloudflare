@@ -1,13 +1,16 @@
+import { getCORSHeaders } from '../utils/cors.js'
+
 export async function onRequest(context) {
   const { request } = context
+  const origin = request.headers.get('Origin')
+  const corsHeaders = getCORSHeaders(origin)
 
   if (request.method === 'OPTIONS') {
     return new Response(null, {
       status: 204,
       headers: {
-        'Access-Control-Allow-Origin': '*',
-        'Access-Control-Allow-Methods': 'POST, OPTIONS',
-        'Access-Control-Allow-Headers': 'Content-Type, Authorization'
+        ...corsHeaders,
+        'Access-Control-Allow-Methods': 'POST, OPTIONS'
       }
     })
   }
@@ -15,7 +18,7 @@ export async function onRequest(context) {
   if (request.method !== 'POST') {
     return new Response(JSON.stringify({ error: 'Method not allowed' }), {
       status: 405,
-      headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' }
+      headers: { 'Content-Type': 'application/json', ...corsHeaders }
     })
   }
 
@@ -38,13 +41,13 @@ export async function onRequest(context) {
       status: response.status,
       headers: {
         'Content-Type': 'application/json',
-        'Access-Control-Allow-Origin': '*'
+        ...corsHeaders
       }
     })
   } catch (error) {
     return new Response(JSON.stringify({ error: error.message }), {
       status: 500,
-      headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' }
+      headers: { 'Content-Type': 'application/json', ...corsHeaders }
     })
   }
 }

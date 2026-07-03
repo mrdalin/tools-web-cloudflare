@@ -24,14 +24,18 @@ export async function onRequest(context) {
         return new Response('Missing "target" parameter', { status: 400 })
     }
 
-    // 检查目标域名是否被允许
-    const matched = allowedTargets.some(domain => targetParam.startsWith(domain))
+    let targetUrl
+    try {
+        targetUrl = new URL(targetParam)
+    } catch {
+        return new Response('Invalid target URL', { status: 400 })
+    }
+
+    // 检查目标 origin 是否被允许，避免 https://allowed.example.evil.com 绕过。
+    const matched = allowedTargets.includes(targetUrl.origin)
     if (!matched) {
         return new Response('Target not allowed', { status: 403 })
     }
-
-    // 拼接最终目标地址
-    const targetUrl = new URL(targetParam)
 
     // 拼接请求路径（如果 target 参数已经包含完整路径，则不再添加 path）
     const path = url.searchParams.get('path') || '';

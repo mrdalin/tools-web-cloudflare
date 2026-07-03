@@ -24,6 +24,7 @@ import AdditiveHazardApp from './AdditiveHazardApp.vue'
 import MedicineGuideApp from './MedicineGuideApp.vue'
 import ContractRiskApp from './ContractRiskApp.vue'
 import FoodCalorieApp from './FoodCalorieApp.vue'
+import { renderSafeMarkdown } from '@/utils/sanitize'
 import {
   topicExamples,
   videoPromptExamples,
@@ -2162,7 +2163,7 @@ const copyMessage = (content: string) => {
 }
 
 const renderMarkdown = (content: string) => {
-  return md.render(content)
+  return renderSafeMarkdown(content)
 }
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars

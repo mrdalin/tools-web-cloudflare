@@ -78,7 +78,6 @@ onMounted(() => {
           <el-link type="primary" class="ml-2" @click="copy(cleanContent)">复制结果</el-link>
         </div>
         <el-input
-          v-html="cleanContent"
           v-model="cleanContent"
           :rows="10"
           type="textarea"

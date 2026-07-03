@@ -170,9 +170,6 @@ const isImporting = ref(false)
 // 快捷键对话框
 const shortcutsDialogRef = ref<InstanceType<typeof ShortcutsDialog> | null>(null)
 
-// 导入按钮引用
-const importButtonRef = ref<InstanceType<typeof ElButton> | null>(null)
-
 // 触发导入
 const triggerImport = () => {
   const input = document.querySelector('.el-upload input') as HTMLInputElement
@@ -723,7 +720,7 @@ const getMarkdownIt = (theme: ThemeStyles): MarkdownIt => {
   const safeFontFamily = theme.fontFamily.replace(/"/g, "'")
 
   const mdIt = new MarkdownIt({
-    html: true,
+    html: false,
     linkify: true,
     typographer: true,
     highlight: (str, lang) => {
@@ -768,7 +765,7 @@ const getMarkdownIt = (theme: ThemeStyles): MarkdownIt => {
     let style = `font-family: ${codeFontFamily};font-size: 0.9em;background: ${theme.codeBg};padding: 2px 6px;border-radius: 4px;color: ${theme.textColor};`
     if (theme.id === 'vibrant') style += ` background: linear-gradient(135deg, ${theme.linkColor}15 0%, ${theme.linkColor}05 100%);color: ${theme.headingColor};`
     else if (theme.id === 'night') style += ` background: ${theme.linkColor}20;color: ${theme.linkColor};`
-    return `<code style="${style}">${tokens[idx].content}</code>`
+    return `<code style="${style}">${mdIt.utils.escapeHtml(tokens[idx].content)}</code>`
   }
 
   mdIt.renderer.rules.strong_open = () => {
@@ -813,13 +810,16 @@ const getMarkdownIt = (theme: ThemeStyles): MarkdownIt => {
     else if (theme.id === 'candy') linkStyle += `border-bottom: 2px dotted #ff69b4;`
     else if (theme.id === 'synthwave') linkStyle += `text-shadow: 0 0 8px #00ffff;transition: all 0.3s;`
     else if (theme.id === 'glitch') linkStyle += `text-shadow: 0 0 8px #00ff00;`
-    return `<a href="${tokens[idx].attrGet('href')}" style="${linkStyle}">`
+    const rawHref = tokens[idx].attrGet('href') || ''
+    const href = mdIt.validateLink(rawHref) ? mdIt.utils.escapeHtml(rawHref) : '#'
+    return `<a href="${href}" style="${linkStyle}">`
   }
 
   mdIt.renderer.rules.hr = () => renderHr(theme)
   mdIt.renderer.rules.image = (tokens, idx) => {
-    const src = tokens[idx].attrGet('src')
-    const alt = tokens[idx].content || ''
+    const rawSrc = tokens[idx].attrGet('src') || ''
+    const src = mdIt.validateLink(rawSrc) ? mdIt.utils.escapeHtml(rawSrc) : ''
+    const alt = mdIt.utils.escapeHtml(tokens[idx].content || '')
     return renderImage(src, alt, theme, safeFontFamily)
   }
 

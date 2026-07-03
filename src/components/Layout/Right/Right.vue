@@ -22,8 +22,29 @@ const toolsStore = useToolsStore()
 
 //点击走马灯
 const clickCarousel = (url: string) => {
-  let w = window.open('')
-  w?.document.write(`<!DOCTYPE html><html><body ><img src='${url}'/></body></html>`)
+  const parsedUrl = new URL(url, window.location.origin)
+  if (!['http:', 'https:'].includes(parsedUrl.protocol)) return
+
+  const w = window.open('', '_blank')
+  if (!w) return
+
+  const { document } = w
+  document.title = 'Image preview'
+  Object.assign(document.body.style, {
+    margin: '0',
+    minHeight: '100vh',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    background: '#f5f5f5'
+  })
+
+  const img = document.createElement('img')
+  img.src = parsedUrl.href
+  img.alt = ''
+  img.style.maxWidth = '100%'
+  img.style.maxHeight = '100vh'
+  document.body.replaceChildren(img)
 }
 
 onMounted(() => {

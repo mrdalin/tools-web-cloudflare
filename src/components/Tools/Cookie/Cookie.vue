@@ -781,10 +781,20 @@ const updateCookieByOriginalIndex = (
 
 // 高亮搜索文本（处理undefined）
 const highlightText = (text: string | undefined, searchText: string) => {
-  if (!searchText.trim() || !text) return text || ''
+  const value = escapeHtml(text || '')
+  if (!searchText.trim() || !text) return value
   
   const regex = new RegExp(`(${searchText.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'gi')
-  return text.replace(regex, '<mark class="search-highlight">$1</mark>')
+  return value.replace(regex, '<mark class="search-highlight">$1</mark>')
+}
+
+const escapeHtml = (value: string) => {
+  return value
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;')
 }
 
 // 检查是否需要高亮显示（处理undefined）

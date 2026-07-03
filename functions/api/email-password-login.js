@@ -1,12 +1,5 @@
 import { ApiResponse } from '../utils/db.js'
-
-async function hashPassword(password, salt) {
-  const enc = new TextEncoder()
-  const data = enc.encode(password + salt)
-  const hashBuffer = await crypto.subtle.digest('SHA-256', data)
-  const hashArray = Array.from(new Uint8Array(hashBuffer))
-  return hashArray.map(b => b.toString(16).padStart(2, '0')).join('')
-}
+import { createPasswordHash, verifyPassword } from '../utils/password.js'
 
 async function signJWT(payload, secret) {
   const enc = new TextEncoder()
@@ -40,7 +33,8 @@ export async function onRequest(context) {
   }
 
   try {
-    const { email, password } = await request.json()
+    const { email: rawEmail, password } = await request.json()
+    const email = String(rawEmail || '').trim().toLowerCase()
 
     if (!email || !password) {
       return ApiResponse.error('邮箱和密码不能为空', request.headers.get('Origin'))
@@ -57,14 +51,20 @@ export async function onRequest(context) {
       return ApiResponse.error('该账号未设置密码，请使用验证码登录', request.headers.get('Origin'))
     }
 
-    const hashedPassword = await hashPassword(password, user.salt)
-    if (hashedPassword !== user.password) {
+    const passwordVerification = await verifyPassword(password, user.password, user.salt)
+    if (!passwordVerification.valid) {
       return ApiResponse.error('邮箱或密码错误', request.headers.get('Origin'))
     }
 
     const now = new Date().toISOString()
-    await env.DB.prepare('UPDATE user SET last_login = ? WHERE id = ?')
-      .bind(now, user.id).run()
+    if (passwordVerification.needsUpgrade) {
+      const { hash: upgradedHash, salt: upgradedSalt } = await createPasswordHash(password)
+      await env.DB.prepare('UPDATE user SET password = ?, salt = ?, last_login = ? WHERE id = ?')
+        .bind(upgradedHash, upgradedSalt, now, user.id).run()
+    } else {
+      await env.DB.prepare('UPDATE user SET last_login = ? WHERE id = ?')
+        .bind(now, user.id).run()
+    }
 
     const token = await signJWT(
       {

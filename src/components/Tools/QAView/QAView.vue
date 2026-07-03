@@ -4,6 +4,7 @@ import { useRoute } from 'vue-router'
 import functionsRequest from '@/utils/functionsRequest'
 import { ElMessage } from 'element-plus'
 import { QuestionFilled, ChatDotRound, Share, CopyDocument } from '@element-plus/icons-vue'
+import { renderSafeMarkdown } from '@/utils/sanitize'
 
 interface QAItem {
   id: string
@@ -81,6 +82,8 @@ const shareToSocial = (platform: string) => {
 onMounted(() => {
   fetchQA()
 })
+
+const renderCustomContent = (content: string) => renderSafeMarkdown(content)
 </script>
 
 <template>
@@ -110,7 +113,7 @@ onMounted(() => {
         
         <!-- 头部自定义内容 -->
         <div v-if="qa.headerContent" class="qa-header-content">
-          <div class="custom-content" v-html="qa.headerContent"></div>
+          <div class="custom-content" v-html="renderCustomContent(qa.headerContent)"></div>
         </div>
         
         <!-- QA内容区域 -->
@@ -170,7 +173,7 @@ onMounted(() => {
         
         <!-- 尾部自定义内容 -->
         <div v-if="qa.footerContent" class="qa-footer-content">
-          <div class="custom-content" v-html="qa.footerContent"></div>
+          <div class="custom-content" v-html="renderCustomContent(qa.footerContent)"></div>
         </div>
         
         <!-- 页面信息 -->

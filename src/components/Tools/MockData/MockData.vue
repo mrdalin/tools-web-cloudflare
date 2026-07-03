@@ -371,6 +371,7 @@ const currentShareUrl = computed(() => {
 })
 
 const recipeShareUrl = (r: Recipe) => (r && r.id ? `${baseUrl}/api/mock/${r.id}` : '')
+const asRecipe = (row: unknown) => row as Recipe
 
 const handleCopyShareUrl = async (text: string) => {
   if (!text) {
@@ -748,12 +749,12 @@ onMounted(() => {
         <el-table-column label="链接" width="120" align="center">
           <template #default="{ row }">
             <el-button
-              v-if="recipeShareUrl(row)"
+              v-if="recipeShareUrl(asRecipe(row))"
               type="primary"
               link
               size="small"
               :icon="Link"
-              @click.stop="handleCopyShareUrl(recipeShareUrl(row))"
+              @click.stop="handleCopyShareUrl(recipeShareUrl(asRecipe(row)))"
             >复制</el-button>
             <el-button
               v-else
@@ -766,8 +767,8 @@ onMounted(() => {
         </el-table-column>
         <el-table-column label="操作" width="200" align="center" fixed="right">
           <template #default="{ row }">
-            <el-button type="primary" link size="small" :icon="Edit" @click.stop="handleLoadRecipe(row)">载入</el-button>
-            <el-button type="danger" link size="small" :icon="Delete" @click.stop="handleDeleteRecipe(row)">删除</el-button>
+            <el-button type="primary" link size="small" :icon="Edit" @click.stop="handleLoadRecipe(asRecipe(row))">载入</el-button>
+            <el-button type="danger" link size="small" :icon="Delete" @click.stop="handleDeleteRecipe(asRecipe(row))">删除</el-button>
           </template>
         </el-table-column>
       </el-table>

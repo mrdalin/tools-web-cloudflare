@@ -7,6 +7,7 @@ import { ElMessage, ElMessageBox } from 'element-plus'
 import { Refresh, Plus, Edit, Delete, View, QuestionFilled, ChatDotRound, CopyDocument, Minus } from '@element-plus/icons-vue'
 import { useUserStore } from '@/store/modules/user'
 import { useRouter } from 'vue-router'
+import { renderSafeMarkdown } from '@/utils/sanitize'
 
 interface QAItem {
   id: string
@@ -318,6 +319,8 @@ const showQADetail = computed(() =>
   !isEditing.value &&
   !showPreview.value
 )
+
+const renderCustomContent = (content: string) => renderSafeMarkdown(content)
 </script>
 
 <template>
@@ -728,7 +731,7 @@ const showQADetail = computed(() =>
           <div class="preview-content">
             <!-- 头部自定义内容 -->
             <div v-if="currentQA.headerContent" class="preview-header-content">
-              <div class="custom-content" v-html="currentQA.headerContent"></div>
+              <div class="custom-content" v-html="renderCustomContent(currentQA.headerContent)"></div>
             </div>
             
             <!-- QA内容 -->
@@ -773,7 +776,7 @@ const showQADetail = computed(() =>
             
             <!-- 尾部自定义内容 -->
             <div v-if="currentQA.footerContent" class="preview-footer-content">
-              <div class="custom-content" v-html="currentQA.footerContent"></div>
+              <div class="custom-content" v-html="renderCustomContent(currentQA.footerContent)"></div>
             </div>
           </div>
         </div>

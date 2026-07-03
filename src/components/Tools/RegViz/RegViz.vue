@@ -207,7 +207,7 @@ const execMatch = () => {
 // 高亮文本HTML
 const highlightedText = computed(() => {
   if (!info.testString || info.matchResults.length === 0) {
-    return info.testString.replace(/</g, '&lt;').replace(/>/g, '&gt;')
+    return escapeHtml(info.testString)
   }
 
   let result = ''

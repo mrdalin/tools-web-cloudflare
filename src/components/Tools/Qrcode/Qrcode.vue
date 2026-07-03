@@ -380,7 +380,6 @@ const applyPreset = (presetKey: string) => {
   }
 };
 
-const uploadLogo = ref();
 const showQRDialog = ref(false);
 const windowWidth = ref(800); // 默认宽度
 

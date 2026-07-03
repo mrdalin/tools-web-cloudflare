@@ -32,7 +32,8 @@ export async function onRequest(context) {
   }
 
   try {
-    const { email, code } = await request.json()
+    const { email: rawEmail, code } = await request.json()
+    const email = String(rawEmail || '').trim().toLowerCase()
 
     if (!email || !code) {
       return ApiResponse.error('参数不完整', request.headers.get('Origin'))

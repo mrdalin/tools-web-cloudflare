@@ -1,14 +1,8 @@
 import { ApiResponse } from '../utils/db.js'
 import { verifyCode } from './send-verification-code.js'
+import { createPasswordHash } from '../utils/password.js'
 
 // 密码加盐哈希
-const hashPassword = async (password, salt) => {
-  const encoder = new TextEncoder()
-  const data = encoder.encode(password + salt)
-  const hash = await crypto.subtle.digest('SHA-256', data)
-  return Array.from(new Uint8Array(hash)).map(b => b.toString(16).padStart(2, '0')).join('')
-}
-
 // 生成JWT
 const generateJWT = async (payload, secret) => {
   const header = { alg: 'HS256', typ: 'JWT' }
@@ -40,7 +34,8 @@ export async function onRequest(context) {
   }
 
   try {
-    const { email, password, code, username } = await request.json()
+    const { email: rawEmail, password, code, username } = await request.json()
+    const email = String(rawEmail || '').trim().toLowerCase()
 
     if (!email || !password || !code || !username) {
       return ApiResponse.error('参数不完整', request.headers.get('Origin'))
@@ -61,11 +56,8 @@ export async function onRequest(context) {
       return ApiResponse.error('该邮箱已注册', request.headers.get('Origin'))
     }
 
-    // 生成随机盐
-    const salt = crypto.randomUUID()
-
     // 加密密码
-    const hashedPassword = await hashPassword(password, salt)
+    const { hash: hashedPassword, salt } = await createPasswordHash(password)
 
     // 创建用户
     const userId = crypto.randomUUID()

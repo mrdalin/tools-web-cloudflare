@@ -1,9 +1,13 @@
+import { getCORSHeaders } from './utils/cors.js'
+
 // 谷歌登录回调
 export async function onRequest(context) {
   const { request, env } = context;
+  const origin = request.headers.get('Origin');
+  const corsHeaders = getCORSHeaders(origin);
 
   if (request.method !== 'POST') {
-    return new Response('Method not allowed', { status: 405 });
+    return new Response('Method not allowed', { status: 405, headers: corsHeaders });
   }
 
   try {
@@ -122,9 +126,8 @@ export async function onRequest(context) {
       status: 200,
       headers: {
         'Content-Type': 'application/json; charset=utf-8',
-        'Access-Control-Allow-Origin': '*',
-        'Access-Control-Allow-Methods': 'POST, OPTIONS',
-        'Access-Control-Allow-Headers': 'Content-Type, Authorization'
+        ...corsHeaders,
+        'Access-Control-Allow-Methods': 'POST, OPTIONS'
       }
     });
 
@@ -138,20 +141,20 @@ export async function onRequest(context) {
       status: 500,
       headers: {
         'Content-Type': 'application/json; charset=utf-8',
-        'Access-Control-Allow-Origin': '*'
+        ...corsHeaders
       }
     });
   }
 }
 
 // 处理OPTIONS请求（CORS预检）
-export async function onRequestOptions() {
+export async function onRequestOptions(context) {
+  const origin = context.request.headers.get('Origin');
   return new Response(null, {
-    status: 200,
+    status: 204,
     headers: {
-      'Access-Control-Allow-Origin': '*',
-      'Access-Control-Allow-Methods': 'POST, OPTIONS',
-      'Access-Control-Allow-Headers': 'Content-Type, Authorization'
+      ...getCORSHeaders(origin),
+      'Access-Control-Allow-Methods': 'POST, OPTIONS'
     }
   });
 }

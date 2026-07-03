@@ -1,8 +1,11 @@
 import { ResumeRouter } from '../../routes/resume.js'
 
+import { getCORSHeaders } from '../../utils/cors.js'
+
 export async function onRequest(context) {
   const { request, env, params } = context
   const origin = request.headers.get('Origin')
+  const corsHeaders = getCORSHeaders(origin)
   const path = `/${params.id}`
 
   // 处理 CORS 预检请求
@@ -10,9 +13,8 @@ export async function onRequest(context) {
     return new Response(null, {
       status: 204,
       headers: {
-        'Access-Control-Allow-Origin': origin || '*',
-        'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
-        'Access-Control-Allow-Headers': 'Content-Type, Authorization'
+        ...corsHeaders,
+        'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS'
       }
     })
   }
@@ -26,7 +28,7 @@ export async function onRequest(context) {
       status: 500,
       headers: {
         'Content-Type': 'application/json',
-        'Access-Control-Allow-Origin': origin || '*'
+        ...corsHeaders
       }
     })
   }

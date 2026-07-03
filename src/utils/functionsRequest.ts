@@ -8,8 +8,9 @@ class FunctionsRequest {
   private proxyUrl: string
 
   constructor() {
-    // 获取代理URL，优先使用环境变量，否则使用默认值
-    this.proxyUrl = import.meta.env.VITE_SITE_URL
+    // 静态站可部署在 VPS，Functions/API 可独立部署在 Cloudflare Pages。
+    // 未配置时保持同源请求，便于本地 Vite proxy 和纯静态部署降级。
+    this.proxyUrl = import.meta.env.VITE_FUNCTIONS_BASE_URL || ''
     
     this.instance = axios.create({
       baseURL: this.proxyUrl,

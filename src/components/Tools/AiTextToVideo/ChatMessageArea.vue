@@ -70,14 +70,7 @@
 
 <script setup lang="ts">
 import { ref } from 'vue'
-import MarkdownIt from 'markdown-it'
-
-const md = new MarkdownIt({
-  html: true,
-  linkify: true,
-  typographer: true,
-  breaks: true
-})
+import { renderSafeMarkdown } from '@/utils/sanitize'
 
 interface ChatSession {
   id: string
@@ -102,7 +95,7 @@ defineEmits<{
 }>()
 
 const renderMarkdown = (content: string) => {
-  return md.render(content)
+  return renderSafeMarkdown(content)
 }
 
 defineExpose({

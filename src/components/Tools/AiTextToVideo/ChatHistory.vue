@@ -65,14 +65,7 @@
 </template>
 
 <script setup lang="ts">
-import MarkdownIt from 'markdown-it'
-
-const md = new MarkdownIt({
-  html: true,
-  linkify: true,
-  typographer: true,
-  breaks: true
-})
+import { renderSafeMarkdown } from '@/utils/sanitize'
 
 export interface ChatMessage {
   role: 'user' | 'assistant'
@@ -93,7 +86,7 @@ defineEmits<{
 }>()
 
 const renderMarkdown = (content: string) => {
-  return md.render(content)
+  return renderSafeMarkdown(content)
 }
 </script>
 

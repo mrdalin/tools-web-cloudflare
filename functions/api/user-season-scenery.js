@@ -1,13 +1,11 @@
+import { getCORSHeaders } from '../utils/cors.js'
+
 // 四季景色用户数据API
 export async function onRequest(context) {
   const { request, env } = context
+  const origin = request.headers.get('Origin')
 
-  // CORS headers
-  const corsHeaders = {
-    'Access-Control-Allow-Origin': '*',
-    'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
-    'Access-Control-Allow-Headers': 'Content-Type, Authorization',
-  }
+  const corsHeaders = getCORSHeaders(origin)
 
   // Handle OPTIONS request
   if (request.method === 'OPTIONS') {

@@ -5,7 +5,6 @@ import DetailHeader from '@/components/Layout/DetailHeader/DetailHeader.vue'
 import ToolDetail from '@/components/Layout/ToolDetail/ToolDetail.vue'
 import * as echarts from 'echarts'
 import type { ECharts } from 'echarts'
-import { debounce } from 'lodash-es'
 import html2canvas from 'html2canvas'
 import { weightApi } from './api'
 import type { WeightMember, WeightRecord, WeightStatistics, ChartDataPoint, TimeRange, WeightUnit, HealthyRange, Achievement } from './types'
@@ -13,6 +12,14 @@ import { NOTE_TAGS } from './types'
 import { useUserStore } from '@/store/modules/user'
 
 const info = { title: '体重记录' }
+
+function debounce<T extends (...args: any[]) => void>(fn: T, delay = 300) {
+  let timer: ReturnType<typeof setTimeout> | null = null
+  return (...args: Parameters<T>) => {
+    if (timer) clearTimeout(timer)
+    timer = setTimeout(() => fn(...args), delay)
+  }
+}
 
 // Emoji 头像列表
 const AVATAR_EMOJIS = ['😀', '😊', '🙂', '😎', '🤗', '💪', '🏃', '⭐', '🌟', '❤️', '🎯', '🔥']

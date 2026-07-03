@@ -1,6 +1,5 @@
 import { defineConfig, loadEnv, type Plugin } from 'vite'
 import vue from '@vitejs/plugin-vue'
-import { createSvgIconsPlugin } from 'vite-plugin-svg-icons'
 import path from 'path'
 import { execSync } from 'node:child_process'
 import Components from 'unplugin-vue-components/vite'
@@ -114,10 +113,6 @@ export default defineConfig(({command, mode}) => {
             whitespace: 'condense', // 压缩模板空格
           }
         }
-      }),
-      createSvgIconsPlugin({
-        iconDirs: [path.resolve(process.cwd(), 'src/assets/icons')],
-        symbolId: 'icon-[dir]-[name]',
       }),
       Components({
         resolvers: [ElementPlusResolver({ importStyle: 'sass' })],

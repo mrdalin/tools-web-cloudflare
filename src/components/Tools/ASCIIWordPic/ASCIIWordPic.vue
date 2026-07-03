@@ -117,7 +117,7 @@ const gen = () => {
       console.log(';----', err)
       return;
     }
-    contentRes.value = data
+    contentRes.value = data ?? ''
   })
 }
 

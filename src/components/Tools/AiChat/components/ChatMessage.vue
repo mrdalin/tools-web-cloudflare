@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
-import MarkdownIt from 'markdown-it'
 import { copy } from '@/utils/string'
+import { renderSafeMarkdown } from '@/utils/sanitize'
 
 interface Message {
   id: string
@@ -41,14 +41,6 @@ const handleCopy = () => {
   copy(copyText);
 }
 
-// 创建Markdown渲染器
-const md = new MarkdownIt({
-  html: true,
-  linkify: true,
-  typographer: true,
-  breaks: true
-})
-
 // 渲染Markdown内容
 const renderedContent = computed(() => {
   if (props.message.type === 'assistant') {
@@ -56,7 +48,7 @@ const renderedContent = computed(() => {
     const content = typeof props.message.content === 'string' 
       ? props.message.content 
       : String(props.message.content || '');
-    return md.render(content);
+    return renderSafeMarkdown(content);
   }
   return props.message.content;
 });
@@ -67,7 +59,7 @@ const renderedReasoning = computed(() => {
     const reasoning = typeof props.message.reasoning === 'string' 
       ? props.message.reasoning 
       : String(props.message.reasoning || '');
-    return md.render(reasoning);
+    return renderSafeMarkdown(reasoning);
   }
   return '';
 });

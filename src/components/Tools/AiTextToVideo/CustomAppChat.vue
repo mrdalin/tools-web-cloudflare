@@ -83,7 +83,7 @@
 import { ref, onBeforeUnmount } from 'vue'
 import { ElMessage } from 'element-plus'
 import * as agnesApi from './api'
-import MarkdownIt from 'markdown-it'
+import { renderSafeMarkdown } from '@/utils/sanitize'
 
 interface Props {
   app: {
@@ -104,10 +104,8 @@ const streamingContent = ref('')
 const isQuerying = ref(false)
 const abortController = ref<AbortController | null>(null)
 
-const md = new MarkdownIt()
-
 const renderMarkdown = (content: string) => {
-  return md.render(content)
+  return renderSafeMarkdown(content)
 }
 
 const handleSubmit = async () => {

@@ -2,9 +2,51 @@ import { ApiResponse } from '../utils/db.js'
 
 // 验证码存储（使用 KV 或临时内存，这里用内存演示，生产环境应使用 KV）
 const verificationCodes = new Map()
+const rateLimitBuckets = new Map()
+
+const CODE_TTL_MS = 5 * 60 * 1000
+const SEND_WINDOW_MS = 15 * 60 * 1000
+const IP_SEND_LIMIT = 20
+const EMAIL_SEND_LIMIT = 5
+const EMAIL_COOLDOWN_MS = 60 * 1000
+const MAX_VERIFY_FAILURES = 5
+
+const normalizeEmail = (email) => String(email || '').trim().toLowerCase()
+
+const getClientIp = (request) => {
+  const forwardedFor = request.headers.get('CF-Connecting-IP') || request.headers.get('X-Forwarded-For') || ''
+  return forwardedFor.split(',')[0].trim() || 'unknown'
+}
+
+const consumeRateLimit = (key, limit, windowMs) => {
+  const now = Date.now()
+  const bucket = (rateLimitBuckets.get(key) || []).filter((timestamp) => now - timestamp < windowMs)
+
+  if (bucket.length >= limit) {
+    rateLimitBuckets.set(key, bucket)
+    return false
+  }
+
+  bucket.push(now)
+  rateLimitBuckets.set(key, bucket)
+  return true
+}
+
+const canSendCode = (request, email, type) => {
+  const ip = getClientIp(request)
+  return (
+    consumeRateLimit(`ip:${ip}`, IP_SEND_LIMIT, SEND_WINDOW_MS) &&
+    consumeRateLimit(`email:${email}:${type}`, EMAIL_SEND_LIMIT, SEND_WINDOW_MS) &&
+    consumeRateLimit(`cooldown:${email}:${type}`, 1, EMAIL_COOLDOWN_MS)
+  )
+}
 
 // 生成6位数字验证码
-const generateCode = () => Math.floor(100000 + Math.random() * 900000).toString()
+const generateCode = () => {
+  const random = new Uint32Array(1)
+  crypto.getRandomValues(random)
+  return String(100000 + (random[0] % 900000))
+}
 
 // 发送邮件通过 Resend
 const sendEmail = async (to, subject, text, html, apiKey, fromEmail) => {
@@ -32,13 +74,15 @@ const sendEmail = async (to, subject, text, html, apiKey, fromEmail) => {
 
 export async function onRequest(context) {
   const { request, env } = context
+  const origin = request.headers.get('Origin')
 
   if (request.method !== 'POST') {
     return ApiResponse.error('仅支持 POST 请求', request.headers.get('Origin'))
   }
 
   try {
-    const { email, type } = await request.json() // type: register / login / reset
+    const { email: rawEmail, type } = await request.json() // type: register / login / reset
+    const email = normalizeEmail(rawEmail)
 
     if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
       return ApiResponse.error('邮箱格式不正确', request.headers.get('Origin'))
@@ -46,6 +90,10 @@ export async function onRequest(context) {
 
     if (!['register', 'login', 'reset'].includes(type)) {
       return ApiResponse.error('类型参数错误', request.headers.get('Origin'))
+    }
+
+    if (!canSendCode(request, email, type)) {
+      return ApiResponse.error('Too many verification code requests, please try again later', origin, 429)
     }
 
     // 检查邮箱是否已注册（仅注册时检查）
@@ -69,7 +117,7 @@ export async function onRequest(context) {
     const key = `${email}:${type}`
 
     // 存储验证码（5分钟有效）
-    verificationCodes.set(key, { code, expires: Date.now() + 5 * 60 * 1000 })
+    verificationCodes.set(key, { code, expires: Date.now() + CODE_TTL_MS, failures: 0 })
 
     // 发送邮件
     const typeText = { register: '注册', login: '登录', reset: '重置密码' }[type]
@@ -103,7 +151,7 @@ export async function onRequest(context) {
 
 // 导出验证码验证函数（供其他 API 使用）
 export const verifyCode = (email, type, code) => {
-  const key = `${email}:${type}`
+  const key = `${normalizeEmail(email)}:${type}`
   const stored = verificationCodes.get(key)
 
   if (!stored) return false
@@ -111,7 +159,19 @@ export const verifyCode = (email, type, code) => {
     verificationCodes.delete(key)
     return false
   }
-  if (stored.code !== code) return false
+  if (stored.failures >= MAX_VERIFY_FAILURES) {
+    verificationCodes.delete(key)
+    return false
+  }
+  if (stored.code !== String(code || '').trim()) {
+    stored.failures = (stored.failures || 0) + 1
+    if (stored.failures >= MAX_VERIFY_FAILURES) {
+      verificationCodes.delete(key)
+    } else {
+      verificationCodes.set(key, stored)
+    }
+    return false
+  }
 
   verificationCodes.delete(key) // 验证成功后删除
   return true

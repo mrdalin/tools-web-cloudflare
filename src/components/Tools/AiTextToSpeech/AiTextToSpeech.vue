@@ -167,20 +167,41 @@ const saveToHistory = (text: string, audio: string) => {
 };
 
 const viewAudio = (audio: string) => {
+  let audioUrl: URL
+  try {
+    audioUrl = new URL(audio, window.location.origin)
+  } catch {
+    return
+  }
+
+  if (!['http:', 'https:', 'blob:', 'data:'].includes(audioUrl.protocol)) return
+
   // 在新窗口中播放音频
   const audioWindow = window.open();
   if (audioWindow) {
-    audioWindow.document.write(`
-      <html>
-        <head><title>音频播放</title></head>
-        <body style="margin:0;padding:20px;background:#f5f5f5;display:flex;justify-content:center;align-items:center;min-height:100vh;">
-          <audio controls autoplay style="max-width:100%;">
-            <source src="${audio}" type="audio/mpeg">
-            您的浏览器不支持音频播放。
-          </audio>
-        </body>
-      </html>
-    `);
+    const { document } = audioWindow
+    document.title = 'Audio player'
+    Object.assign(document.body.style, {
+      margin: '0',
+      padding: '20px',
+      background: '#f5f5f5',
+      display: 'flex',
+      justifyContent: 'center',
+      alignItems: 'center',
+      minHeight: '100vh'
+    })
+
+    const audioEl = document.createElement('audio')
+    audioEl.controls = true
+    audioEl.autoplay = true
+    audioEl.style.maxWidth = '100%'
+
+    const source = document.createElement('source')
+    source.src = audioUrl.href
+    source.type = 'audio/mpeg'
+    audioEl.appendChild(source)
+
+    document.body.replaceChildren(audioEl)
   }
 };
 

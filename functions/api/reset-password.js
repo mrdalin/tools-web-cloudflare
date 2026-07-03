@@ -1,13 +1,6 @@
 import { ApiResponse } from '../utils/db.js'
 import { verifyCode } from './send-verification-code.js'
-
-// 密码加盐哈希
-const hashPassword = async (password, salt) => {
-  const encoder = new TextEncoder()
-  const data = encoder.encode(password + salt)
-  const hash = await crypto.subtle.digest('SHA-256', data)
-  return Array.from(new Uint8Array(hash)).map(b => b.toString(16).padStart(2, '0')).join('')
-}
+import { createPasswordHash } from '../utils/password.js'
 
 export async function onRequest(context) {
   const { request, env } = context
@@ -17,7 +10,8 @@ export async function onRequest(context) {
   }
 
   try {
-    const { email, code, newPassword } = await request.json()
+    const { email: rawEmail, code, newPassword } = await request.json()
+    const email = String(rawEmail || '').trim().toLowerCase()
 
     if (!email || !code || !newPassword) {
       return ApiResponse.error('参数不完整', request.headers.get('Origin'))
@@ -32,17 +26,17 @@ export async function onRequest(context) {
       return ApiResponse.error('验证码错误或已过期', request.headers.get('Origin'))
     }
 
-    // 检查用户是否存在，并获取盐
-    const user = await env.DB.prepare('SELECT id, salt FROM user WHERE email = ?').bind(email).first()
+    // 检查用户是否存在
+    const user = await env.DB.prepare('SELECT id FROM user WHERE email = ?').bind(email).first()
     if (!user) {
       return ApiResponse.error('用户不存在', request.headers.get('Origin'))
     }
 
     // 更新密码
-    const hashedPassword = await hashPassword(newPassword, user.salt)
+    const { hash: hashedPassword, salt } = await createPasswordHash(newPassword)
     const now = new Date().toISOString()
-    await env.DB.prepare('UPDATE user SET password = ?, last_login = ? WHERE email = ?')
-      .bind(hashedPassword, now, email).run()
+    await env.DB.prepare('UPDATE user SET password = ?, salt = ?, last_login = ? WHERE email = ?')
+      .bind(hashedPassword, salt, now, email).run()
 
     return ApiResponse.success({ message: '密码重置成功' }, request.headers.get('Origin'))
   } catch (error) {

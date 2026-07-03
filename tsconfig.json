@@ -26,7 +26,8 @@
     "baseUrl": "./",  
     //路径映射，相对于baseUrl
     "paths": {
-      "@/*": ["src/*"]
+      "@/*": ["src/*"],
+      "qrcode-vue3": ["src/types/qrcode-vue3-shim.d.ts"]
     },
     "allowJs": true,
     "noImplicitAny": false,

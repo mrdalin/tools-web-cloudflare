@@ -1,7 +1,5 @@
 import { createApp } from 'vue'
 import App from './App.vue'
-//vite-plugin-svg-icons
-import 'virtual:svg-icons-register'
 //router
 import router from './router'
 //styles

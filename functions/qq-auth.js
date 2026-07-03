@@ -381,15 +381,9 @@ async function processUserLogin(userData, openId, env) {
 }
 
 // 处理OPTIONS请求（CORS预检）
-export async function onRequestOptions() {
-    return new Response(null, {
-        status: 200,
-        headers: {
-            'Access-Control-Allow-Origin': '*',
-            'Access-Control-Allow-Methods': 'POST, GET, OPTIONS',
-            'Access-Control-Allow-Headers': 'Content-Type, Authorization'
-        }
-    });
+export async function onRequestOptions(context) {
+    const origin = context.request.headers.get('Origin')
+    return handleCORSPreflight(origin)
 }
 
 // 工具函数
