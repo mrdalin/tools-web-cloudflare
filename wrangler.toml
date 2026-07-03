@@ -4,9 +4,9 @@ pages_build_output_dir = "dist"
 
 [vars]
 NODE_ENV = "production"
-VITE_SITE_URL = "https://tools-web-cloudflare.pages.dev"
+VITE_SITE_URL = "https://youngbar.com"
 VITE_FUNCTIONS_BASE_URL = ""
-SITE_URL = "https://tools-web-cloudflare.pages.dev"
+SITE_URL = "https://youngbar.com"
 
 [[d1_databases]]
 binding = "DB"
