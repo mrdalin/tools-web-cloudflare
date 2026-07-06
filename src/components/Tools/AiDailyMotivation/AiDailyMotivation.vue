@@ -11,7 +11,7 @@ const info = reactive({
 
 const pollinationsProxyUrl = ref(import.meta.env.VITE_POLLINATIONS_PROXY_URL);
 const pollinationsTextUrl = ref(import.meta.env.VITE_POLLINATIONS_TEXT_URL);
-const pollinationsImageUrl = ref(import.meta.env.VITE_POLLINATIONS_URL || "https://gen.pollinations.ai");
+const pollinationsImageUrl = ref(import.meta.env.VITE_POLLINATIONS_URL || "https://image.pollinations.ai");
 
 // 状态管理
 const loading = ref(false);
@@ -281,7 +281,7 @@ const generateCover = async (motivation: string, motivationId: number) => {
     }).toString();
 
     const response = await axios.get(
-      `${pollinationsProxyUrl.value}?path=image/${encodedPrompt}&target=${pollinationsImageUrl.value}&params=${params}`,
+      `${pollinationsProxyUrl.value}?path=prompt/${encodedPrompt}&target=${pollinationsImageUrl.value}&params=${params}`,
       {
         responseType: "blob",
         signal: abortController.value.signal
