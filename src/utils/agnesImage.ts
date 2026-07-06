@@ -22,30 +22,38 @@ export async function generateAgnesImages(options: GenerateAgnesImageOptions): P
     extraBody.image = options.images
   }
 
-  const resp = await axios.post(
-    '/api/agnes-image-generations',
-    {
-      model: options.model || 'agnes-image-2.1-flash',
-      prompt: options.prompt,
-      size,
-      ...(options.count ? { n: options.count } : {}),
-      extra_body: extraBody
-    },
-    {
-      timeout: options.timeout || 120000,
-      signal: options.signal,
-      headers: {
-        'Content-Type': 'application/json'
+  let resp
+  try {
+    resp = await axios.post(
+      '/api/agnes-image-generations',
+      {
+        model: options.model || 'agnes-image-2.1-flash',
+        prompt: options.prompt,
+        size,
+        ...(options.count ? { n: options.count } : {}),
+        extra_body: extraBody
+      },
+      {
+        timeout: options.timeout || 120000,
+        signal: options.signal,
+        headers: {
+          'Content-Type': 'application/json'
+        }
       }
-    }
-  )
+    )
+  } catch (error: any) {
+    const message = error?.response?.data?.error?.message
+      || (typeof error?.response?.data?.error === 'string' ? error.response.data.error : '')
+      || '图片生成服务暂时不稳定，请稍后重试'
+    throw new Error(message)
+  }
 
   const images = (resp.data?.data || [])
     .map((item: any) => item?.url || (item?.b64_json ? `data:image/png;base64,${item.b64_json}` : ''))
     .filter(Boolean)
 
   if (!images.length) {
-    throw new Error('No image returned from Agnes')
+    throw new Error('图片生成结果为空，请稍后重试')
   }
 
   return images

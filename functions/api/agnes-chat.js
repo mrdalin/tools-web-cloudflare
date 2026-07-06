@@ -1,5 +1,5 @@
 import { getCORSHeaders } from '../utils/cors.js'
-import { getAgnesAuthorization, missingAgnesKeyResponse } from '../utils/agnes.js'
+import { fetchWithRetry, friendlyAgnesError, getAgnesAuthorization, missingAgnesKeyResponse } from '../utils/agnes.js'
 
 export async function onRequest(context) {
   const { request, env } = context
@@ -31,14 +31,26 @@ export async function onRequest(context) {
       return missingAgnesKeyResponse(corsHeaders)
     }
 
-    const response = await fetch('https://apihub.agnes-ai.com/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': authHeader
+    let parsedBody = {}
+    try {
+      parsedBody = JSON.parse(body)
+    } catch {}
+
+    const response = await fetchWithRetry(
+      'https://apihub.agnes-ai.com/v1/chat/completions',
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': authHeader
+        },
+        body
       },
-      body: body
-    })
+      {
+        attempts: parsedBody?.stream === true ? 2 : 3,
+        timeoutMs: parsedBody?.stream === true ? 30_000 : 60_000
+      }
+    )
 
     // 流式透传：直接将上游 ReadableStream 转发给客户端，不缓存
     return new Response(response.body, {
@@ -51,8 +63,9 @@ export async function onRequest(context) {
       }
     })
   } catch (error) {
-    return new Response(JSON.stringify({ error: error.message }), {
-      status: 500,
+    const friendly = friendlyAgnesError(error)
+    return new Response(JSON.stringify({ error: { message: friendly.message, detail: error.message } }), {
+      status: friendly.status,
       headers: { 'Content-Type': 'application/json', ...corsHeaders }
     })
   }

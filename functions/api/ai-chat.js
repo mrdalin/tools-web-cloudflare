@@ -1,4 +1,5 @@
 import { getCORSHeaders, handleCORSPreflight } from '../utils/cors.js'
+import { fetchWithRetry } from '../utils/agnes.js'
 
 const AGNES_CHAT_URL = 'https://apihub.agnes-ai.com/v1/chat/completions'
 const POLLINATIONS_CHAT_URL = 'https://text.pollinations.ai/v1/chat/completions'
@@ -102,16 +103,22 @@ function getProviderError(provider, response, text) {
   return `${provider} failed with ${response.status}: ${text.slice(0, 200)}`
 }
 
-async function callProvider({ provider, url, apiKey, payload, signal }) {
+async function callProvider({ provider, url, apiKey, payload, timeoutMs }) {
   const headers = { 'Content-Type': 'application/json' }
   if (apiKey) headers.Authorization = `Bearer ${apiKey}`
 
-  const response = await fetch(url, {
-    method: 'POST',
-    headers,
-    body: JSON.stringify(payload),
-    signal
-  })
+  const response = await fetchWithRetry(
+    url,
+    {
+      method: 'POST',
+      headers,
+      body: JSON.stringify(payload)
+    },
+    {
+      attempts: payload.stream ? 2 : 3,
+      timeoutMs
+    }
+  )
 
   if (!response.ok) {
     const text = await response.text().catch(() => '')
@@ -140,54 +147,47 @@ async function jsonProviderResponse(response, provider, origin) {
 
 async function callWithFallback(body, env, request, origin) {
   const timeoutMs = Number.isInteger(body.timeout_ms) ? Math.min(body.timeout_ms, 60_000) : 60_000
-  const controller = new AbortController()
-  const timeout = setTimeout(() => controller.abort(), timeoutMs)
-
-  try {
-    const providers = []
-    if (env.AGNES_API_KEY) {
-      providers.push({
-        name: 'agnes',
-        url: AGNES_CHAT_URL,
-        apiKey: env.AGNES_API_KEY,
-        model: AGNES_MODEL
-      })
-    }
-
+  const providers = []
+  if (env.AGNES_API_KEY) {
     providers.push({
-      name: 'pollinations',
-      url: POLLINATIONS_CHAT_URL,
-      apiKey: env.POLLINATIONS_API_KEY,
-      model: POLLINATIONS_MODEL
+      name: 'agnes',
+      url: AGNES_CHAT_URL,
+      apiKey: env.AGNES_API_KEY,
+      model: AGNES_MODEL
     })
-
-    let lastError
-    for (const provider of providers) {
-      try {
-        const payload = buildPayload(body, provider.model)
-        const response = await callProvider({
-          provider: provider.name,
-          url: provider.url,
-          apiKey: provider.apiKey,
-          payload,
-          signal: controller.signal
-        })
-
-        if (body.stream === true) {
-          return streamResponse(response, provider.name, origin)
-        }
-
-        return await jsonProviderResponse(response, provider.name, origin)
-      } catch (error) {
-        lastError = error
-        console.warn(`${provider.name} chat request failed, trying fallback`, error.message)
-      }
-    }
-
-    return jsonResponse({ error: 'AI service unavailable', detail: lastError?.message || 'unknown error' }, 502, origin)
-  } finally {
-    clearTimeout(timeout)
   }
+
+  providers.push({
+    name: 'pollinations',
+    url: POLLINATIONS_CHAT_URL,
+    apiKey: env.POLLINATIONS_API_KEY,
+    model: POLLINATIONS_MODEL
+  })
+
+  let lastError
+  for (const provider of providers) {
+    try {
+      const payload = buildPayload(body, provider.model)
+      const response = await callProvider({
+        provider: provider.name,
+        url: provider.url,
+        apiKey: provider.apiKey,
+        payload,
+        timeoutMs
+      })
+
+      if (body.stream === true) {
+        return streamResponse(response, provider.name, origin)
+      }
+
+      return await jsonProviderResponse(response, provider.name, origin)
+    } catch (error) {
+      lastError = error
+      console.warn(`${provider.name} chat request failed, trying fallback`, error.message)
+    }
+  }
+
+  return jsonResponse({ error: 'AI service unavailable', detail: lastError?.message || 'unknown error' }, 502, origin)
 }
 
 export async function onRequest(context) {

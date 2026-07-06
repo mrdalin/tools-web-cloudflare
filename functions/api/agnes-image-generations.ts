@@ -1,5 +1,5 @@
 import { getCORSHeaders, handleCORSPreflight } from '../utils/cors.js'
-import { getAgnesAuthorization, missingAgnesKeyResponse } from '../utils/agnes.js'
+import { fetchWithRetry, friendlyAgnesError, getAgnesAuthorization, missingAgnesKeyResponse } from '../utils/agnes.js'
 
 export async function onRequest(context: any) {
   const { request, env } = context
@@ -25,24 +25,38 @@ export async function onRequest(context: any) {
       return missingAgnesKeyResponse(corsHeaders)
     }
 
-    const response = await fetch('https://apihub.agnes-ai.com/v1/images/generations', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': authHeader
+    const response = await fetchWithRetry(
+      'https://apihub.agnes-ai.com/v1/images/generations',
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': authHeader
+        },
+        body: JSON.stringify(body)
       },
-      body: JSON.stringify(body)
-    })
+      {
+        attempts: 3,
+        timeoutMs: 90_000
+      }
+    )
 
-    const data = await response.json()
+    const text = await response.text()
+    let data
+    try {
+      data = text ? JSON.parse(text) : {}
+    } catch {
+      data = { error: { message: text || 'Agnes returned an empty response' } }
+    }
 
     return new Response(JSON.stringify(data), {
       status: response.status,
       headers: { 'Content-Type': 'application/json', ...corsHeaders }
     })
   } catch (error: any) {
-    return new Response(JSON.stringify({ error: { message: error.message } }), {
-      status: 500,
+    const friendly = friendlyAgnesError(error)
+    return new Response(JSON.stringify({ error: { message: friendly.message, detail: error.message } }), {
+      status: friendly.status,
       headers: { 'Content-Type': 'application/json', ...corsHeaders }
     })
   }

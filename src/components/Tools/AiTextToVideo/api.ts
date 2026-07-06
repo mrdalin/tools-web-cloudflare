@@ -47,6 +47,34 @@ export interface ChatOptions {
   messages: Array<{ role: string; content: string }>
 }
 
+function sleep(ms: number) {
+  return new Promise(resolve => setTimeout(resolve, ms))
+}
+
+async function getResponseError(response: Response, fallback: string) {
+  const text = await response.text().catch(() => '')
+  if (!text) return fallback
+
+  try {
+    const data = JSON.parse(text)
+    return data?.error?.message || data?.message || fallback
+  } catch {
+    return `${fallback}: ${text.slice(0, 160)}`
+  }
+}
+
+function collectImageUrls(data: any): string[] {
+  return (data?.data || [])
+    .map((item: any) => item?.url || (item?.b64_json ? `data:image/png;base64,${item.b64_json}` : ''))
+    .filter(Boolean)
+}
+
+function permanentError(message: string) {
+  const error = new Error(message) as Error & { permanent?: boolean }
+  error.permanent = true
+  return error
+}
+
 // 生成优化后的提示词
 export async function generateOptimizedPrompt(apiKey: string, topic: string): Promise<string> {
   const response = await fetch('/api/agnes-chat', {
@@ -74,11 +102,13 @@ export async function generateOptimizedPrompt(apiKey: string, topic: string): Pr
   })
 
   if (!response.ok) {
-    throw new Error('提示词生成失败')
+    throw new Error(await getResponseError(response, '提示词生成失败'))
   }
 
   const data = await response.json()
-  return data.choices[0].message.content.trim()
+  const content = data.choices?.[0]?.message?.content?.trim()
+  if (!content) throw new Error('提示词生成结果为空，请稍后重试')
+  return content
 }
 
 // 提交视频生成任务
@@ -113,11 +143,13 @@ export async function submitVideoTask(
   })
 
   if (!response.ok) {
-    const error = await response.json().catch(() => ({}))
-    throw new Error(error.error?.message || '视频生成任务提交失败')
+    throw new Error(await getResponseError(response, '视频生成任务提交失败'))
   }
 
   const data = await response.json()
+  if (!data.video_id) {
+    throw new Error(data?.error?.message || '视频生成任务没有返回任务ID，请稍后重试')
+  }
   return data.video_id
 }
 
@@ -127,30 +159,49 @@ export async function pollVideoStatus(
   videoId: string,
   onProgress?: (status: string) => void
 ): Promise<string> {
+  let consecutiveErrors = 0
+
   while (true) {
-    await new Promise(resolve => setTimeout(resolve, 5000))
+    await sleep(5000)
 
-    const statusResponse = await fetch(`/api/agnes-video-status?video_id=${encodeURIComponent(videoId)}`, {
-      headers: { 'Authorization': `Bearer ${apiKey}` }
-    })
+    try {
+      const statusResponse = await fetch(`/api/agnes-video-status?video_id=${encodeURIComponent(videoId)}`, {
+        headers: { 'Authorization': `Bearer ${apiKey}` }
+      })
 
-    if (!statusResponse.ok) {
-      const errorText = await statusResponse.text()
-      throw new Error(`查询视频状态失败: ${errorText}`)
-    }
+      if (!statusResponse.ok) {
+        throw new Error(await getResponseError(statusResponse, '查询视频状态失败'))
+      }
 
-    const statusData = await statusResponse.json()
-    const status = statusData.status
+      const statusData = await statusResponse.json()
+      const status = statusData.status
+      consecutiveErrors = 0
 
-    if (onProgress) {
-      onProgress(status)
-    }
+      if (onProgress) {
+        onProgress(status)
+      }
 
-    if (status === 'completed') {
-      // API返回的视频URL在remixed_from_video_id字段
-      return statusData.remixed_from_video_id || statusData.video_url
-    } else if (status === 'failed') {
-      throw new Error('视频生成失败')
+      if (status === 'completed') {
+        const videoUrl = statusData.remixed_from_video_id || statusData.video_url
+        if (!videoUrl) {
+          throw permanentError('视频生成完成，但没有返回视频地址，请稍后重试')
+        }
+        return videoUrl
+      } else if (status === 'failed') {
+        throw permanentError(statusData?.error?.message || '视频生成失败')
+      }
+    } catch (error: any) {
+      if (error?.permanent) throw error
+
+      consecutiveErrors += 1
+      if (consecutiveErrors >= 3) {
+        throw new Error(error?.message || '查询视频状态失败，请稍后重试')
+      }
+
+      if (onProgress) {
+        onProgress('retrying')
+      }
+      await sleep(3000)
     }
   }
 }
@@ -176,12 +227,13 @@ export async function generateImage(options: TextToImageOptions): Promise<string
   })
 
   if (!response.ok) {
-    const error = await response.json().catch(() => ({}))
-    throw new Error(error.error?.message || '图片生成失败')
+    throw new Error(await getResponseError(response, '图片生成失败'))
   }
 
   const data = await response.json()
-  return data.data.map((item: any) => item.url)
+  const images = collectImageUrls(data)
+  if (!images.length) throw new Error('图片生成结果为空，请稍后重试')
+  return images
 }
 
 // 图生图
@@ -206,12 +258,13 @@ export async function editImage(options: ImageToImageOptions): Promise<string[]>
   })
 
   if (!response.ok) {
-    const error = await response.json().catch(() => ({}))
-    throw new Error(error.error?.message || '图片生成失败')
+    throw new Error(await getResponseError(response, '图片生成失败'))
   }
 
   const data = await response.json()
-  return data.data.map((item: any) => item.url)
+  const images = collectImageUrls(data)
+  if (!images.length) throw new Error('图片生成结果为空，请稍后重试')
+  return images
 }
 
 // AI对话（流式）
@@ -235,7 +288,7 @@ export async function chatStream(
   })
 
   if (!response.ok) {
-    throw new Error('对话请求失败')
+    throw new Error(await getResponseError(response, '对话请求失败'))
   }
 
   const reader = response.body?.getReader()
@@ -305,13 +358,15 @@ export async function generateImageToImage(
   })
 
   if (!response.ok) {
-    const error = await response.json().catch(() => ({}))
-    throw new Error(error.error?.message || '图片生成失败')
+    throw new Error(await getResponseError(response, '图片生成失败'))
   }
 
   const data = await response.json()
+  const images = collectImageUrls(data)
+  if (!images.length) throw new Error('图片生成结果为空，请稍后重试')
+
   return {
-    images: data.data.map((item: any) => item.url)
+    images
   }
 }
 
@@ -339,8 +394,7 @@ export async function sendChatMessageStream(
   })
 
   if (!response.ok) {
-    const error = await response.json().catch(() => ({}))
-    throw new Error(error.error?.message || '对话请求失败')
+    throw new Error(await getResponseError(response, '对话请求失败'))
   }
 
   const reader = response.body?.getReader()
@@ -419,8 +473,7 @@ export async function sendChatMessageWithImageStream(
   })
 
   if (!response.ok) {
-    const error = await response.json().catch(() => ({}))
-    throw new Error(error.error?.message || '对话请求失败')
+    throw new Error(await getResponseError(response, '对话请求失败'))
   }
 
   const reader = response.body?.getReader()

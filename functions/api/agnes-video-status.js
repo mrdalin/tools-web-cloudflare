@@ -1,5 +1,5 @@
 import { getCORSHeaders, handleCORSPreflight } from '../utils/cors.js'
-import { getAgnesAuthorization, missingAgnesKeyResponse } from '../utils/agnes.js'
+import { fetchWithRetry, friendlyAgnesError, getAgnesAuthorization, missingAgnesKeyResponse } from '../utils/agnes.js'
 
 export async function onRequest(context) {
   const { request, env } = context
@@ -34,12 +34,19 @@ export async function onRequest(context) {
       return missingAgnesKeyResponse(corsHeaders)
     }
 
-    const response = await fetch(`https://apihub.agnes-ai.com/agnesapi?video_id=${encodeURIComponent(videoId)}`, {
-      method: 'GET',
-      headers: {
-        'Authorization': authHeader
+    const response = await fetchWithRetry(
+      `https://apihub.agnes-ai.com/agnesapi?video_id=${encodeURIComponent(videoId)}`,
+      {
+        method: 'GET',
+        headers: {
+          'Authorization': authHeader
+        }
+      },
+      {
+        attempts: 3,
+        timeoutMs: 30_000
       }
-    })
+    )
 
     const result = await response.text()
 
@@ -51,8 +58,9 @@ export async function onRequest(context) {
       }
     })
   } catch (error) {
-    return new Response(JSON.stringify({ error: error.message }), {
-      status: 500,
+    const friendly = friendlyAgnesError(error)
+    return new Response(JSON.stringify({ error: { message: friendly.message, detail: error.message } }), {
+      status: friendly.status,
       headers: { 'Content-Type': 'application/json', ...corsHeaders }
     })
   }
