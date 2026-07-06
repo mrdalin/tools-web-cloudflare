@@ -188,7 +188,7 @@ export async function generateImage(options: TextToImageOptions): Promise<string
 export async function editImage(options: ImageToImageOptions): Promise<string[]> {
   const selectedAspectRatio = options.aspectRatioOptions.find(r => r.value === options.aspectRatio)!
 
-  const response = await fetch('https://apihub.agnes-ai.com/v1/images/generations', {
+  const response = await fetch('/api/agnes-image-generations', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -287,7 +287,7 @@ export async function generateImageToImage(
   prompt: string,
   _strength: number = 0.7
 ): Promise<{ images: string[] }> {
-  const response = await fetch('https://apihub.agnes-ai.com/v1/images/generations', {
+  const response = await fetch('/api/agnes-image-generations', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -322,7 +322,7 @@ export async function sendChatMessageStream(
   model: string = 'agnes-2.0-flash',
   onChunk: (content: string) => void
 ): Promise<string> {
-  const response = await fetch('https://apihub.agnes-ai.com/v1/chat/completions', {
+  const response = await fetch('/api/agnes-chat', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -388,7 +388,7 @@ export async function sendChatMessageWithImageStream(
   model: string = 'agnes-2.0-flash',
   onChunk: (content: string) => void
 ): Promise<string> {
-  const response = await fetch('https://apihub.agnes-ai.com/v1/chat/completions', {
+  const response = await fetch('/api/agnes-chat', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',

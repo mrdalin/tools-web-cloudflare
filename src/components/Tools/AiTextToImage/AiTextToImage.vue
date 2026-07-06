@@ -1,13 +1,11 @@
 <script setup lang="ts">
 import { ref, reactive, onMounted, computed, watch } from "vue";
 import { useRoute } from 'vue-router'
-import axios from "axios";
+import { generateAgnesImages } from "@/utils/agnesImage";
 
 import DetailHeader from "@/components/Layout/DetailHeader/DetailHeader.vue";
 import ToolDetail from "@/components/Layout/ToolDetail/ToolDetail.vue";
 const maxHistoryCount = ref(Number(import.meta.env.VITE_AI_IMAGE_HISTORY_MAX) || 20);
-const pollinationsProxyUrl = ref(import.meta.env.VITE_POLLINATIONS_PROXY_URL);
-const pollinationsUrl = ref(import.meta.env.VITE_POLLINATIONS_URL);
 
 const info = reactive({
   title: "在线文生图",
@@ -74,8 +72,10 @@ const imageUrl = ref("");
 const isLoading = ref(false);
 
 // 模型列表
-const models = ref<{ value: string; label: string }[]>([]);
-const selectedModel = ref("");
+const models = ref<{ value: string; label: string }[]>([
+  { value: 'agnes-image-2.1-flash', label: 'Agnes Image 2.1 Flash' }
+]);
+const selectedModel = ref("agnes-image-2.1-flash");
 
 // 参数
 const width = ref(1024);
@@ -103,19 +103,10 @@ const fetchModels = async () => {
   modelsLoadError.value = false;
   
   try {
-    const response = await axios.get(
-      `${pollinationsProxyUrl.value}?path=models&target=${pollinationsUrl.value}`
-    );
-    const modelNames = response.data;
-
-    models.value = modelNames.map((name) => ({
-      value: name,
-      label: name.charAt(0).toUpperCase() + name.slice(1),
-    }));
-
-    if (models.value.length > 0) {
-      selectedModel.value = models.value[0].value;
-    }
+    models.value = [
+      { value: 'agnes-image-2.1-flash', label: 'Agnes Image 2.1 Flash' }
+    ];
+    selectedModel.value = 'agnes-image-2.1-flash';
   } catch (error) {
     console.error("获取模型失败:", error);
     modelsLoadError.value = true;
@@ -176,41 +167,15 @@ const generateImage = async () => {
 
   try {
     // 如果 seed 为 -1，生成一个随机种子
-    const actualSeed =
-      seed.value === -1 ? Math.floor(Math.random() * info.maxSeed) : seed.value;
-
-    // 构造查询参数
-    const params = {
+    const [generatedUrl] = await generateAgnesImages({
       model: selectedModel.value,
+      prompt: prompt.value,
       width: width.value,
       height: height.value,
-      nologo: noLogo.value ? "true" : undefined,
-      seed: actualSeed.toString(),
-    };
+      timeout: 120000
+    });
 
-    // 移除未定义的参数并确保所有值都是字符串
-    const filteredParams = Object.fromEntries(
-      Object.entries(params)
-        .filter(([_, v]) => v !== undefined)
-        .map(([k, v]) => [k, String(v)]) // 确保所有值都是字符串
-    );
-
-    // 添加时间戳避免缓存
-    filteredParams._t = String(Date.now());
-
-    // 将 filteredParams 转成 GET 参数拼接
-    const queryString = new URLSearchParams(filteredParams).toString();
-    const response = await axios.get(
-      `${pollinationsProxyUrl.value}?path=prompt/${encodeURIComponent(prompt.value)}&target=${pollinationsUrl.value}&params=${queryString}`,
-      {
-        responseType: "blob",
-      }
-    );
-
-    const blob = new Blob([response.data], { type: "image/png" });
-    imageUrl.value = URL.createObjectURL(blob);
-
-    // 保存到历史记录
+    imageUrl.value = generatedUrl;
     saveToHistory(prompt.value, imageUrl.value);
   } catch (error) {
     console.error("生成失败:", error);

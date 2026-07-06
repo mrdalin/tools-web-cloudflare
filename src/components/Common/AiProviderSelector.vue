@@ -113,8 +113,8 @@ const emit = defineEmits<Emits>()
 const availableProviders = ref([
   {
     name: 'pollinations',
-    displayName: 'Pollinations',
-    description: '强大的AI图像生成和文本处理服务，支持多种模型'
+    displayName: 'Agnes AI',
+    description: '站内默认 AI 服务，使用 Agnes 2.0 Flash，失败时由服务端自动兜底'
   }
 ])
 
@@ -134,6 +134,15 @@ const fetchPollinationsModels = async () => {
   try {
     isLoadingModels.value = true
     modelsLoadError.value = ''
+
+    pollinationsModels.value = [
+      {
+        name: 'agnes-2.0-flash',
+        description: 'Agnes 2.0 Flash，站内默认文本模型',
+        provider: 'agnes'
+      }
+    ]
+    return
     
     // 获取代理URL和目标URL
     const proxyUrl = import.meta.env.VITE_POLLINATIONS_PROXY_URL || ''

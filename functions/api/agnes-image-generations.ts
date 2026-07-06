@@ -1,13 +1,28 @@
-export async function onRequestPost(context: any) {
+import { getCORSHeaders, handleCORSPreflight } from '../utils/cors.js'
+import { getAgnesAuthorization, missingAgnesKeyResponse } from '../utils/agnes.js'
+
+export async function onRequest(context: any) {
+  const { request, env } = context
+  const origin = request.headers.get('Origin')
+  const corsHeaders = getCORSHeaders(origin)
+
+  if (request.method === 'OPTIONS') {
+    return handleCORSPreflight(origin)
+  }
+
+  if (request.method !== 'POST') {
+    return new Response(JSON.stringify({ error: { message: 'Method not allowed' } }), {
+      status: 405,
+      headers: { 'Content-Type': 'application/json', ...corsHeaders }
+    })
+  }
+
   try {
-    const body = await context.request.json()
-    const authHeader = context.request.headers.get('Authorization')
+    const body = await request.json()
+    const authHeader = getAgnesAuthorization(request, env)
 
     if (!authHeader) {
-      return new Response(JSON.stringify({ error: { message: 'Missing Authorization header' } }), {
-        status: 401,
-        headers: { 'Content-Type': 'application/json' }
-      })
+      return missingAgnesKeyResponse(corsHeaders)
     }
 
     const response = await fetch('https://apihub.agnes-ai.com/v1/images/generations', {
@@ -23,12 +38,12 @@ export async function onRequestPost(context: any) {
 
     return new Response(JSON.stringify(data), {
       status: response.status,
-      headers: { 'Content-Type': 'application/json' }
+      headers: { 'Content-Type': 'application/json', ...corsHeaders }
     })
   } catch (error: any) {
     return new Response(JSON.stringify({ error: { message: error.message } }), {
       status: 500,
-      headers: { 'Content-Type': 'application/json' }
+      headers: { 'Content-Type': 'application/json', ...corsHeaders }
     })
   }
 }

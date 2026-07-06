@@ -5,8 +5,6 @@ import { ElMessage } from 'element-plus'
 import { useRoute, useRouter } from 'vue-router'
 import DetailHeader from '@/components/Layout/DetailHeader/DetailHeader.vue'
 import ToolDetail from '@/components/Layout/ToolDetail/ToolDetail.vue'
-import { useUserStore } from '@/store/modules/user'
-import ApiConfigTab from './ApiConfigTab.vue'
 import TextToVideoTab from './TextToVideoTab.vue'
 import ImageToVideoTab from './ImageToVideoTab.vue'
 import TextToImageTab from './TextToImageTab.vue'
@@ -35,12 +33,13 @@ import {
 } from './prompts'
 import * as agnesApi from './api'
 
-const userStore = useUserStore()
 const route = useRoute()
 const router = useRouter()
 
+type ToolTab = 'text-to-video' | 'image-to-video' | 'text-to-image' | 'image-to-image' | 'ai-chat' | 'apps'
+const visibleTabs: ToolTab[] = ['text-to-video', 'image-to-video', 'text-to-image', 'image-to-image', 'ai-chat', 'apps']
 const apiKey = ref('')
-const activeTab = ref<'api-config' | 'text-to-video' | 'image-to-video' | 'text-to-image' | 'image-to-image' | 'ai-chat' | 'apps'>('api-config')
+const activeTab = ref<ToolTab>('text-to-video')
 const tabContainerRef = ref<HTMLDivElement | null>(null)
 
 // 应用Tab状态
@@ -433,11 +432,6 @@ const backToAppList = () => {
 }
 
 const analyzeDream = async () => {
-  if (!apiKey.value.trim()) {
-    ElMessage.warning('请先配置API Key')
-    return
-  }
-
   if (!dreamInput.value.trim()) {
     ElMessage.warning('请描述你的梦境')
     return
@@ -548,11 +542,6 @@ const newDreamTopic = () => {
 
 
 const generateCityGuide = async () => {
-  if (!apiKey.value.trim()) {
-    ElMessage.warning('请先配置API Key')
-    return
-  }
-
   if (!cityInput.value.trim()) {
     ElMessage.warning('请输入城市名称')
     return
@@ -681,11 +670,6 @@ const newCityTopic = () => {
 }
 
 const generatePetAvatar = async () => {
-  if (!apiKey.value.trim()) {
-    ElMessage.warning('请先配置API Key')
-    return
-  }
-
   if (!petImage.value) {
     ElMessage.warning('请先上传宠物照片')
     return
@@ -736,11 +720,6 @@ const usePetPreset = (url: string) => {
 
 // 祝福语生成器
 const generateBlessings = async () => {
-  if (!apiKey.value.trim()) {
-    ElMessage.warning('请先配置API Key')
-    return
-  }
-
   // 判断是追问还是首次生成
   const isFollowUp = blessingsChatMessages.value.length > 0
 
@@ -870,11 +849,6 @@ const newBlessingsTopic = () => {
 
 // 智能文案助手
 const generateCopywriting = async () => {
-  if (!apiKey.value.trim()) {
-    ElMessage.warning('请先配置API Key')
-    return
-  }
-
   if (!copyTopic.value.trim()) {
     ElMessage.warning('请输入文案主题')
     return
@@ -1000,11 +974,6 @@ const copyCopywriting = () => {
 
 // AI证件照
 const generateIdPhoto = async () => {
-  if (!apiKey.value.trim()) {
-    ElMessage.warning('请先配置API Key')
-    return
-  }
-
   if (!idPhotoImage.value) {
     ElMessage.warning('请先上传照片')
     return
@@ -1054,11 +1023,6 @@ const useIdPhotoPreset = (url: string) => {
 
 // 添加剂危害查询
 const queryAdditiveHazard = async () => {
-  if (!apiKey.value.trim()) {
-    ElMessage.warning('请先配置API Key')
-    return
-  }
-
   if (!additiveInput.value.trim()) {
     ElMessage.warning('请输入添加剂名称')
     return
@@ -1208,11 +1172,6 @@ const newAdditiveTopic = () => {
 
 // 药品说明书解读
 const queryMedicineGuide = async () => {
-  if (!apiKey.value.trim()) {
-    ElMessage.warning('请先配置API Key')
-    return
-  }
-
   if (!medicineInput.value.trim() && !medicineUploadedImage.value) {
     ElMessage.warning('请输入药品名称或上传说明书照片')
     return
@@ -1457,11 +1416,6 @@ const newMedicineTopic = () => {
 
 // 合同风险检测
 const analyzeContractRisk = async () => {
-  if (!apiKey.value.trim()) {
-    ElMessage.warning('请先配置API Key')
-    return
-  }
-
   if (!contractInput.value.trim() && !contractUploadedImage.value) {
     ElMessage.warning('请输入合同内容或上传合同照片')
     return
@@ -1704,11 +1658,6 @@ const newContractTopic = () => {
 
 // 食物热量识别
 const queryFoodCalorie = async () => {
-  if (!apiKey.value.trim()) {
-    ElMessage.warning('请先配置API Key')
-    return
-  }
-
   if (!foodInput.value.trim() && !foodUploadedImage.value) {
     ElMessage.warning('请输入食物名称或上传食物照片')
     return
@@ -1980,7 +1929,7 @@ const newFoodTopic = () => {
   ElMessage.success('已开启新话题')
 }
 
-const switchTab = (tab: 'api-config' | 'text-to-video' | 'image-to-video' | 'text-to-image' | 'image-to-image' | 'ai-chat' | 'apps') => {
+const switchTab = (tab: ToolTab) => {
   activeTab.value = tab
   // 不清空结果，保持各Tab独立
   currentStage.value = 0
@@ -1999,11 +1948,6 @@ const switchTab = (tab: 'api-config' | 'text-to-video' | 'image-to-video' | 'tex
 const sendChatMessage = async () => {
   if (isChatting.value) {
     return // 发送中时不允许再次发送
-  }
-
-  if (!apiKey.value.trim()) {
-    ElMessage.warning('请先填写并保存API Key')
-    return
   }
 
   if (!chatInput.value.trim()) {
@@ -2168,11 +2112,6 @@ const renderMarkdown = (content: string) => {
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 const generateTextToImage = async () => {
-  if (!apiKey.value.trim()) {
-    ElMessage.warning('请先填写并保存API Key')
-    return
-  }
-
   if (!imagePrompt.value.trim()) {
     ElMessage.warning('请输入图片描述')
     return
@@ -2272,11 +2211,6 @@ const removeSourceImage = () => {
 }
 
 const generateImageToImage = async () => {
-  if (!apiKey.value.trim()) {
-    ElMessage.warning('请先填写并保存API Key')
-    return
-  }
-
   if (!imageToImageSourceImage.value) {
     ElMessage.warning('请先上传参考图片')
     return
@@ -2323,20 +2257,10 @@ const generateImageToImage = async () => {
 }
 
 onMounted(() => {
-  // 优先从URL获取API Key
-  const apiKeyFromUrl = route.query.apiKey as string
-  if (apiKeyFromUrl) {
-    apiKey.value = apiKeyFromUrl
-  } else {
-    // 如果URL没有，则从localStorage读取
-    const stored = localStorage.getItem('agnes_api_key')
-    if (stored) apiKey.value = stored
-  }
-
   // 从URL恢复Tab状态
   const tabFromUrl = route.query.tab as string
-  if (tabFromUrl && ['api-config', 'text-to-video', 'image-to-video', 'text-to-image', 'image-to-image', 'ai-chat', 'apps'].includes(tabFromUrl)) {
-    activeTab.value = tabFromUrl as any
+  if (tabFromUrl && visibleTabs.includes(tabFromUrl as ToolTab)) {
+    activeTab.value = tabFromUrl as ToolTab
   }
 
   // 从URL恢复应用状态：?app=xxx
@@ -2353,8 +2277,7 @@ onMounted(() => {
   // 手机端：滚动到选中的Tab
   setTimeout(() => {
     if (tabContainerRef.value && window.innerWidth < 768) {
-      const tabs = ['api-config', 'text-to-video', 'image-to-video', 'text-to-image', 'image-to-image', 'ai-chat', 'apps']
-      const activeIndex = tabs.indexOf(activeTab.value)
+      const activeIndex = visibleTabs.indexOf(activeTab.value)
       if (activeIndex > 0) {
         const scrollAmount = activeIndex * 150 // 每个Tab大约150px
         tabContainerRef.value.scrollTo({ left: scrollAmount, behavior: 'smooth' })
@@ -2362,21 +2285,6 @@ onMounted(() => {
     }
   }, 100)
 })
-
-const saveApiKey = async () => {
-  if (!apiKey.value.trim()) {
-    ElMessage.warning('请输入API Key')
-    return
-  }
-
-  if (userStore.user?.uid) {
-    // TODO: 调用接口保存到服务器
-    ElMessage.warning('暂不支持保存到服务器')
-  }
-
-  localStorage.setItem('agnes_api_key', apiKey.value.trim())
-  ElMessage.success('API Key已保存到本地')
-}
 
 const startElapsedTimer = (stage: string, tab: 'text-to-video' | 'image-to-video' | 'text-to-image' | 'image-to-image') => {
   if (elapsedTimer.value) {
@@ -2413,11 +2321,6 @@ const stopElapsedTimer = () => {
 }
 
 const generateVideo = async () => {
-  if (!apiKey.value.trim()) {
-    ElMessage.warning('请先填写并保存API Key')
-    return
-  }
-
   if (!topic.value.trim()) {
     ElMessage.warning('请输入视频主题')
     return
@@ -2556,11 +2459,6 @@ const handleVideoMouseLeave = (event: Event) => {
 }
 
 const generateImageToVideo = async () => {
-  if (!apiKey.value.trim()) {
-    ElMessage.warning('请先填写并保存API Key')
-    return
-  }
-
   if (uploadedImages.value.length === 0) {
     ElMessage.warning('请先上传图片')
     return
@@ -2651,15 +2549,6 @@ const generateImageToVideo = async () => {
           <!-- 移动端：横向滚动 -->
           <div ref="tabContainerRef" class="flex md:flex-col gap-2 overflow-x-auto md:overflow-x-visible pb-2 md:pb-0 -mx-2 px-2 md:mx-0 md:px-0">
             <button
-              @click="switchTab('api-config')"
-              :class="['px-4 py-3 rounded-lg font-medium transition-all text-left whitespace-nowrap md:whitespace-normal flex-shrink-0 md:flex-shrink',
-                activeTab === 'api-config'
-                  ? 'bg-blue-500 text-white shadow-md'
-                  : 'bg-gray-50 text-gray-700 hover:bg-gray-100']"
-            >
-              🔑 API配置
-            </button>
-            <button
               @click="switchTab('text-to-video')"
               :class="['px-4 py-3 rounded-lg font-medium transition-all text-left whitespace-nowrap md:whitespace-normal flex-shrink-0 md:flex-shrink',
                 activeTab === 'text-to-video'
@@ -2718,14 +2607,6 @@ const generateImageToVideo = async () => {
 
         <!-- 右侧内容区域 -->
         <div class="flex-1 min-w-0">
-          <!-- API配置Tab -->
-          <ApiConfigTab
-            v-if="activeTab === 'api-config'"
-            v-model:apiKey="apiKey"
-            :isLoggedIn="!!userStore.user?.uid"
-            @save="saveApiKey"
-          />
-
           <!-- 文生视频Tab -->
           <TextToVideoTab
             v-if="activeTab === 'text-to-video'"
@@ -3070,8 +2951,6 @@ const generateImageToVideo = async () => {
         <section>
           <h3 class="font-semibold mb-2">使用说明</h3>
           <ol class="list-decimal list-inside space-y-1">
-            <li>在 <a href="https://agnes-ai.com" target="_blank" class="text-blue-500">agnes-ai.com</a> 注册并获取 API Key</li>
-            <li>填写 API Key 并保存（已登录保存到服务器，未登录保存到本地）</li>
             <li>输入视频主题，建议描述主体、动作、场景、镜头运动、光照和视觉风格</li>
             <li>选择视频时长（5秒/10秒/15秒）和宽高比（9:16竖屏/16:9横屏/1:1方形等）</li>
             <li>点击生成，系统会先生成英文 Prompt，再提交视频任务并轮询查询进度</li>

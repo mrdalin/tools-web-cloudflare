@@ -1,9 +1,14 @@
-import { getCORSHeaders } from '../utils/cors.js'
+import { getCORSHeaders, handleCORSPreflight } from '../utils/cors.js'
+import { getAgnesAuthorization, missingAgnesKeyResponse } from '../utils/agnes.js'
 
 export async function onRequest(context) {
-  const { request } = context
+  const { request, env } = context
   const origin = request.headers.get('Origin')
   const corsHeaders = getCORSHeaders(origin)
+
+  if (request.method === 'OPTIONS') {
+    return handleCORSPreflight(origin)
+  }
 
   if (request.method !== 'GET') {
     return new Response(JSON.stringify({ error: 'Method not allowed' }), {
@@ -23,12 +28,16 @@ export async function onRequest(context) {
       })
     }
 
-    const authHeader = request.headers.get('Authorization')
+    const authHeader = getAgnesAuthorization(request, env)
+
+    if (!authHeader) {
+      return missingAgnesKeyResponse(corsHeaders)
+    }
 
     const response = await fetch(`https://apihub.agnes-ai.com/agnesapi?video_id=${encodeURIComponent(videoId)}`, {
       method: 'GET',
       headers: {
-        'Authorization': authHeader || ''
+        'Authorization': authHeader
       }
     })
 

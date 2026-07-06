@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import { ref, reactive, onMounted, onUnmounted } from "vue";
 import axios from "axios";
+import { generateAIText } from "@/utils/aiText";
+import { generateAgnesImages } from "@/utils/agnesImage";
 import DetailHeader from "@/components/Layout/DetailHeader/DetailHeader.vue";
 import ToolDetail from "@/components/Layout/ToolDetail/ToolDetail.vue";
 
@@ -8,10 +10,6 @@ const info = reactive({
   title: "AI每日励志鸡汤文",
   desc: "AI智能生成每日励志鸡汤文，支持多种风格选择，定时刷新，为你的每一天注入正能量。",
 });
-
-const pollinationsProxyUrl = ref(import.meta.env.VITE_POLLINATIONS_PROXY_URL);
-const pollinationsTextUrl = ref(import.meta.env.VITE_POLLINATIONS_TEXT_URL);
-const pollinationsImageUrl = ref(import.meta.env.VITE_POLLINATIONS_URL || "https://image.pollinations.ai");
 
 // 状态管理
 const loading = ref(false);
@@ -84,29 +82,10 @@ const generateMotivations = async (isAutoRefresh: boolean = false) => {
 4. 每条鸡汤文单独一行，不要编号，不要标点符号结尾
 5. 只输出鸡汤文内容，不要其他解释文字`;
 
-      // 构建 OpenAI 格式请求
-      const requestBody = {
-        model: 'openai-fast',
-        messages: [{ role: 'user', content: prompt }],
-        seed: seed  // 添加随机种子
-      };
-
-      const resp = await axios.post(
-        pollinationsProxyUrl.value,
-        requestBody,
-        {
-          params: {
-            target: `${pollinationsTextUrl.value}/v1/chat/completions`,
-            _t: Date.now() // 添加时间戳避免缓存
-          },
-          timeout: 60000,
-          headers: {
-            'Content-Type': 'application/json'
-          }
-        }
+      const text = await generateAIText(
+        [{ role: 'user', content: `${prompt}\n\n随机种子：${seed}` }],
+        { timeout: 60000 }
       );
-
-      let text = resp.data?.choices?.[0]?.message?.content || '';
 
       // 处理返回的文本，分割成多条鸡汤文
       const lines = text
@@ -269,28 +248,13 @@ const generateCover = async (motivation: string, motivationId: number) => {
     // 构造封面生成的提示词
     const coverPrompt = `励志鸡汤文封面背景：${motivation}，简约现代设计风格，渐变背景，适合作为文字封面，高清图片`;
 
-    // 使用 gen.pollinations.ai 的图片生成 API
-    const encodedPrompt = encodeURIComponent(coverPrompt);
-    const seed = Math.floor(Math.random() * 100000000);
-
-    const params = new URLSearchParams({
-      model: 'flux',
-      seed: String(seed),
-      width: '1024',
-      height: '1024',
-      nologo: 'true'
-    }).toString();
-
-    const response = await axios.get(
-      `${pollinationsProxyUrl.value}?path=prompt/${encodedPrompt}&target=${pollinationsImageUrl.value}&params=${params}`,
-      {
-        responseType: "blob",
-        signal: abortController.value.signal
-      }
-    );
-
-    const blob = new Blob([response.data], { type: "image/png" });
-    const imageUrl = URL.createObjectURL(blob);
+    // 使用站点后端代理的 Agnes 图片生成 API
+    const [imageUrl] = await generateAgnesImages({
+      prompt: coverPrompt,
+      width: 1024,
+      height: 1024,
+      signal: abortController.value.signal
+    });
 
     // 将文字叠加到图片上
     const finalImageUrl = await addTextToImage(imageUrl, motivation);
@@ -322,6 +286,7 @@ const addTextToImage = (imageUrl: string, text: string): Promise<string> => {
     const canvas = document.createElement('canvas');
     const ctx = canvas.getContext('2d')!;
     const img = new Image();
+    img.crossOrigin = 'anonymous';
     
     img.onload = () => {
       // 设置canvas尺寸
@@ -395,10 +360,15 @@ const addTextToImage = (imageUrl: string, text: string): Promise<string> => {
       });
       
       // 转换为base64
-      const finalImageUrl = canvas.toDataURL('image/png');
-      resolve(finalImageUrl);
+      try {
+        const finalImageUrl = canvas.toDataURL('image/png');
+        resolve(finalImageUrl);
+      } catch {
+        resolve(imageUrl);
+      }
     };
     
+    img.onerror = () => resolve(imageUrl);
     img.src = imageUrl;
   });
 };

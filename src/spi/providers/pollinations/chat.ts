@@ -5,20 +5,16 @@ export async function chat(
   messages: ChatMessage[],
   options?: ChatOptions
 ): Promise<ChatResponse> {
-  if (!this.proxyUrl || !this.textUrl) {
-    throw new Error('API配置不完整')
-  }
-
   // 构建 OpenAI 兼容的请求体
   const requestBody = {
-    model: options?.model || 'openai-fast',
+    model: 'agnes-2.0-flash',
     messages: messages.map(msg => ({
       role: msg.role,
       content: msg.content
     })),
     temperature: options?.temperature || 0.7,
     stream: options?.stream || false,
-    seed: Math.floor(Math.random() * 100000000) // 添加随机种子
+    max_tokens: options?.maxTokens || 2000
   }
 
   try {
@@ -27,7 +23,7 @@ export async function chat(
 
       // 使用 fetch API 处理流式响应
       const response = await fetch(
-        `${this.proxyUrl}?target=${this.textUrl}/v1/chat/completions`,
+        '/api/ai-chat',
         {
           method: 'POST',
           headers: {
@@ -129,7 +125,7 @@ export async function chat(
       console.log('Pollinations使用非流式输出');
 
       const response = await fetch(
-        `${this.proxyUrl}?target=${this.textUrl}/v1/chat/completions&_t=${Date.now()}`,
+        '/api/ai-chat',
         {
           method: 'POST',
           headers: {

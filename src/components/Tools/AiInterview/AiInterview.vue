@@ -1,15 +1,12 @@
 <script setup lang="ts">
 import { reactive, ref, computed, nextTick } from "vue";
 import { useRoute } from 'vue-router';
-import axios from 'axios';
+import { generateAIText } from '@/utils/aiText';
 import DetailHeader from "@/components/Layout/DetailHeader/DetailHeader.vue";
 import ToolDetail from "@/components/Layout/ToolDetail/ToolDetail.vue";
 import { copy } from '@/utils/string';
 
 const route = useRoute();
-
-const pollinationsProxyUrl = ref(import.meta.env.VITE_POLLINATIONS_PROXY_URL);
-const pollinationsTextUrl = ref(import.meta.env.VITE_POLLINATIONS_TEXT_URL);
 
 const info = reactive({
   title: "AI面试",
@@ -164,27 +161,10 @@ const sendMessage = async (userInput?: string) => {
       ...messages.value.map(m => ({ role: m.type === 'user' ? 'user' : 'assistant', content: m.content }))
     ];
 
-    // 构建 OpenAI 格式请求
-    const requestBody = {
-      model: 'openai-fast',
-      messages: apiMessages
-    };
-
-    const resp = await axios.post(
-      pollinationsProxyUrl.value,
-      requestBody,
-      {
-        params: {
-          target: `${pollinationsTextUrl.value}/v1/chat/completions`
-        },
-        headers: {
-          'Content-Type': 'application/json'
-        }
-      }
-    );
-
-    // 解析 OpenAI 格式响应
-    const assistantMessage = resp.data?.choices?.[0]?.message?.content || '抱歉，我暂时无法回复。';
+    const assistantMessage = await generateAIText(
+      apiMessages as Array<{ role: 'system' | 'user' | 'assistant'; content: string }>,
+      { timeout: 60000 }
+    ) || '抱歉，我暂时无法回复。';
     messages.value.push({ type: 'assistant', content: assistantMessage });
 
   } catch (e) {

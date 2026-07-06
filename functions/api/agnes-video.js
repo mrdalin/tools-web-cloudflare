@@ -1,7 +1,8 @@
 import { getCORSHeaders } from '../utils/cors.js'
+import { getAgnesAuthorization, missingAgnesKeyResponse } from '../utils/agnes.js'
 
 export async function onRequest(context) {
-  const { request } = context
+  const { request, env } = context
   const origin = request.headers.get('Origin')
   const corsHeaders = getCORSHeaders(origin)
 
@@ -24,13 +25,17 @@ export async function onRequest(context) {
 
   try {
     const body = await request.text()
-    const authHeader = request.headers.get('Authorization')
+    const authHeader = getAgnesAuthorization(request, env)
+
+    if (!authHeader) {
+      return missingAgnesKeyResponse(corsHeaders)
+    }
 
     const response = await fetch('https://apihub.agnes-ai.com/v1/videos', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': authHeader || ''
+        'Authorization': authHeader
       },
       body: body
     })

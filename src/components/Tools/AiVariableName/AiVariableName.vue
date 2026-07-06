@@ -1,12 +1,9 @@
 <script setup lang="ts">
 import { ref, reactive, computed } from 'vue'
-import axios from 'axios'
+import { generateAIText } from '@/utils/aiText'
 import DetailHeader from '@/components/Layout/DetailHeader/DetailHeader.vue'
 import ToolDetail from '@/components/Layout/ToolDetail/ToolDetail.vue'
 import { copy } from '@/utils/string'
-
-const pollinationsProxyUrl = ref(import.meta.env.VITE_POLLINATIONS_PROXY_URL)
-const pollinationsTextUrl = ref(import.meta.env.VITE_POLLINATIONS_TEXT_URL)
 
 const info = reactive({
   title: 'AI起变量名',
@@ -57,29 +54,9 @@ const generate = async () => {
   try {
     const prompt = buildPrompt()
 
-    // 构建 OpenAI 格式请求
-    const requestBody = {
-      model: 'openai-fast',
-      messages: [
-        { role: 'user', content: prompt }
-      ]
-    }
-
-    const resp = await axios.post(
-      pollinationsProxyUrl.value,
-      requestBody,
-      {
-        params: {
-          target: `${pollinationsTextUrl.value}/v1/chat/completions`
-        },
-        headers: {
-          'Content-Type': 'application/json'
-        }
-      }
-    )
-
-    // 解析 OpenAI 格式响应
-    const content = resp.data?.choices?.[0]?.message?.content || ''
+    const content = await generateAIText([{ role: 'user', content: prompt }], {
+      timeout: 60000
+    })
     const lines = content
       .replace(/\r\n/g, '\n')
       .split('\n')

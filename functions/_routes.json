@@ -5,6 +5,7 @@
     "/proxy/*",
     "/google-auth",
     "/api/agnes-chat",
+    "/api/ai-chat",
     "/api/agnes-proxy",
     "/api/agnes-video",
     "/api/agnes-video-status",

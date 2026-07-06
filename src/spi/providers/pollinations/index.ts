@@ -3,7 +3,7 @@ import { chat } from './chat'
 import { generateImage } from './image'
 
 export class PollinationsProvider implements AIProvider {
-  name = 'Pollinations'
+  name = 'Agnes'
   version = '1.0.0'
   capabilities = ['chat', 'image-generation', 'text-processing']
   
