@@ -6,7 +6,7 @@ export async function generateImage(
   prompt: string, 
   options?: ImageOptions
 ): Promise<ImageResponse> {
-  if (!this.apiKey || !this.proxyUrl || !this.imageUrl) {
+  if (!this.proxyUrl || !this.imageUrl) {
     throw new Error('API配置不完整')
   }
 
@@ -35,9 +35,6 @@ export async function generateImage(
   const response = await axios.get(
     `${this.proxyUrl}?path=prompt/${encodeURIComponent(prompt)}&target=${this.imageUrl}&params=${queryString}`,
     {
-      headers: {
-        Authorization: 'Bearer ' + this.apiKey,
-      },
       responseType: 'blob',
     }
   )

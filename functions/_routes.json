@@ -1,6 +1,7 @@
 {
   "version": 1,
   "include": [
+    "/proxy",
     "/proxy/*",
     "/google-auth",
     "/api/agnes-chat",
@@ -8,6 +9,7 @@
     "/api/agnes-video",
     "/api/agnes-video-status",
     "/api/agnes-image-generations",
+    "/api/imgbb-upload",
     "/api/ai-apps",
     "/api/ai-apps/*",
     "/api/notes",

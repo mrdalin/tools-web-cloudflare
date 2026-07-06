@@ -328,7 +328,7 @@ VITE_SUPABASE_URL=https://your-project.supabase.co
 VITE_SUPABASE_ANON_KEY=your-anon-key
 
 # AI 工具配置（文生图功能需要）
-VITE_POLLINATIONS_API_KEY=your-api-key
+# POLLINATIONS_API_KEY=your-api-key
 VITE_POLLINATIONS_PROXY_URL=https://your-domain.com/proxy
 ```
 

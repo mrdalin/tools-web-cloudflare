@@ -5,7 +5,6 @@ import axios from "axios";
 import DetailHeader from "@/components/Layout/DetailHeader/DetailHeader.vue";
 import ToolDetail from "@/components/Layout/ToolDetail/ToolDetail.vue";
 
-const pollinationsApiKey = ref(import.meta.env.VITE_POLLINATIONS_API_KEY || "");
 const pollinationsProxyUrl = ref(import.meta.env.VITE_POLLINATIONS_PROXY_URL);
 const pollinationsUrl = ref(import.meta.env.VITE_POLLINATIONS_TEXT_URL);
 
@@ -120,9 +119,6 @@ const generateSpeech = async () => {
     const response = await axios.get(
       `${pollinationsProxyUrl.value}?path=${encodeURIComponent(text.value)}&target=${pollinationsUrl.value}`,
       {
-        headers: {
-          Authorization: "Bearer " + pollinationsApiKey.value,
-        },
         responseType: "blob",
       }
     );

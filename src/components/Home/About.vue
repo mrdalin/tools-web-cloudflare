@@ -35,13 +35,10 @@ onMounted(async () => {
         <el-text>主要基于Vite + Vue + ElementPlus + Typescript + TailwindCss + Cloudflare Functions开发，某些工具使用了第三方开源库，您可以在仓库的 <el-link :href="gitUrl + '/blob/master/package.json'" target="_blank" type="primary">package.json</el-link> 文件中找到完整的列表。</el-text>
       </p>
         <div>
-          本站用到的免费AI：
+          本站 AI 工具默认使用：
             <ul class="list-disc list-inside ml-4">
               <li>
                 <el-link href="https://pollinations.ai" target="_blank" type="primary">pollinations.ai</el-link>
-              </li>
-              <li>
-                <el-link href="https://platform.aitools.cfd/" target="_blank" type="primary">platform.aitools.cfd</el-link>
               </li>
             </ul>
         </div>

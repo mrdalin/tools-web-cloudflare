@@ -5,7 +5,7 @@ export async function chat(
   messages: ChatMessage[], 
   options?: ChatOptions
 ): Promise<ChatResponse> {
-  if (!this.apiKey || !this.proxyUrl) {
+  if (!this.proxyUrl) {
     throw new Error('API配置不完整')
   }
 
@@ -22,7 +22,7 @@ export async function chat(
 
   try {
     if (options?.stream && options?.onChunk) {
-      console.log('开始流式输出请求', this.apiKey);
+      console.log('开始流式输出请求');
       
       // 使用 fetch API 处理流式响应
       const response = await fetch(
@@ -30,7 +30,6 @@ export async function chat(
         {
           method: 'POST',
           headers: {
-            'Authorization': `Bearer ${this.apiKey}`,
             'Content-Type': 'application/json'
           },
           body: JSON.stringify(requestBody),
@@ -133,7 +132,6 @@ export async function chat(
         {
           method: 'POST',
           headers: {
-            'Authorization': `Bearer ${this.apiKey}`,
             'Content-Type': 'application/json'
           },
           body: JSON.stringify(requestBody),

@@ -5,7 +5,7 @@ export async function chat(
   messages: ChatMessage[],
   options?: ChatOptions
 ): Promise<ChatResponse> {
-  if (!this.apiKey || !this.proxyUrl || !this.textUrl) {
+  if (!this.proxyUrl || !this.textUrl) {
     throw new Error('API配置不完整')
   }
 
@@ -31,8 +31,7 @@ export async function chat(
         {
           method: 'POST',
           headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${this.apiKey}`
+            'Content-Type': 'application/json'
           },
           body: JSON.stringify(requestBody),
           signal: options.signal
@@ -134,8 +133,7 @@ export async function chat(
         {
           method: 'POST',
           headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${this.apiKey}`
+            'Content-Type': 'application/json'
           },
           body: JSON.stringify(requestBody),
           signal: options?.signal

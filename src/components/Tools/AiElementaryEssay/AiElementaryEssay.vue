@@ -9,7 +9,6 @@ const info = reactive({
   desc: "按年级/题材/关键词生成贴合小学生水平的作文，支持字数、风格与结构控制。",
 });
 
-const pollinationsApiKey = ref(import.meta.env.VITE_POLLINATIONS_API_KEY || "");
 const pollinationsProxyUrl = ref(import.meta.env.VITE_POLLINATIONS_PROXY_URL);
 const pollinationsTextUrl = ref(import.meta.env.VITE_POLLINATIONS_TEXT_URL);
 
@@ -80,7 +79,6 @@ const generate = async () => {
           target: `${pollinationsTextUrl.value}/v1/chat/completions`
         },
         headers: {
-          'Authorization': `Bearer ${pollinationsApiKey.value}`,
           'Content-Type': 'application/json'
         }
       }

@@ -5,7 +5,6 @@ import axios from "axios";
 
 import DetailHeader from "@/components/Layout/DetailHeader/DetailHeader.vue";
 import ToolDetail from "@/components/Layout/ToolDetail/ToolDetail.vue";
-const pollinationsApiKey = ref(import.meta.env.VITE_POLLINATIONS_API_KEY || "");
 const maxHistoryCount = ref(Number(import.meta.env.VITE_AI_IMAGE_HISTORY_MAX) || 20);
 const pollinationsProxyUrl = ref(import.meta.env.VITE_POLLINATIONS_PROXY_URL);
 const pollinationsUrl = ref(import.meta.env.VITE_POLLINATIONS_URL);
@@ -204,9 +203,6 @@ const generateImage = async () => {
     const response = await axios.get(
       `${pollinationsProxyUrl.value}?path=prompt/${encodeURIComponent(prompt.value)}&target=${pollinationsUrl.value}&params=${queryString}`,
       {
-        headers: {
-          Authorization: "Bearer " + pollinationsApiKey.value,
-        },
         responseType: "blob",
       }
     );

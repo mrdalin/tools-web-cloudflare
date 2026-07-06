@@ -1,7 +1,7 @@
 import { allowedOrigins, isOriginAllowed, handleCORSPreflight, getCORSHeaders } from './utils/cors.js'
 
 export async function onRequest(context) {
-    const { request } = context
+    const { request, env } = context
     const url = new URL(request.url)
     const origin = request.headers.get('Origin')
 
@@ -77,7 +77,7 @@ export async function onRequest(context) {
         headers: (() => {
             const safeHeaders = new Headers();
             // 只复制安全的headers
-            const allowedHeaders = ['content-type', 'authorization', 'user-agent', 'accept', 'accept-language', 'accept-encoding'];
+            const allowedHeaders = ['content-type', 'user-agent', 'accept', 'accept-language', 'accept-encoding'];
 
             request.headers.forEach((value, key) => {
                 const lowerKey = key.toLowerCase();
@@ -89,6 +89,14 @@ export async function onRequest(context) {
                     }
                 }
             });
+            if (targetUrl.origin.includes('pollinations') && env.POLLINATIONS_API_KEY) {
+                safeHeaders.set('Authorization', `Bearer ${env.POLLINATIONS_API_KEY}`);
+            }
+
+            if (targetUrl.origin === 'https://platform.aitools.cfd' && env.AITOOLS_API_KEY) {
+                safeHeaders.set('Authorization', `Bearer ${env.AITOOLS_API_KEY}`);
+            }
+
             return safeHeaders;
         })(),
         body: request.method === 'POST' || request.method === 'PUT' || request.method === 'PATCH'

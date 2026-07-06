@@ -5,7 +5,6 @@ import DetailHeader from '@/components/Layout/DetailHeader/DetailHeader.vue'
 import ToolDetail from '@/components/Layout/ToolDetail/ToolDetail.vue'
 import { copy } from '@/utils/string'
 
-const pollinationsApiKey = ref(import.meta.env.VITE_POLLINATIONS_API_KEY || '')
 const pollinationsProxyUrl = ref(import.meta.env.VITE_POLLINATIONS_PROXY_URL)
 const pollinationsTextUrl = ref(import.meta.env.VITE_POLLINATIONS_TEXT_URL)
 
@@ -74,7 +73,6 @@ const generate = async () => {
           target: `${pollinationsTextUrl.value}/v1/chat/completions`
         },
         headers: {
-          'Authorization': `Bearer ${pollinationsApiKey.value}`,
           'Content-Type': 'application/json'
         }
       }

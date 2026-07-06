@@ -9,9 +9,9 @@ const info = reactive({
   desc: "AI智能生成每日励志鸡汤文，支持多种风格选择，定时刷新，为你的每一天注入正能量。",
 });
 
-const pollinationsApiKey = ref(import.meta.env.VITE_POLLINATIONS_API_KEY || "");
 const pollinationsProxyUrl = ref(import.meta.env.VITE_POLLINATIONS_PROXY_URL);
 const pollinationsTextUrl = ref(import.meta.env.VITE_POLLINATIONS_TEXT_URL);
+const pollinationsImageUrl = ref(import.meta.env.VITE_POLLINATIONS_URL || "https://gen.pollinations.ai");
 
 // 状态管理
 const loading = ref(false);
@@ -100,7 +100,6 @@ const generateMotivations = async (isAutoRefresh: boolean = false) => {
             _t: Date.now() // 添加时间戳避免缓存
           },
           headers: {
-            'Authorization': `Bearer ${pollinationsApiKey.value}`,
             'Content-Type': 'application/json'
           }
         }
@@ -273,12 +272,17 @@ const generateCover = async (motivation: string, motivationId: number) => {
     const encodedPrompt = encodeURIComponent(coverPrompt);
     const seed = Math.floor(Math.random() * 100000000);
 
+    const params = new URLSearchParams({
+      model: 'flux',
+      seed: String(seed),
+      width: '1024',
+      height: '1024',
+      nologo: 'true'
+    }).toString();
+
     const response = await axios.get(
-      `https://gen.pollinations.ai/image/${encodedPrompt}?model=flux&seed=${seed}&width=1024&height=1024&nologo=true`,
+      `${pollinationsProxyUrl.value}?path=image/${encodedPrompt}&target=${pollinationsImageUrl.value}&params=${params}`,
       {
-        headers: {
-          'Authorization': `Bearer ${pollinationsApiKey.value}`
-        },
         responseType: "blob",
         signal: abortController.value.signal
       }

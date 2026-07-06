@@ -362,7 +362,7 @@ const handleImageUpload = async (event: Event) => {
       const formData = new FormData()
       formData.append('image', base64)
 
-      const response = await fetch('https://api.imgbb.com/1/upload?key=df54760d0a641fb1f8cf178e59b603e4', {
+      const response = await fetch('/api/imgbb-upload', {
         method: 'POST',
         body: formData
       })
@@ -2245,7 +2245,7 @@ const handleImageToImageUpload = async (event: Event) => {
     const formData = new FormData()
     formData.append('image', base64)
 
-    const response = await fetch('https://api.imgbb.com/1/upload?key=df54760d0a641fb1f8cf178e59b603e4', {
+    const response = await fetch('/api/imgbb-upload', {
       method: 'POST',
       body: formData
     })

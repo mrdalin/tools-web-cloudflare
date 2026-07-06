@@ -10,7 +10,6 @@ type Gender = '男' | '女'
 type SurnameUsage = '父姓' | '母姓'
 type GivenLen = '1' | '1-2' | '2'
 
-const pollinationsApiKey = ref(import.meta.env.VITE_POLLINATIONS_API_KEY || '')
 const pollinationsProxyUrl = ref(import.meta.env.VITE_POLLINATIONS_PROXY_URL)
 const pollinationsTextUrl = ref(import.meta.env.VITE_POLLINATIONS_TEXT_URL)
 
@@ -269,7 +268,6 @@ const generate = async () => {
             target: `${pollinationsTextUrl.value}/v1/chat/completions`
           },
           headers: {
-            'Authorization': `Bearer ${pollinationsApiKey.value}`,
             'Content-Type': 'application/json'
           }
         }

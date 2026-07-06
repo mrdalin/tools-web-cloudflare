@@ -9,7 +9,6 @@ const info = reactive({
   desc: '由AI大模型驱动，支持多语言互译，源语言可自动检测。'
 })
 
-const pollinationsApiKey = ref(import.meta.env.VITE_POLLINATIONS_API_KEY || '')
 const pollinationsProxyUrl = ref(import.meta.env.VITE_POLLINATIONS_PROXY_URL)
 const pollinationsTextUrl = ref(import.meta.env.VITE_POLLINATIONS_TEXT_URL)
 
@@ -113,7 +112,6 @@ const translate = async () => {
           target: `${pollinationsTextUrl.value}/v1/chat/completions`
         },
         headers: {
-          'Authorization': `Bearer ${pollinationsApiKey.value}`,
           'Content-Type': 'application/json'
         }
       }
