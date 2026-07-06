@@ -11,7 +11,7 @@ export async function chat(
 
   // 构建 OpenAI 兼容的请求体
   const requestBody = {
-    model: options?.model || 'nova-fast',
+    model: options?.model || 'openai-fast',
     messages: messages.map(msg => ({
       role: msg.role,
       content: msg.content

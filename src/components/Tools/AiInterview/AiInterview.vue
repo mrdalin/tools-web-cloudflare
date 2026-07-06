@@ -166,7 +166,7 @@ const sendMessage = async (userInput?: string) => {
 
     // 构建 OpenAI 格式请求
     const requestBody = {
-      model: 'nova-fast',
+      model: 'openai-fast',
       messages: apiMessages
     };
 

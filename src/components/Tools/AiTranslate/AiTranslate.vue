@@ -100,7 +100,7 @@ const translate = async () => {
 
     // 构建 OpenAI 格式请求
     const requestBody = {
-      model: 'nova-fast',
+      model: 'openai-fast',
       messages: [{ role: 'user', content: prompt }]
     }
 
@@ -111,6 +111,7 @@ const translate = async () => {
         params: {
           target: `${pollinationsTextUrl.value}/v1/chat/completions`
         },
+        timeout: 60000,
         headers: {
           'Content-Type': 'application/json'
         }

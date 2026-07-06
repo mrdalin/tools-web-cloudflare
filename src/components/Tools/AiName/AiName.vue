@@ -257,7 +257,7 @@ const generate = async () => {
     // 构建 OpenAI 格式请求的辅助函数
     const fetchOpenAI = async (prompt: string) => {
       const requestBody = {
-        model: 'nova-fast',
+        model: 'openai-fast',
         messages: [{ role: 'user', content: prompt }]
       }
       const resp = await axios.post(
@@ -267,6 +267,7 @@ const generate = async () => {
           params: {
             target: `${pollinationsTextUrl.value}/v1/chat/completions`
           },
+          timeout: 60000,
           headers: {
             'Content-Type': 'application/json'
           }

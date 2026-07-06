@@ -86,7 +86,7 @@ const generateMotivations = async (isAutoRefresh: boolean = false) => {
 
       // 构建 OpenAI 格式请求
       const requestBody = {
-        model: 'nova-fast',
+        model: 'openai-fast',
         messages: [{ role: 'user', content: prompt }],
         seed: seed  // 添加随机种子
       };
@@ -99,6 +99,7 @@ const generateMotivations = async (isAutoRefresh: boolean = false) => {
             target: `${pollinationsTextUrl.value}/v1/chat/completions`,
             _t: Date.now() // 添加时间戳避免缓存
           },
+          timeout: 60000,
           headers: {
             'Content-Type': 'application/json'
           }
