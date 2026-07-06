@@ -623,6 +623,10 @@ export const constantRoute = [
     }
   },
   {
+    path: '/ai/text-to-image',
+    redirect: '/ai-text-to-image'
+  },
+  {
     path: '/ai-text-to-image',
     component: () => import('@/components/Tools/AiTextToImage/AiTextToImage.vue'),
     name: 'AiTextToImage',
