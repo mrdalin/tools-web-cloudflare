@@ -36,7 +36,7 @@ const providerItems = [
         只有在你需要同步个人数据、使用账号功能或调用部分云端能力时，才会处理必要信息。
       </p>
       <div class="privacy-meta">
-        <span>生效日期：2026 年 7 月 7 日</span>
+        <span>生效日期：2026 年 6 月 21 日</span>
         <span>适用网站：https://youngbar.com</span>
       </div>
     </section>

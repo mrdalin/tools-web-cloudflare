@@ -1,4 +1,5 @@
 import { ApiResponse } from '../utils/db.js'
+import { ensureUserAuthSchema } from '../utils/user-schema.js'
 
 const verificationCodes = new Map()
 const rateLimitBuckets = new Map()
@@ -158,6 +159,8 @@ export async function onRequest(context) {
     if (!canSendCode(request, email, type)) {
       return ApiResponse.error('验证码请求过于频繁，请稍后再试', origin, 429)
     }
+
+    await ensureUserAuthSchema(env.DB)
 
     if (type === 'register') {
       const existing = await env.DB.prepare('SELECT id FROM user WHERE email = ?').bind(email).first()

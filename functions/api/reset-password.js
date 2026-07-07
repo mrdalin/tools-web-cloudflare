@@ -1,6 +1,7 @@
 import { ApiResponse } from '../utils/db.js'
 import { consumeVerificationCode, verifyCode } from './send-verification-code.js'
 import { createPasswordHash } from '../utils/password.js'
+import { ensureUserAuthSchema } from '../utils/user-schema.js'
 
 export async function onRequest(context) {
   const { request, env } = context
@@ -21,6 +22,8 @@ export async function onRequest(context) {
     if (newPassword.length < 6) {
       return ApiResponse.error('密码至少 6 位', origin, 400)
     }
+
+    await ensureUserAuthSchema(env.DB)
 
     const user = await env.DB.prepare('SELECT id FROM user WHERE email = ?').bind(email).first()
     if (!user) {

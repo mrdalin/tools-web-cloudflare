@@ -91,6 +91,25 @@ const optionClick = (item: any) => {
   }
 }
 
+const ensureHomeReadyAfterLogout = async () => {
+  componentStore.setActiveCategory('')
+  searchParam.title = ''
+  options.value = []
+
+  if (toolsStore.cates.length === 0) {
+    try {
+      await toolsStore.getToolCate()
+    } catch (error) {
+      console.error('Reload tools after logout failed:', error)
+    }
+  }
+
+  await router.replace({ path: '/', query: {} })
+  window.requestAnimationFrame(() => {
+    window.scrollTo({ top: 0, left: 0, behavior: 'auto' })
+  })
+}
+
 // 处理退出登录
 const handleLogout = async () => {
   try {
@@ -103,15 +122,13 @@ const handleLogout = async () => {
     // 等待DOM更新
     await nextTick()
     
-    // 强制跳转到首页，使用replace避免历史记录问题
-    await router.replace('/')
+    await ensureHomeReadyAfterLogout()
     
     // 显示成功消息
     ElMessage.success('已退出登录')
   } catch (error) {
     console.error('退出登录失败:', error)
-    // 即使出错也要跳转到首页
-    await router.replace('/')
+    await ensureHomeReadyAfterLogout()
     ElMessage.success('已退出登录')
   }
 }

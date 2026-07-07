@@ -1,5 +1,6 @@
 import { ApiResponse } from '../utils/db.js'
 import { createPasswordHash, verifyPassword } from '../utils/password.js'
+import { ensureUserAuthSchema } from '../utils/user-schema.js'
 
 async function signJWT(payload, secret) {
   const enc = new TextEncoder()
@@ -39,6 +40,8 @@ export async function onRequest(context) {
     if (!email || !password) {
       return ApiResponse.error('邮箱和密码不能为空', request.headers.get('Origin'))
     }
+
+    await ensureUserAuthSchema(env.DB)
 
     const user = await env.DB.prepare('SELECT id, email, username, avatar, password, salt FROM user WHERE email = ?')
       .bind(email).first()

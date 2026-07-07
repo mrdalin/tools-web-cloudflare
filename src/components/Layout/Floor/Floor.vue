@@ -6,7 +6,13 @@ const feedbackUrl = `${gitUrl}/issues/new`
 <template>
   <footer class="site-footer">
     <div class="site-footer__copyright">2006-2026 Youngbar</div>
-    <div class="site-footer__origin">一切来自 2006 年的「飘」</div>
+    <router-link
+      to="/about"
+      class="site-footer__origin"
+      title="查看 Youngbar 的来历"
+    >
+      一切来自 2006 年的「飘」
+    </router-link>
     <nav class="site-footer__links" aria-label="页脚链接">
       <router-link to="/privacy">隐私政策</router-link>
       <a :href="feedbackUrl" target="_blank" rel="noopener noreferrer">反馈建议</a>
@@ -29,10 +35,18 @@ const feedbackUrl = `${gitUrl}/issues/new`
 }
 
 .site-footer__origin {
+  display: inline-block;
   margin-top: 2px;
   color: #64748b;
   font-size: 13px;
   line-height: 1.7;
+  text-underline-offset: 3px;
+}
+
+.site-footer__origin:hover,
+.site-footer__origin:focus-visible {
+  color: var(--warm-primary);
+  text-decoration: underline;
 }
 
 .site-footer__links {

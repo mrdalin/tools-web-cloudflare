@@ -1,6 +1,7 @@
 import { ApiResponse } from '../utils/db.js'
 import { consumeVerificationCode, verifyCode } from './send-verification-code.js'
 import { createPasswordHash } from '../utils/password.js'
+import { ensureUserAuthSchema } from '../utils/user-schema.js'
 
 const generateJWT = async (payload, secret) => {
   const header = { alg: 'HS256', typ: 'JWT' }
@@ -44,6 +45,8 @@ export async function onRequest(context) {
     if (password.length < 6) {
       return ApiResponse.error('密码至少 6 位', origin, 400)
     }
+
+    await ensureUserAuthSchema(env.DB)
 
     const existing = await env.DB.prepare('SELECT id FROM user WHERE email = ?').bind(email).first()
     if (existing) {

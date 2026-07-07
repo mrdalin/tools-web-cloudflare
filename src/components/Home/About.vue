@@ -38,12 +38,12 @@ onMounted(async () => {
     <div class="p-5 w-2/3">
       <h1 class="text-2xl font-bold">关于 {{appTitle}}（源自：Tools-Web）</h1>
       <p class="mt-6">
-        <el-text>本站是一个开源免费的工具站，基于 Tools-Web 二次开发，部署在 Cloudflare 上。包含开发、文本、媒体、图表、生活、查询等 <span class="text-primary font-bold">{{ totalTools }}</span> 种实用工具，完全开源免费；如果对您有帮助，请将其分享给您的朋友，并且添加到收藏夹中。因为是纯前端，所以请求外部第三方接口用 Cloudflare Functions 实现。</el-text>
+        <el-text>本站是一个开源免费的工具站，基于 Tools-Web 二次开发，部署在 Cloudflare 上。包含开发、文本、媒体、图表、生活、查询等 <span class="text-primary font-bold">{{ totalTools }}</span> 种实用工具，完全开源免费；如果对您有帮助，请将其分享给您的好友，并且添加到收藏夹中。因为是纯前端，所以请求外部第三方接口用 Cloudflare Functions 实现。</el-text>
       </p>
 
       <h1 class="text-2xl font-bold mt-6 mb-6">Youngbar 的来历</h1>
       <p>
-        <el-text>Youngbar.com 这个域名，源于 2006 年一位 QQ 昵称叫「飘」的朋友提出的想法，并由此注册。今天把它用在这个工具站上，也保留一句感谢：一切来自 2006 年的「飘」。</el-text>
+        <el-text>Youngbar.com 这个域名，源于 2006 年一位 QQ 昵称叫「飘」的好友提出的想法，并由此注册。今天把它用在这个工具站上，也像给这段二十多年的友情留下一盏灯。愿多年以后，念起仍是少年；一切来自 2006 年的「飘」。</el-text>
       </p>
 
       <h1 class="text-2xl font-bold mt-6 mb-6">项目来源</h1>
