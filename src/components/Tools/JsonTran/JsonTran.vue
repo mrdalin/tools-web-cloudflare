@@ -4,8 +4,6 @@ import { ElMessage } from 'element-plus'
 import DetailHeader from '@/components/Layout/DetailHeader/DetailHeader.vue'
 import ToolDetail from '@/components/Layout/ToolDetail/ToolDetail.vue'
 import { transferred, copy } from '@/utils/string';
-import Codemirror from "codemirror-editor-vue3";
-import "codemirror/mode/javascript/javascript.js";
 
 const info = reactive({
   title: "Json在线转换",
@@ -27,17 +25,6 @@ const info = reactive({
   isParseErr: false,
   parseErr: ''
 })
-
-const cmOptions = {
-  mode: "application/json",
-  lineNumbers: true,
-  theme: "default",
-  indentUnit: 2,
-  tabSize: 2,
-  lineWrapping: true,
-  foldGutter: true,
-  gutters: ["CodeMirror-linenumbers", "CodeMirror-foldgutter"]
-}
 
 //格式化json
 const formatJson = () => {
@@ -104,14 +91,13 @@ const copyRes = async () => {
     <div class="p-4 rounded-2xl bg-white">
       
       <div>
-        <Codemirror
-          v-model:value="info.code"
-          :options="cmOptions"
-          border
-          height="400"
-          width="100%"
+        <textarea
+          v-model="info.code"
+          class="json-editor"
+          spellcheck="false"
           placeholder="请输入JSON代码..."
-        />
+          aria-label="JSON source"
+        ></textarea>
       </div>
       
       <div class="mt-4">
@@ -139,4 +125,24 @@ const copyRes = async () => {
 </template>
 
 <style scoped>
+.json-editor {
+  box-sizing: border-box;
+  width: 100%;
+  min-height: 400px;
+  padding: 16px;
+  border: 1px solid #d7e5df;
+  border-radius: 8px;
+  background: #fff;
+  color: #1f2937;
+  font-family: Consolas, Monaco, "Courier New", monospace;
+  font-size: 14px;
+  line-height: 1.65;
+  outline: none;
+  resize: vertical;
+}
+
+.json-editor:focus {
+  border-color: #0f766e;
+  box-shadow: 0 0 0 3px rgba(15, 118, 110, 0.12);
+}
 </style>

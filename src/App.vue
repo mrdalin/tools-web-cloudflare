@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, ref, onMounted, onUnmounted, defineAsyncComponent, defineComponent, h } from 'vue'
+import { computed, ref, onMounted, onUnmounted, defineAsyncComponent, defineComponent, h, nextTick, watch } from 'vue'
 import LayoutSkeleton from "@/components/Layout/LayoutSkeleton.vue";
 // import Right from '@/components/Layout/Right/Right.vue'
 import { useComponentStore } from "@/store/modules/component";
@@ -36,6 +36,10 @@ import zhCn from 'element-plus/dist/locale/zh-cn.mjs'
 import { hasToolSeoContent } from '@/components/Layout/ToolSeoContent/toolSeoMeta'
 
 const showBackTop = ref(false)
+const discussTrigger = ref<HTMLElement | null>(null)
+const showDiscuss = ref(false)
+let discussObserver: IntersectionObserver | null = null
+
 const onScroll = () => {
   showBackTop.value = (window.pageYOffset || document.documentElement.scrollTop) > 300
 }
@@ -52,8 +56,6 @@ const smoothScrollTop = () => {
   }
   requestAnimationFrame(step)
 }
-onMounted(() => window.addEventListener('scroll', onScroll, { passive: true }))
-onUnmounted(() => window.removeEventListener('scroll', onScroll))
 //store
 const componentStore = useComponentStore();
 const route = useRoute();
@@ -78,6 +80,55 @@ const isHomePage = computed(() => {
   return route.name === 'home' || route.path === '/';
 });
 const showToolSeoContent = computed(() => hasToolSeoContent(route.path));
+const canShowDiscuss = computed(() => !isSpecialPage.value && !isHomePage.value && !componentStore.hideAllUI)
+
+const stopDiscussObserver = () => {
+  if (discussObserver) {
+    discussObserver.disconnect()
+    discussObserver = null
+  }
+}
+
+const setupDiscussObserver = async () => {
+  stopDiscussObserver()
+  showDiscuss.value = false
+
+  if (!canShowDiscuss.value) return
+
+  await nextTick()
+  const target = discussTrigger.value
+  if (!target) return
+
+  if (!('IntersectionObserver' in window)) {
+    showDiscuss.value = true
+    return
+  }
+
+  discussObserver = new IntersectionObserver(
+    ([entry]) => {
+      if (!entry.isIntersecting) return
+      showDiscuss.value = true
+      stopDiscussObserver()
+    },
+    { rootMargin: '800px 0px' },
+  )
+  discussObserver.observe(target)
+}
+
+onMounted(() => {
+  window.addEventListener('scroll', onScroll, { passive: true })
+  setupDiscussObserver()
+})
+onUnmounted(() => {
+  window.removeEventListener('scroll', onScroll)
+  stopDiscussObserver()
+})
+
+watch(
+  () => [route.fullPath, canShowDiscuss.value],
+  () => setupDiscussObserver(),
+  { flush: 'post' },
+)
 
 </script>
 
@@ -117,7 +168,8 @@ const showToolSeoContent = computed(() => hasToolSeoContent(route.path));
           </transition>
         </router-view>
         <ToolSeoContent v-if="!isSpecialPage && !isHomePage && !componentStore.hideAllUI && showToolSeoContent" />
-        <Discuss v-if="!isSpecialPage && !isHomePage && !componentStore.hideAllUI" />
+        <div v-if="canShowDiscuss" ref="discussTrigger" class="h-px" aria-hidden="true"></div>
+        <Discuss v-if="canShowDiscuss && showDiscuss" />
       </el-main>
       <el-footer v-if="!isSpecialPage" class="md:mb-6 mt-12 c-xs:mb-12">
         <Floor />
