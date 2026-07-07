@@ -5,7 +5,7 @@ const feedbackUrl = `${gitUrl}/issues/new`
 
 <template>
   <footer class="site-footer">
-    <div class="site-footer__copyright">2006-2026 Youngbar</div>
+    <div class="site-footer__copyright">© 2006-2026 Youngbar</div>
     <router-link
       to="/about"
       class="site-footer__origin"
