@@ -7,6 +7,7 @@ const dataItems = [
   'Google 登录信息：当你选择 Google 登录时，本站只接收 Google 返回的唯一用户 ID、邮箱、邮箱验证状态和基础资料，用于创建或登录 Youngbar 账号。',
   '你主动保存的内容：笔记、短链、收藏、体重记录、QA 页面、待办、密码管理器加密数据等。',
   'AI 功能输入：你提交给 AI 工具的文本、图片或视频生成需求，会通过 Cloudflare Functions 转发给已配置的 AI 服务提供方处理。',
+  '访问统计信息：本站会使用 Google Analytics 统计页面访问、工具使用等匿名汇总数据，不会主动上报你在工具中输入的具体内容。',
   '安全与运行日志：为了防止滥用、排查故障和保障服务稳定，Cloudflare 可能记录请求 IP、浏览器信息、访问时间和错误日志。'
 ]
 
@@ -21,7 +22,7 @@ const useItems = [
 const providerItems = [
   'Cloudflare：网站托管、Pages Functions、D1 数据库、访问日志与安全防护。',
   'Resend：发送邮箱验证码、找回密码等事务邮件。',
-  'Google：当你主动选择 Google 登录时提供身份认证。',
+  'Google：当你主动选择 Google 登录时提供身份认证，并通过 Google Analytics 提供匿名访问统计。',
   'Agnes AI 及备用 AI 服务：处理你主动提交的 AI 文本、图片或视频生成请求。'
 ]
 </script>

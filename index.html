@@ -2,8 +2,8 @@
 <html lang="zh-CN">
   <head>
     <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/src/assets/logo.png" />
-    <link rel="shortcut icon" type="image/svg+xml" href="/public/favicon.ico" />
+    <link rel="icon" type="image/png" href="/logo192.png" />
+    <link rel="shortcut icon" href="/favicon.ico" />
     <link rel="privacy" href="https://youngbar.com/privacy" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="renderer" content="webkit">
@@ -11,6 +11,18 @@
 
     <!-- DNS 预连接（优先级更高） -->
     <link rel="dns-prefetch" href="//accounts.google.com">
+    <link rel="preconnect" href="https://www.googletagmanager.com">
+    <link rel="canonical" href="https://youngbar.com/">
+
+    <!-- Google tag (gtag.js) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-YVWF2H3GQ5"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      window.gtag = gtag;
+      gtag('js', new Date());
+      gtag('config', 'G-YVWF2H3GQ5', { send_page_view: false });
+    </script>
 
     <!-- 首屏关键 CSS 内联（避免主 CSS 加载期间出现白底闪烁） -->
     <style>
@@ -30,7 +42,7 @@
     <meta property="og:locale" content="zh_CN">
     <meta property="og:title" content="Youngbar工具箱 - 一个开源免费的工具站 | MD5加密 JSON格式化 二维码 AI绘画">
     <meta property="og:description" content="Youngbar工具箱是一个完全开源免费的在线工具站，提供80+种实用工具。开发运维：MD5加密、JSON格式化、正则测试、UUID、时间戳转换、Base64、URL编解码、JWT、Cron等；文本处理：文本对比、Markdown、字数统计等；图片处理：二维码生成识别、PDF转图片、图片压缩等；数据图表：柱状图折线图饼图散点图；AI工具：AI绘画、AI翻译、AI起名、AI对话等；趣味游戏：贪吃蛇、2048、扫雷、数独、五子棋等。完全免费，无需注册。">
-    <meta property="og:image" content="https://youngbar.com/logo.png">
+    <meta property="og:image" content="https://youngbar.com/logo512.png">
     <meta property="og:site_name" content="Youngbar工具箱">
     <meta property="og:url" content="https://youngbar.com">
 
@@ -38,7 +50,7 @@
     <meta name="twitter:card" content="summary_large_image">
     <meta name="twitter:title" content="Youngbar工具箱 - 一个开源免费的工具站 | 80+实用工具">
     <meta name="twitter:description" content="Youngbar工具箱是一个完全开源免费的在线工具站，提供80+种实用工具。开发运维：MD5加密、JSON格式化、正则测试、UUID、时间戳转换、Base64、URL编解码、JWT、Cron等；文本处理：文本对比、Markdown、字数统计等；图片处理：二维码生成识别、PDF转图片、图片压缩等；数据图表：柱状图折线图饼图散点图；AI工具：AI绘画、AI翻译、AI起名、AI对话等；趣味游戏：贪吃蛇、2048、扫雷、数独、五子棋等。完全免费，无需注册。">
-    <meta name="twitter:image" content="https://youngbar.com/logo.png">
+    <meta name="twitter:image" content="https://youngbar.com/logo512.png">
 
     <!-- 结构化数据 -->
     <script type="application/ld+json">
@@ -49,12 +61,7 @@
       "alternateName": "Youngbar Tools",
       "url": "https://youngbar.com",
       "privacyPolicy": "https://youngbar.com/privacy",
-      "description": "Youngbar工具箱是一个完全开源免费的在线工具站，提供80+种实用工具，涵盖开发运维、文本处理、教育学术、图片处理、数据图表、AI工具、趣味游戏等多个分类，包括MD5加密、JSON格式化、二维码生成识别、AI绘画、正则测试、时间戳转换、Base64编解码等，完全免费，无需注册",
-      "potentialAction": {
-        "@type": "SearchAction",
-        "target": "https://youngbar.com/search?q={search_term_string}",
-        "query-input": "required name=search_term_string"
-      }
+      "description": "Youngbar工具箱是一个完全开源免费的在线工具站，提供80+种实用工具，涵盖开发运维、文本处理、教育学术、图片处理、数据图表、AI工具、趣味游戏等多个分类，包括MD5加密、JSON格式化、二维码生成识别、AI绘画、正则测试、时间戳转换、Base64编解码等，完全免费，无需注册"
     }
     </script>
 
