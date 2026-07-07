@@ -1,9 +1,11 @@
 <script setup lang="ts">
 import { reactive, ref, onMounted, computed } from 'vue'
+import { useRouter } from 'vue-router'
 import functionsRequest from '@/utils/functionsRequest'
 import DetailHeader from '@/components/Layout/DetailHeader/DetailHeader.vue'
 import ToolDetail from '@/components/Layout/ToolDetail/ToolDetail.vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
+import { getLocalToken, isTokenExpired, logout } from '@/utils/user'
 import { 
   Refresh, 
   Plus, 
@@ -50,6 +52,7 @@ const info = reactive({
   title: "公司对比",
 })
 
+const router = useRouter()
 const companies = ref<Company[]>([])
 const currentCompany = ref<Company | null>(null)
 const isEditing = ref(false)
@@ -85,6 +88,37 @@ const formData = reactive({
 // 添加loading状态
 const loading = ref(false)
 const operationLoading = ref(false)
+const requiresLogin = ref(false)
+
+const goToLogin = () => {
+  const currentPath = window.location.pathname
+  router.push('/login?redirect=' + encodeURIComponent(currentPath))
+}
+
+const ensureAuthenticated = (showMessage = true) => {
+  const token = getLocalToken()
+  if (!token) {
+    requiresLogin.value = true
+    if (showMessage) {
+      ElMessage.warning('请先登录后使用公司对比')
+    }
+    return false
+  }
+
+  if (isTokenExpired(token)) {
+    logout()
+    requiresLogin.value = true
+    if (showMessage) {
+      ElMessage.warning('登录已过期，请重新登录后继续使用公司对比')
+    }
+    return false
+  }
+
+  requiresLogin.value = false
+  return true
+}
+
+const isUnauthorizedError = (error: any) => error?.response?.status === 401
 
 // 添加搜索相关变量
 const searchKeyword = ref('')
@@ -221,6 +255,8 @@ const isAllSelected = computed(() =>
 
 // 获取公司列表（支持分页）
 const fetchCompanies = async (page = 1, pageSize = 12) => {
+  if (!ensureAuthenticated()) return
+
   try {
     loading.value = true
     const response = await functionsRequest.get('/api/companies', {
@@ -233,7 +269,11 @@ const fetchCompanies = async (page = 1, pageSize = 12) => {
         pagination.value = data.pagination
       }
     }
-  } catch (error) {
+  } catch (error: any) {
+    if (isUnauthorizedError(error)) {
+      requiresLogin.value = true
+      return
+    }
     console.error('获取公司列表失败:', error)
     ElMessage.error('获取公司列表失败')
   } finally {
@@ -254,6 +294,8 @@ const handleSizeChange = (pageSize: number) => {
 
 // 创建公司记录
 const createCompany = async () => {
+  if (!ensureAuthenticated()) return
+
   if (!formData.name.trim() || !formData.position.trim()) {
     ElMessage.warning('公司名称和职位不能为空')
     return
@@ -283,7 +325,11 @@ const createCompany = async () => {
     } else {
       ElMessage.error('创建失败')
     }
-  } catch (error) {
+  } catch (error: any) {
+    if (isUnauthorizedError(error)) {
+      requiresLogin.value = true
+      return
+    }
     console.error('创建公司记录失败:', error)
     ElMessage.error('创建失败')
   } finally {
@@ -293,6 +339,8 @@ const createCompany = async () => {
 
 // 更新公司记录
 const updateCompany = async () => {
+  if (!ensureAuthenticated()) return
+
   if (!editingCompanyId.value || !formData.name.trim() || !formData.position.trim()) {
     ElMessage.warning('公司名称和职位不能为空')
     return
@@ -324,7 +372,11 @@ const updateCompany = async () => {
     } else {
       ElMessage.error('更新失败')
     }
-  } catch (error) {
+  } catch (error: any) {
+    if (isUnauthorizedError(error)) {
+      requiresLogin.value = true
+      return
+    }
     console.error('更新公司记录失败:', error)
     ElMessage.error('更新失败')
   } finally {
@@ -334,6 +386,8 @@ const updateCompany = async () => {
 
 // 删除公司记录
 const deleteCompany = async (company: Company) => {
+  if (!ensureAuthenticated()) return
+
   await ElMessageBox.confirm('确定要删除这条公司记录吗？', '提示', {
     confirmButtonText: '确定',
     cancelButtonText: '取消',
@@ -357,7 +411,11 @@ const deleteCompany = async (company: Company) => {
     } else {
       ElMessage.error('删除失败')
     }
-  } catch (error) {
+  } catch (error: any) {
+    if (isUnauthorizedError(error)) {
+      requiresLogin.value = true
+      return
+    }
     console.error('删除公司记录失败:', error)
     ElMessage.error('删除失败')
   } finally {
@@ -392,6 +450,8 @@ const viewCompany = (company: Company) => {
 
 // 新建公司记录
 const newCompany = () => {
+  if (!ensureAuthenticated()) return
+
   currentCompany.value = null
   isEditing.value = false
   resetForm()
@@ -574,6 +634,8 @@ const toggleSelectCompany = (company: Company) => {
 }
 
 const batchDelete = async () => {
+  if (!ensureAuthenticated()) return
+
   if (selectedCompanies.value.length === 0) {
     ElMessage.warning('请选择要删除的公司')
     return
@@ -600,7 +662,11 @@ const batchDelete = async () => {
     ElMessage.success(`成功删除 ${selectedCompanies.value.length} 家公司`)
     selectedCompanies.value = []
     await fetchCompanies(pagination.value.page, pagination.value.pageSize)
-  } catch (error) {
+  } catch (error: any) {
+    if (isUnauthorizedError(error)) {
+      requiresLogin.value = true
+      return
+    }
     console.error('批量删除失败:', error)
     ElMessage.error('批量删除失败')
   } finally {
@@ -613,7 +679,9 @@ const handleSearch = () => {
 }
 
 onMounted(() => {
-  fetchCompanies()
+  if (ensureAuthenticated(false)) {
+    fetchCompanies()
+  }
 })
 </script>
 
@@ -621,7 +689,16 @@ onMounted(() => {
   <div class="flex flex-col mt-3 flex-1">
     <DetailHeader :title="info.title"></DetailHeader>
 
-    <div class="companies-container">
+    <div v-if="requiresLogin" class="company-login-required">
+      <div class="login-icon-wrapper">
+        <el-icon><OfficeBuilding /></el-icon>
+      </div>
+      <h2>登录后使用公司对比</h2>
+      <p>公司记录会保存到你的账号中，方便以后继续编辑、筛选和对比。</p>
+      <el-button type="primary" size="large" @click="goToLogin">前往登录</el-button>
+    </div>
+
+    <div v-else class="companies-container">
       <!-- 操作栏 -->
       <div class="header-section">
         <div class="header-left">
@@ -1364,6 +1441,45 @@ onMounted(() => {
   min-height: 600px;
   position: relative;
   overflow: hidden;
+}
+
+.company-login-required {
+  width: min(520px, calc(100vw - 32px));
+  margin: 48px auto 0;
+  padding: 36px 28px;
+  border: 1px solid rgba(214, 227, 225, 0.95);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.94);
+  box-shadow: 0 16px 36px rgba(15, 23, 42, 0.08);
+  text-align: center;
+}
+
+.login-icon-wrapper {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 64px;
+  height: 64px;
+  margin-bottom: 18px;
+  border-radius: 50%;
+  background: var(--youngbar-primary-soft);
+  color: var(--warm-primary);
+  font-size: 30px;
+}
+
+.company-login-required h2 {
+  margin: 0;
+  color: #0f172a;
+  font-size: 24px;
+  font-weight: 800;
+  line-height: 1.35;
+}
+
+.company-login-required p {
+  margin: 12px auto 22px;
+  color: #64748b;
+  font-size: 15px;
+  line-height: 1.8;
 }
 
 .companies-container::before {
