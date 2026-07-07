@@ -121,10 +121,10 @@ const isHomePage = computed(() => {
     <transition name="backtop-fade">
       <div
         v-show="showBackTop && !isHomePage"
-        class="fixed right-[30px] bottom-[60px] z-50 cursor-pointer w-10 h-10 rounded-full bg-white shadow-lg flex items-center justify-center hover:bg-blue-50 transition-colors border border-gray-100"
+        class="fixed right-[30px] bottom-[60px] z-50 cursor-pointer w-10 h-10 rounded-lg bg-white shadow-md flex items-center justify-center hover:bg-warm-50 transition-colors border border-slate-200"
         @click="smoothScrollTop"
       >
-        <el-icon :size="20" color="#409EFF"><Top /></el-icon>
+        <el-icon :size="20" color="#0f766e"><Top /></el-icon>
       </div>
     </transition>
   </el-container>

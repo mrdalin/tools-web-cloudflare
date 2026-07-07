@@ -13,7 +13,7 @@ const feedbackUrl = `${gitUrl}/issues/new`
                 一切来自 2006 年的「飘」
             </div>
             <div class="flex justify-center items-center text-xs">
-                <a :href="feedbackUrl" target="_blank" class="text-blue-700 hover:underline">反馈建议</a>
+                <a :href="feedbackUrl" target="_blank" class="text-warm-700 hover:text-warm-800 hover:underline">反馈建议</a>
             </div>
         </div>
     </div>
