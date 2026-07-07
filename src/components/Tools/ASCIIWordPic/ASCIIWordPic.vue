@@ -9,7 +9,7 @@ const info = reactive({
 })
 figlet.defaults({ fontPath: '//unpkg.com/figlet@1.6.0/fonts' });
 
-const content = ref('Tools-Web')
+const content = ref('Youngbar')
 const contentRes = ref('')
 const fontStyle = ref('Big')
 const loading = ref(false)

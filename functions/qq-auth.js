@@ -28,7 +28,7 @@ async function getAuthUrl(request, env, origin) {
     try {
         // QQ互联配置信息
         const CLIENT_ID = env.QQ_CLIENT_ID;
-        const REDIRECT_URI = env.QQ_REDIRECT_URI || `${env.SITE_URL || 'https://tools.ranblogs.com'}/qq-auth`;
+        const REDIRECT_URI = env.QQ_REDIRECT_URI || `${env.SITE_URL || 'https://youngbar.com'}/qq-auth`;
         const AUTH_URL = 'https://graph.qq.com/oauth2.0/authorize';
 
         // 检查必要的配置

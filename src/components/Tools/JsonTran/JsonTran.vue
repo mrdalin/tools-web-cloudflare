@@ -8,13 +8,13 @@ import { transferred, copy } from '@/utils/string';
 const info = reactive({
   title: "Json在线转换",
   code: JSON.stringify({
-  "name": "Tools-Web",
-  "version": "1.0.0",
-  "description": "在线工具箱",
+  "name": "Youngbar工具箱",
+  "version": "2026.0",
+  "description": "Youngbar 在线工具箱",
   "features": ["JSON格式化", "压缩", "转义", "去转义"],
   "author": {
-    "name": "yifang",
-    "site": "https://tools-web.com"
+    "name": "Youngbar",
+    "site": "https://youngbar.com"
   },
   "settings": {
     "theme": "light",

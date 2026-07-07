@@ -22,12 +22,12 @@ const generateData = reactive({
   }, null, 2),
   payload: JSON.stringify({
     "iss": (import.meta.env.VITE_SITE_URL).replace(/^https?:\/\//, ''),
-    "sub": "yifang",
+    "sub": "youngbar-user",
     "aud": (import.meta.env.VITE_SITE_URL).replace(/^https?:\/\//, '').split('.')[1],
     "iat": Math.floor(Date.now() / 1000),
     "exp": Math.floor(Date.now() / 1000) + 3600
   }, null, 2),
-  secret: 'your-secret-key',
+  secret: 'youngbar-secret-key',
   generatedToken: ''
 })
 
@@ -135,12 +135,12 @@ const clearGenerate = () => {
   }, null, 2)
   generateData.payload = JSON.stringify({
     "iss": (import.meta.env.VITE_SITE_URL).replace(/^https?:\/\//, ''),
-    "sub": "yifang",
+    "sub": "youngbar-user",
     "aud": (import.meta.env.VITE_SITE_URL).replace(/^https?:\/\//, '').split('.')[1],
     "iat": Math.floor(Date.now() / 1000),
     "exp": Math.floor(Date.now() / 1000) + 3600
   }, null, 2)
-  generateData.secret = 'your-secret-key'
+  generateData.secret = 'youngbar-secret-key'
   generateData.generatedToken = ''
 }
 

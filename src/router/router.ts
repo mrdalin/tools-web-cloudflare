@@ -683,7 +683,7 @@ export const constantRoute = [
     name: 'about',
     meta: {
       title: "关于",
-      keywords: '关于ranblogs,关于工具站',
+      keywords: '关于Youngbar,关于工具站',
       description: '',
     }
   },
@@ -695,7 +695,7 @@ export const constantRoute = [
     meta: {
       title: "用户登录",
       keywords: '用户登录,账号登录,工具箱登录',
-      description: 'Tools-Web工具箱用户登录页面，登录后享受更多个性化功能',
+      description: 'Youngbar工具箱用户登录页面，登录后享受更多个性化功能',
     }
   },
   {

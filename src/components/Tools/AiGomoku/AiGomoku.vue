@@ -542,10 +542,10 @@ const getStatusText = () => {
           <p class="text-gray-700 text-sm">
             <strong>源码地址：</strong>
             <a 
-              href="https://github.com/ideajoker/tools-web-cloudflare/blob/master/src/components/Tools/AiGomoku/AiGomoku.vue" 
+              href="https://github.com/ideajoker/tools-web-cloudflare/blob/main/src/components/Tools/AiGomoku/AiGomoku.vue"
               target="_blank" 
               rel="noopener noreferrer"
-              class="text-blue-600 hover:text-blue-800 underline"
+              class="text-primary hover:text-primary/80 underline"
             >
               GitHub - AI五子棋组件源码
             </a>

@@ -6,8 +6,8 @@ import ToolDetail from '@/components/Layout/ToolDetail/ToolDetail.vue'
 const info = reactive({
   title: "JSON/YAML 格式化对比",
   input: `{
-  "name": "tools-web",
-  "version": "1.0.0",
+  "name": "Youngbar工具箱",
+  "version": "2026.0",
   "features": [
     "JSON处理",
     "YAML转换",
