@@ -1,7 +1,7 @@
 //通过vue-router插件实现模板路由配置
 import { createRouter, createWebHistory } from 'vue-router'
 import { constantRoute } from './router'
-import { getToolSeoMeta } from '@/components/Layout/ToolSeoContent/toolSeoContent'
+import { getToolSeoMeta } from '@/components/Layout/ToolSeoContent/toolSeoMeta'
 
 const appTitle = import.meta.env.VITE_APP_TITLE || 'Youngbar工具箱'
 const appDesc = import.meta.env.VITE_APP_DESC || '一个轻量的在线工具箱'

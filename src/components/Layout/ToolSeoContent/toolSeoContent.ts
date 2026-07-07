@@ -1,3 +1,5 @@
+import { normalizeToolSeoPath } from './toolSeoMeta'
+
 export interface ToolSeoRelatedLink {
   label: string
   path: string
@@ -404,25 +406,4 @@ export const toolSeoContents: Record<string, ToolSeoContent> = {
   },
 }
 
-const aliasPathMap = new Map([
-  ['/ai/text-to-image', '/ai-text-to-image'],
-])
-
-export const normalizeToolSeoPath = (path: string) => {
-  if (!path || path === '/') return '/'
-  const cleanPath = path.split('?')[0].replace(/\/+$/, '') || '/'
-  return aliasPathMap.get(cleanPath) || cleanPath
-}
-
 export const getToolSeoContent = (path: string) => toolSeoContents[normalizeToolSeoPath(path)]
-
-export const getToolSeoMeta = (path: string) => {
-  const content = getToolSeoContent(path)
-  if (!content) return null
-
-  return {
-    title: content.metaTitle,
-    keywords: content.keywords,
-    description: content.metaDescription,
-  }
-}

@@ -33,7 +33,7 @@ const Floor = defineAsyncComponent({
 import { useRoute } from 'vue-router';
 import { Top } from '@element-plus/icons-vue';
 import zhCn from 'element-plus/dist/locale/zh-cn.mjs'
-import { getToolSeoContent } from '@/components/Layout/ToolSeoContent/toolSeoContent'
+import { hasToolSeoContent } from '@/components/Layout/ToolSeoContent/toolSeoMeta'
 
 const showBackTop = ref(false)
 const onScroll = () => {
@@ -77,7 +77,7 @@ const isSpecialPage = computed(() => {
 const isHomePage = computed(() => {
   return route.name === 'home' || route.path === '/';
 });
-const hasToolSeoContent = computed(() => Boolean(getToolSeoContent(route.path)));
+const showToolSeoContent = computed(() => hasToolSeoContent(route.path));
 
 </script>
 
@@ -116,7 +116,7 @@ const hasToolSeoContent = computed(() => Boolean(getToolSeoContent(route.path)))
             <component :is="Component" :key="route.path"></component>
           </transition>
         </router-view>
-        <ToolSeoContent v-if="!isSpecialPage && !isHomePage && !componentStore.hideAllUI && hasToolSeoContent" />
+        <ToolSeoContent v-if="!isSpecialPage && !isHomePage && !componentStore.hideAllUI && showToolSeoContent" />
         <Discuss v-if="!isSpecialPage && !isHomePage && !componentStore.hideAllUI" />
       </el-main>
       <el-footer v-if="!isSpecialPage" class="md:mb-6 mt-12 c-xs:mb-12">
