@@ -225,7 +225,7 @@ onUnmounted(() => {
     <div class="flex items-center w-full">
       <Transition name="fold" class="hidden c-sm:block c-md:hidden c-xs:block">
         <svg v-if="!componentStore.leftComDrawer" @click="componentStore.setleftComDrawerStatus(true)" t="1702978210636" class="icon" viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg" p-id="7618" width="30" height="30">
-          <path fill="#7c2d12" fill-opacity=".9" d="M895.936 256l-768-0.896 0.128-64L896 192l-0.064 64zM179.2 689.152l202.688-152a32 32 0 0 0 0-51.2L179.2 333.952a32 32 0 0 0-51.2 25.6v304a32 32 0 0 0 51.2 25.6z m12.8-89.6v-176l117.312 88L192 599.552zM896 544H480v-64H896v64z m-0.064 288l-768-0.896 0.128-64L896 768l-0.064 64z" p-id="7619"></path>
+          <path fill="#334155" fill-opacity=".9" d="M895.936 256l-768-0.896 0.128-64L896 192l-0.064 64zM179.2 689.152l202.688-152a32 32 0 0 0 0-51.2L179.2 333.952a32 32 0 0 0-51.2 25.6v304a32 32 0 0 0 51.2 25.6z m12.8-89.6v-176l117.312 88L192 599.552zM896 544H480v-64H896v64z m-0.064 288l-768-0.896 0.128-64L896 768l-0.064 64z" p-id="7619"></path>
         </svg>
         <svg v-else @click="componentStore.setleftComDrawerStatus(false)" t="1702978577170" class="icon" viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg" p-id="1587" width="30" height="30">
           <path fill="#444" fill-opacity=".9" d="M128.064 192l768 0.896-0.128 64L128 256l0.064-64z m514.048 294.848a32 32 0 0 0 0 51.2l202.688 152a32 32 0 0 0 51.2-25.6v-304a32 32 0 0 0-51.2-25.6l-202.688 152zM832 424.448v176l-117.312-88L832 424.448zM128 480h416v64H128v-64z m0.064 288l768 0.896-0.128 64L128 832l0.064-64z" p-id="1588"></path>
@@ -299,7 +299,7 @@ onUnmounted(() => {
               content="用户登录"
               placement="bottom"
             >
-              <el-button type="primary" size="large" class="bg-gradient-to-r from-warm-500 to-orange-500 hover:from-warm-600 hover:to-orange-600 w-20 border-none">
+              <el-button type="primary" size="large" class="header-login-button w-20 border-none">
                 登录
               </el-button>
             </el-tooltip>
@@ -355,39 +355,53 @@ onUnmounted(() => {
 
 <style scoped>
 .site-header {
-  transition: background-color 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+  transition:
+    background-color 0.18s ease,
+    box-shadow 0.18s ease,
+    border-color 0.18s ease,
+    transform 0.18s ease;
 }
 
 .site-header--floating {
   position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
+  top: 12px;
+  left: 16px;
+  right: 16px;
   width: auto;
+  height: 64px;
   z-index: 60;
-  padding-left: 16px;
-  padding-right: 16px;
-  background: rgba(255, 251, 235, 0.96);
-  border-bottom: 1px solid rgba(253, 186, 116, 0.45);
-  box-shadow: 0 12px 28px rgba(120, 53, 15, 0.12);
-  backdrop-filter: blur(12px);
+  padding: 8px 16px;
+  box-sizing: border-box;
+  background: rgba(255, 255, 255, 0.92);
+  border: 1px solid rgba(214, 227, 225, 0.95);
+  border-radius: 12px;
+  box-shadow: 0 14px 32px rgba(15, 23, 42, 0.12);
+  backdrop-filter: blur(14px);
 }
 
 @media (min-width: 992px) {
   .site-header--floating.site-header--with-sidebar {
-    left: 240px;
+    left: 256px;
   }
 }
 
 @media (max-width: 768px) {
   .site-header--floating {
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 64px;
     padding-left: 0;
     padding-right: 0;
+    border-radius: 0;
+    border-left: none;
+    border-right: none;
+    border-top: none;
   }
 }
 
 .fold-enter-active {
-  transition: all 1s ease-out;
+  transition: opacity 0.18s ease-out, transform 0.18s ease-out;
 }
 
 .fold-enter-from,
@@ -400,12 +414,32 @@ onUnmounted(() => {
 :deep(.el-select__wrapper) {
     box-shadow: 0 0 0 0px var(--el-input-border-color, var(--el-border-color)) inset;
     cursor: default;
+    min-height: 44px;
+    border: 1px solid transparent;
+    border-radius: 10px;
+    transition: border-color 0.18s ease, box-shadow 0.18s ease, background-color 0.18s ease;
     @apply w-full;
 }
 
 .el-select :deep(.el-select__wrapper){
-  background-color: rgba(254, 247, 237, 0.9);
+  background-color: rgba(255, 255, 255, 0.94);
   border-color: var(--warm-border);
+}
+
+.el-select :deep(.el-select__wrapper.is-focused),
+.el-select :deep(.el-select__wrapper:hover) {
+  border-color: rgba(15, 118, 110, 0.45);
+  box-shadow: 0 0 0 3px rgba(20, 184, 166, 0.12);
+}
+
+.header-login-button {
+  background: var(--warm-primary);
+  box-shadow: 0 8px 18px rgba(15, 118, 110, 0.16);
+}
+
+.header-login-button:hover,
+.header-login-button:focus {
+  background: var(--warm-primary-hover);
 }
 
 /* 用户菜单样式 */
@@ -431,7 +465,7 @@ onUnmounted(() => {
   padding: 0.5rem 1rem;
   font-size: 0.875rem;
   color: #374151;
-  transition: all 0.2s;
+  transition: background-color 0.18s ease, color 0.18s ease;
 }
 
 .user-menu-item:hover {
@@ -445,9 +479,9 @@ onUnmounted(() => {
   animation: fadeIn 0.3s ease-out;
 }
 
-/* 加载动画样式 - 暖色主题 */
+/* 加载动画样式 */
 .loading-container {
-  background: rgba(254, 247, 237, 0.95);
+  background: rgba(255, 255, 255, 0.96);
   border: 1px solid var(--warm-border);
   border-radius: 16px;
   padding: 32px 40px;

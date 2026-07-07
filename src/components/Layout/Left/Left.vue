@@ -190,8 +190,8 @@ onMounted(async () => {
           :alt="appNet"
         />
         <div class="flex flex-col mt-auto mb-auto">
-          <div class="text-2xl text-warm-800">{{ appName }}</div>
-          <div class="text-sm text-warm-600">{{ appNet }}</div>
+          <div class="text-xl font-semibold text-slate-900 tracking-tight">{{ appName }}</div>
+          <div class="text-xs text-slate-500">{{ appNet }}</div>
         </div>
       </router-link>
     </div>
@@ -449,5 +449,60 @@ onMounted(async () => {
       0 4px 16px rgba(249, 115, 22, 0.3),
       0 0 20px rgba(249, 115, 22, 0.15);
   }
+}
+
+.el-sub-menu :deep(.el-sub-menu__title) {
+  height: 40px !important;
+  line-height: 40px !important;
+  border-radius: 8px !important;
+  color: #334155;
+  font-weight: 600;
+  transition: background-color 0.18s ease, color 0.18s ease;
+}
+
+.el-sub-menu :deep(.el-sub-menu__title:hover) {
+  color: var(--warm-primary);
+  background-color: rgba(15, 118, 110, 0.08);
+  border-radius: 8px !important;
+}
+
+.el-menu-item {
+  height: 38px !important;
+  line-height: 38px !important;
+  margin: 4px 0;
+  border: 1px solid transparent;
+  border-radius: 8px !important;
+  color: #475569;
+  background-color: transparent !important;
+  box-shadow: none !important;
+  animation: none !important;
+  transform: none !important;
+  transition:
+    background-color 0.18s ease,
+    border-color 0.18s ease,
+    color 0.18s ease,
+    box-shadow 0.18s ease;
+}
+
+.el-menu-item::before,
+.el-menu-item::after {
+  content: none !important;
+}
+
+.el-menu-item:hover {
+  color: var(--warm-primary) !important;
+  background-color: rgba(15, 118, 110, 0.08) !important;
+  border-color: rgba(15, 118, 110, 0.12);
+  box-shadow: none !important;
+  animation: none !important;
+  transform: none !important;
+}
+
+.el-menu-item.is-active {
+  color: var(--warm-primary) !important;
+  background-color: rgba(15, 118, 110, 0.12) !important;
+  border-color: rgba(15, 118, 110, 0.2);
+  box-shadow: inset 3px 0 0 var(--warm-primary) !important;
+  animation: none !important;
 }
 </style>

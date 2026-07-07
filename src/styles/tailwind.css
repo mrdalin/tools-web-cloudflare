@@ -3,38 +3,39 @@
 @tailwind utilities;
 
 :root{
-  /* 暖色主题变量 */
-  --base-warm: #fef7ed;
-  --base-orange: #fdead5;
-  --base-black: #7c2d12;
-  --warm-primary: #f97316;
-  --warm-primary-hover: #ea580c;
-  --warm-secondary: #f59e0b;
-  --warm-accent: #fbbf24;
-  --warm-muted: #fed7aa;
-  --warm-border: #fdba74;
-  --warm-bg-card: #fffbeb;
-  --warm-text: #92400e;
-  --warm-text-muted: #b45309;
+  /* 工具台主题变量 */
+  --base-warm: #f8fafc;
+  --base-orange: #eef7f5;
+  --base-black: #17212b;
+  --warm-primary: #0f766e;
+  --warm-primary-hover: #115e59;
+  --warm-secondary: #2563eb;
+  --warm-accent: #f97316;
+  --warm-muted: #ccfbf1;
+  --warm-border: #d6e3e1;
+  --warm-bg-card: #ffffff;
+  --warm-text: #1f2937;
+  --warm-text-muted: #64748b;
 }
 
-/* 暖色背景渐变 */
+/* 工具台背景 */
 body {
-  background: linear-gradient(135deg, #fef7ed 0%, #fdead5 100%);
+  background:
+    linear-gradient(180deg, rgba(240, 253, 250, 0.9) 0%, rgba(248, 250, 252, 0.98) 36%, #f8fafc 100%);
   color: var(--base-black);
 }
 
 /* Element Plus 主题色覆盖 */
 :root {
-  --el-color-primary: #f97316;
-  --el-color-primary-light-3: #fb923c;
-  --el-color-primary-light-5: #fdba74;
-  --el-color-primary-light-7: #fed7aa;
-  --el-color-primary-light-8: #ffedd5;
-  --el-color-primary-light-9: #fff7ed;
-  --el-color-primary-dark-2: #ea580c;
-  --el-color-success: #f59e0b;
-  --el-color-warning: #fbbf24;
+  --el-color-primary: #0f766e;
+  --el-color-primary-light-3: #14b8a6;
+  --el-color-primary-light-5: #5eead4;
+  --el-color-primary-light-7: #99f6e4;
+  --el-color-primary-light-8: #ccfbf1;
+  --el-color-primary-light-9: #f0fdfa;
+  --el-color-primary-dark-2: #115e59;
+  --el-color-success: #10b981;
+  --el-color-warning: #f97316;
   --el-color-danger: #dc2626;
-  --el-color-info: #6b7280;
+  --el-color-info: #64748b;
 }

@@ -226,7 +226,7 @@ watch(() => toolsStore.cates.length, () => {
     <div v-for="(cate, index) in toolsStore.cates" :key="index">
       <!-- cate title -->
       <div 
-        class="mt-8 mb-3 text-xl font-bold text-warm-800 cursor-pointer hover:text-warm-600 transition-colors duration-200" 
+        class="category-title mt-8 mb-3 text-xl font-bold cursor-pointer"
         :id="'cate_' + cate.id"
         @click="gotoAnchor('cate_' + cate.id)"
       >
@@ -234,8 +234,8 @@ watch(() => toolsStore.cates.length, () => {
       </div>
       <!-- card -->
       <div class="flex justify-start flex-wrap gap-[1.25%] c-xs:ml-0">
-          <router-link v-for="(item, index) in cate.list" :key="index" :to="item.url" class="flex flex-col mt-5 border-solid rounded-2xl border-warm-400 p-2 bg-white shadow-lg hover:bg-warm-50 hover:shadow-xl hover:border-warm-500 w-full sm:w-[49%] md:w-[32%] lg:w-[24%] xl:w-[19%] p-5 hover:-translate-y-3 duration-300 transition-all">
-            <div class="flex items-center border-b border-warm-300 pb-2">
+          <router-link v-for="(item, index) in cate.list" :key="index" :to="item.url" class="tool-card flex flex-col mt-4 border bg-white/95 w-full sm:w-[49%] md:w-[32%] lg:w-[24%] xl:w-[19%] p-4">
+            <div class="flex items-center border-b border-slate-100 pb-3">
               <img
                 v-if="!useSpriteLogo(item).style"
                 :src="item.logo"
@@ -252,15 +252,15 @@ watch(() => toolsStore.cates.length, () => {
               ></div>
               <div class="flex flex-col ml-2 w-full">
                 <div class="flex">
-                  <div class="font-semibold text-lg line-clamp-1 text-warm-900">{{ item.title }}</div>
+                  <div class="font-semibold text-base line-clamp-1 text-slate-900">{{ item.title }}</div>
                 </div>
                 <div class="flex justify-between">
-                  <el-text size="small" class="text-warm-700">{{ item.cate }}</el-text>
+                  <el-text size="small" class="tool-card-meta">{{ item.cate }}</el-text>
                 </div>
               </div>
             </div>
             <div class="flex items-center justify-between mt-2">
-              <el-text line-clamp="2" class="text-warm-800">{{ item.desc }}</el-text>
+              <el-text line-clamp="2" class="tool-card-desc">{{ item.desc }}</el-text>
             </div>
           </router-link>
       </div>
@@ -270,16 +270,71 @@ watch(() => toolsStore.cates.length, () => {
     <transition name="fade">
       <div
         v-show="showBackTop"
-        class="fixed right-[30px] bottom-[60px] z-50 cursor-pointer w-14 h-14 rounded-full bg-white shadow-lg flex items-center justify-center hover:bg-blue-50 transition-colors border border-gray-100"
+        class="fixed right-[30px] bottom-[60px] z-50 cursor-pointer w-11 h-11 rounded-lg bg-white shadow-md flex items-center justify-center hover:bg-warm-50 transition-colors border border-slate-200"
         @click="scrollToTop"
       >
-        <el-icon :size="28" color="#409EFF"><Top /></el-icon>
+        <el-icon :size="22" color="#0f766e"><Top /></el-icon>
       </div>
     </transition>
   </div>
 </template>
 
 <style scoped>
+.category-title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: #0f172a;
+  letter-spacing: 0;
+  scroll-margin-top: 96px;
+  transition: color 0.18s ease;
+}
+
+.category-title::before {
+  content: '';
+  width: 4px;
+  height: 18px;
+  border-radius: 2px;
+  background: var(--warm-primary);
+}
+
+.category-title:hover {
+  color: var(--warm-primary);
+}
+
+.tool-card {
+  min-height: 132px;
+  border-color: rgba(226, 232, 240, 0.95);
+  border-radius: 8px;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+  transition:
+    transform 0.18s ease,
+    box-shadow 0.18s ease,
+    border-color 0.18s ease,
+    background-color 0.18s ease;
+}
+
+.tool-card:hover {
+  transform: translateY(-2px);
+  border-color: rgba(20, 184, 166, 0.45);
+  background-color: #ffffff;
+  box-shadow: 0 10px 24px rgba(15, 23, 42, 0.08);
+}
+
+.tool-card:focus-visible {
+  outline: 3px solid rgba(20, 184, 166, 0.24);
+  outline-offset: 2px;
+}
+
+.tool-card-meta {
+  color: #64748b !important;
+}
+
+.tool-card-desc {
+  color: #475569 !important;
+  line-height: 1.55;
+}
+
 .fade-enter-active,
 .fade-leave-active {
   transition: opacity 0.3s ease;
