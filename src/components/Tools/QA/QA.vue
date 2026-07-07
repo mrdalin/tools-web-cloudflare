@@ -5,9 +5,9 @@ import DetailHeader from '@/components/Layout/DetailHeader/DetailHeader.vue'
 import ToolDetail from '@/components/Layout/ToolDetail/ToolDetail.vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { Refresh, Plus, Edit, Delete, View, QuestionFilled, ChatDotRound, CopyDocument, Minus } from '@element-plus/icons-vue'
-import { useUserStore } from '@/store/modules/user'
 import { useRouter } from 'vue-router'
 import { renderSafeMarkdown } from '@/utils/sanitize'
+import { getLocalToken, isTokenExpired, logout } from '@/utils/user'
 
 interface QAItem {
   id: string
@@ -38,7 +38,6 @@ const info = reactive({
   title: "QA问答页面制作",
 })
 
-const userStore = useUserStore()
 const router = useRouter()
 
 const qaList = ref<QAItem[]>([])
@@ -71,21 +70,121 @@ const formData = reactive({
 // 添加loading状态
 const loading = ref(false)
 const operationLoading = ref(false)
+const syncingLocal = ref(false)
+const isCloudMode = ref(false)
+const localQACount = ref(0)
+const LOCAL_QA_KEY = 'youngbar.qa.localItems'
 
-// 检查登录状态
-onMounted(() => {
-  if (!userStore.getLoginStatus) {
-    ElMessage.warning('请先登录')
-    const currentPath = window.location.pathname
-    router.push('/login?redirect=' + encodeURIComponent(currentPath))
+const goToLogin = () => {
+  const currentPath = window.location.pathname
+  router.push('/login?redirect=' + encodeURIComponent(currentPath))
+}
+
+const hasValidToken = () => {
+  const token = getLocalToken()
+  if (!token) return false
+  if (isTokenExpired(token)) {
+    logout()
+    return false
   }
+  return true
+}
+
+const isUnauthorizedError = (error: any) => error?.response?.status === 401
+
+const buildQAPayload = () => ({
+  title: formData.title.trim(),
+  qaItems: formData.qaItems.map(item => ({
+    question: item.question.trim(),
+    answer: item.answer.trim()
+  })),
+  headerContent: formData.headerContent.trim(),
+  footerContent: formData.footerContent.trim(),
+  isPublic: formData.isPublic
+})
+
+const normalizeLocalQA = (qa: any): QAItem => {
+  const now = new Date().toISOString()
+  const qaItems = Array.isArray(qa?.qaItems) ? qa.qaItems : []
+  return {
+    id: String(qa?.id || `local-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`),
+    title: String(qa?.title || ''),
+    question: String(qa?.question || ''),
+    answer: String(qa?.answer || ''),
+    qaItems: qaItems.map((item: any) => ({
+      question: String(item?.question || ''),
+      answer: String(item?.answer || '')
+    })),
+    headerContent: String(qa?.headerContent || ''),
+    footerContent: String(qa?.footerContent || ''),
+    createTime: String(qa?.createTime || now),
+    updateTime: String(qa?.updateTime || qa?.createTime || now),
+    isPublic: Boolean(qa?.isPublic)
+  }
+}
+
+const readLocalQAList = (): QAItem[] => {
+  try {
+    const raw = localStorage.getItem(LOCAL_QA_KEY)
+    const parsed = raw ? JSON.parse(raw) : []
+    return Array.isArray(parsed) ? parsed.map(normalizeLocalQA) : []
+  } catch (error) {
+    console.error('读取本地QA失败:', error)
+    return []
+  }
+}
+
+const writeLocalQAList = (items: QAItem[]) => {
+  localStorage.setItem(LOCAL_QA_KEY, JSON.stringify(items))
+  localQACount.value = items.length
+}
+
+const refreshLocalQACount = () => {
+  localQACount.value = readLocalQAList().length
+}
+
+const setLocalPagination = (total: number) => {
+  pagination.value = {
+    total,
+    page: 1,
+    pageSize: total || 12,
+    totalPages: total > 0 ? 1 : 0,
+    hasNext: false,
+    hasPrev: false
+  }
+}
+
+const loadLocalQAList = () => {
+  const items = readLocalQAList()
+  isCloudMode.value = false
+  qaList.value = items
+  localQACount.value = items.length
+  currentQA.value = null
+  setLocalPagination(items.length)
+}
+
+const switchToLocalMode = (message?: string) => {
+  loadLocalQAList()
+  if (message) {
+    ElMessage.warning(message)
+  }
+}
+
+onMounted(() => {
   fetchQAList()
 })
 
 // 获取QA列表（支持分页）
 const fetchQAList = async (page = 1, pageSize = 12) => {
+  if (!hasValidToken()) {
+    switchToLocalMode()
+    return
+  }
+
   try {
     loading.value = true
+    isCloudMode.value = true
+    refreshLocalQACount()
     const response = await functionsRequest.get('/api/qa', {
       params: { page, pageSize }
     })
@@ -96,7 +195,11 @@ const fetchQAList = async (page = 1, pageSize = 12) => {
         pagination.value = data.pagination
       }
     }
-  } catch (error) {
+  } catch (error: any) {
+    if (isUnauthorizedError(error)) {
+      switchToLocalMode('登录已过期，已切换为本地模式')
+      return
+    }
     console.error('获取QA列表失败:', error)
     ElMessage.error('获取QA列表失败')
   } finally {
@@ -145,18 +248,29 @@ const createQA = async () => {
     }
   }
 
+  const payload = buildQAPayload()
+
+  if (!isCloudMode.value || !hasValidToken()) {
+    const now = new Date().toISOString()
+    const localQA: QAItem = {
+      id: `local-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+      question: payload.qaItems[0]?.question || '',
+      answer: payload.qaItems[0]?.answer || '',
+      ...payload,
+      createTime: now,
+      updateTime: now
+    }
+    writeLocalQAList([localQA, ...readLocalQAList()])
+    ElMessage.success(payload.isPublic ? '已保存到本地，公开链接需登录同步后生成' : '已保存到本地')
+    showForm.value = false
+    resetForm()
+    loadLocalQAList()
+    return
+  }
+
   try {
     operationLoading.value = true
-    const response = await functionsRequest.post('/api/qa', {
-      title: formData.title.trim(),
-      qaItems: formData.qaItems.map(item => ({
-        question: item.question.trim(),
-        answer: item.answer.trim()
-      })),
-      headerContent: formData.headerContent.trim(),
-      footerContent: formData.footerContent.trim(),
-      isPublic: formData.isPublic
-    })
+    const response = await functionsRequest.post('/api/qa', payload)
 
     if (response.status === 201) {
       ElMessage.success('创建成功')
@@ -166,7 +280,11 @@ const createQA = async () => {
     } else {
       ElMessage.error('创建失败')
     }
-  } catch (error) {
+  } catch (error: any) {
+    if (isUnauthorizedError(error)) {
+      switchToLocalMode('登录已过期，已切换为本地模式')
+      return
+    }
     console.error('创建QA失败:', error)
     ElMessage.error('创建失败')
   } finally {
@@ -190,18 +308,37 @@ const updateQA = async () => {
     }
   }
 
+  const payload = buildQAPayload()
+
+  if (!isCloudMode.value || !hasValidToken()) {
+    const items = readLocalQAList()
+    const index = items.findIndex((item) => item.id === editingQAId.value)
+    if (index === -1) {
+      ElMessage.error('本地QA不存在')
+      return
+    }
+    const updatedQA: QAItem = {
+      ...items[index],
+      question: payload.qaItems[0]?.question || '',
+      answer: payload.qaItems[0]?.answer || '',
+      ...payload,
+      updateTime: new Date().toISOString()
+    }
+    items.splice(index, 1, updatedQA)
+    writeLocalQAList(items)
+    ElMessage.success(payload.isPublic ? '已更新本地QA，公开链接需登录同步后生成' : '已更新本地QA')
+    showForm.value = false
+    isEditing.value = false
+    editingQAId.value = null
+    resetForm()
+    loadLocalQAList()
+    currentQA.value = qaList.value.find((item) => item.id === updatedQA.id) || updatedQA
+    return
+  }
+
   try {
     operationLoading.value = true
-    const response = await functionsRequest.put(`/api/qa/${editingQAId.value}`, {
-      title: formData.title.trim(),
-      qaItems: formData.qaItems.map(item => ({
-        question: item.question.trim(),
-        answer: item.answer.trim()
-      })),
-      headerContent: formData.headerContent.trim(),
-      footerContent: formData.footerContent.trim(),
-      isPublic: formData.isPublic
-    })
+    const response = await functionsRequest.put(`/api/qa/${editingQAId.value}`, payload)
 
     if (response.status === 200) {
       ElMessage.success('更新成功')
@@ -213,7 +350,11 @@ const updateQA = async () => {
     } else {
       ElMessage.error('更新失败')
     }
-  } catch (error) {
+  } catch (error: any) {
+    if (isUnauthorizedError(error)) {
+      switchToLocalMode('登录已过期，已切换为本地模式')
+      return
+    }
     console.error('更新QA失败:', error)
     ElMessage.error('更新失败')
   } finally {
@@ -228,6 +369,16 @@ const deleteQA = async (qa: QAItem) => {
     cancelButtonText: '取消',
     type: 'warning',
   })
+
+  if (!isCloudMode.value || !hasValidToken()) {
+    writeLocalQAList(readLocalQAList().filter((item) => item.id !== qa.id))
+    ElMessage.success('已删除本地QA')
+    if (currentQA.value?.id === qa.id) {
+      currentQA.value = null
+    }
+    loadLocalQAList()
+    return
+  }
 
   try {
     operationLoading.value = true
@@ -246,7 +397,11 @@ const deleteQA = async (qa: QAItem) => {
     } else {
       ElMessage.error('删除失败')
     }
-  } catch (error) {
+  } catch (error: any) {
+    if (isUnauthorizedError(error)) {
+      switchToLocalMode('登录已过期，已切换为本地模式')
+      return
+    }
     console.error('删除QA失败:', error)
     ElMessage.error('删除失败')
   } finally {
@@ -303,12 +458,63 @@ const formatTime = (timeStr: string) => {
 
 // 复制QA链接
 const copyQALink = async (qa: QAItem) => {
+  if (!isCloudMode.value || qa.id.startsWith('local-')) {
+    ElMessage.warning('本地QA草稿没有公开链接，请登录并同步到云端后再复制')
+    return
+  }
+
   try {
     const link = `${window.location.origin}/qa-view/${qa.id}`
     await navigator.clipboard.writeText(link)
     ElMessage.success('链接已复制到剪贴板')
   } catch (err) {
     ElMessage.error('复制失败')
+  }
+}
+
+const syncLocalQAToCloud = async () => {
+  if (!hasValidToken()) {
+    ElMessage.warning('请先登录后再同步本地QA')
+    goToLogin()
+    return
+  }
+
+  const localQAList = readLocalQAList()
+  if (localQAList.length === 0) {
+    ElMessage.info('没有需要同步的本地QA')
+    return
+  }
+
+  try {
+    syncingLocal.value = true
+    for (const qa of localQAList) {
+      const qaItems = qa.qaItems.length > 0
+        ? qa.qaItems
+        : [{ question: qa.question, answer: qa.answer }]
+      await functionsRequest.post('/api/qa', {
+        title: qa.title,
+        qaItems: qaItems.map(item => ({
+          question: item.question,
+          answer: item.answer
+        })),
+        headerContent: qa.headerContent,
+        footerContent: qa.footerContent,
+        isPublic: qa.isPublic
+      })
+    }
+    localStorage.removeItem(LOCAL_QA_KEY)
+    localQACount.value = 0
+    ElMessage.success(`已同步 ${localQAList.length} 个本地QA到云端`)
+    await fetchQAList(1, pagination.value.pageSize || 12)
+  } catch (error: any) {
+    if (isUnauthorizedError(error)) {
+      switchToLocalMode('登录已过期，请重新登录后再同步')
+      return
+    }
+    console.error('同步本地QA失败:', error)
+    ElMessage.error('同步失败，请稍后重试')
+  } finally {
+    syncingLocal.value = false
   }
 }
 
@@ -328,6 +534,29 @@ const renderCustomContent = (content: string) => renderSafeMarkdown(content)
     <DetailHeader :title="info.title"></DetailHeader>
 
     <div class="qa-container">
+      <div class="mode-banner" :class="{ 'mode-banner--cloud': isCloudMode }">
+        <div class="mode-copy">
+          <strong>{{ isCloudMode ? '云端模式' : '本地模式' }}</strong>
+          <span>
+            {{ isCloudMode ? 'QA页面已保存到账号，可生成公开链接。' : '无需登录即可制作和预览，公开链接需登录并同步到云端后生成。' }}
+          </span>
+        </div>
+        <div class="mode-actions">
+          <el-button v-if="!isCloudMode" type="primary" plain @click="goToLogin">
+            登录后云同步
+          </el-button>
+          <el-button
+            v-if="isCloudMode && localQACount > 0"
+            type="primary"
+            :loading="syncingLocal"
+            :disabled="syncingLocal"
+            @click="syncLocalQAToCloud"
+          >
+            同步 {{ localQACount }} 个本地QA
+          </el-button>
+        </div>
+      </div>
+
       <!-- 操作栏 -->
       <div class="header-section">
         <div class="header-left">
@@ -478,7 +707,7 @@ const renderCustomContent = (content: string) => renderSafeMarkdown(content)
       </div>
 
       <!-- 分页组件 -->
-      <div v-if="pagination.total > 0" class="pagination-wrapper">
+      <div v-if="isCloudMode && pagination.total > 0" class="pagination-wrapper">
         <el-pagination
           v-model:current-page="pagination.page"
           v-model:page-size="pagination.pageSize"
@@ -832,6 +1061,47 @@ const renderCustomContent = (content: string) => renderSafeMarkdown(content)
 .qa-container > * {
   position: relative;
   z-index: 1;
+}
+
+.mode-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 18px;
+  padding: 14px 18px;
+  border: 1px solid rgba(214, 227, 225, 0.95);
+  border-radius: 12px;
+  background: var(--youngbar-primary-soft);
+  color: #0f172a;
+}
+
+.mode-banner--cloud {
+  background: rgba(255, 255, 255, 0.95);
+}
+
+.mode-copy {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.mode-copy strong {
+  color: var(--warm-primary);
+  font-size: 15px;
+}
+
+.mode-copy span {
+  color: #64748b;
+  font-size: 14px;
+}
+
+.mode-actions {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  gap: 10px;
 }
 
 /* 头部样式 */
@@ -1566,6 +1836,15 @@ const renderCustomContent = (content: string) => renderSafeMarkdown(content)
   .qa-container {
     padding: 16px;
     border-radius: 16px;
+  }
+
+  .mode-banner {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .mode-actions {
+    width: 100%;
   }
   
   .header-section {

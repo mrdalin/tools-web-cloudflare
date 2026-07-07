@@ -5,6 +5,7 @@ import DetailHeader from '@/components/Layout/DetailHeader/DetailHeader.vue'
 import ToolDetail from '@/components/Layout/ToolDetail/ToolDetail.vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { Refresh, Plus, Edit, Delete, View, Document } from '@element-plus/icons-vue'
+import { getLocalToken, isTokenExpired, logout } from '@/utils/user'
 
 interface Note {
   id: string
@@ -51,11 +52,102 @@ const formData = reactive({
 // 添加loading状态
 const loading = ref(false)
 const operationLoading = ref(false) // 用于表单操作的loading
+const syncingLocal = ref(false)
+const isCloudMode = ref(false)
+const localNoteCount = ref(0)
+const LOCAL_NOTES_KEY = 'youngbar.notes.localNotes'
+
+const goToLogin = () => {
+  const currentPath = window.location.pathname
+  window.location.href = '/login?redirect=' + encodeURIComponent(currentPath)
+}
+
+const hasValidToken = () => {
+  const token = getLocalToken()
+  if (!token) return false
+  if (isTokenExpired(token)) {
+    logout()
+    return false
+  }
+  return true
+}
+
+const isUnauthorizedError = (error: any) => error?.response?.status === 401
+
+const buildNotePayload = () => ({
+  title: formData.title.trim(),
+  content: formData.content.trim()
+})
+
+const normalizeLocalNote = (note: any): Note => {
+  const now = new Date().toISOString()
+  return {
+    id: String(note?.id || `local-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`),
+    title: String(note?.title || ''),
+    content: String(note?.content || ''),
+    createTime: String(note?.createTime || now),
+    updateTime: String(note?.updateTime || note?.createTime || now)
+  }
+}
+
+const readLocalNotes = (): Note[] => {
+  try {
+    const raw = localStorage.getItem(LOCAL_NOTES_KEY)
+    const parsed = raw ? JSON.parse(raw) : []
+    return Array.isArray(parsed) ? parsed.map(normalizeLocalNote) : []
+  } catch (error) {
+    console.error('读取本地笔记失败:', error)
+    return []
+  }
+}
+
+const writeLocalNotes = (items: Note[]) => {
+  localStorage.setItem(LOCAL_NOTES_KEY, JSON.stringify(items))
+  localNoteCount.value = items.length
+}
+
+const refreshLocalNoteCount = () => {
+  localNoteCount.value = readLocalNotes().length
+}
+
+const setLocalPagination = (total: number) => {
+  pagination.value = {
+    total,
+    page: 1,
+    pageSize: total || 12,
+    totalPages: total > 0 ? 1 : 0,
+    hasNext: false,
+    hasPrev: false
+  }
+}
+
+const loadLocalNotes = () => {
+  const items = readLocalNotes()
+  isCloudMode.value = false
+  notes.value = items
+  localNoteCount.value = items.length
+  currentNote.value = null
+  setLocalPagination(items.length)
+}
+
+const switchToLocalMode = (message?: string) => {
+  loadLocalNotes()
+  if (message) {
+    ElMessage.warning(message)
+  }
+}
 
 // 获取笔记列表（支持分页）
 const fetchNotes = async (page = 1, pageSize = 12) => {
+  if (!hasValidToken()) {
+    switchToLocalMode()
+    return
+  }
+
   try {
     loading.value = true
+    isCloudMode.value = true
+    refreshLocalNoteCount()
     const response = await functionsRequest.get('/api/notes', {
       params: { page, pageSize }
     })
@@ -66,7 +158,11 @@ const fetchNotes = async (page = 1, pageSize = 12) => {
         pagination.value = data.pagination
       }
     }
-  } catch (error) {
+  } catch (error: any) {
+    if (isUnauthorizedError(error)) {
+      switchToLocalMode('登录已过期，已切换为本地模式')
+      return
+    }
     console.error('获取笔记列表失败:', error)
     ElMessage.error('获取笔记列表失败')
   } finally {
@@ -92,12 +188,27 @@ const createNote = async () => {
     return
   }
 
+  const payload = buildNotePayload()
+
+  if (!isCloudMode.value || !hasValidToken()) {
+    const now = new Date().toISOString()
+    const localNote: Note = {
+      id: `local-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+      ...payload,
+      createTime: now,
+      updateTime: now
+    }
+    writeLocalNotes([localNote, ...readLocalNotes()])
+    ElMessage.success('已保存到本地')
+    showForm.value = false
+    resetForm()
+    loadLocalNotes()
+    return
+  }
+
   try {
     operationLoading.value = true
-    const response = await functionsRequest.post('/api/notes', {
-      title: formData.title.trim(),
-      content: formData.content.trim()
-    })
+    const response = await functionsRequest.post('/api/notes', payload)
 
     if (response.status === 201) {
       ElMessage.success('创建成功')
@@ -108,7 +219,11 @@ const createNote = async () => {
     } else {
       ElMessage.error('创建失败')
     }
-  } catch (error) {
+  } catch (error: any) {
+    if (isUnauthorizedError(error)) {
+      switchToLocalMode('登录已过期，已切换为本地模式')
+      return
+    }
     console.error('创建笔记失败:', error)
     ElMessage.error('创建失败')
   } finally {
@@ -123,12 +238,35 @@ const updateNote = async () => {
     return
   }
 
+  const payload = buildNotePayload()
+
+  if (!isCloudMode.value || !hasValidToken()) {
+    const items = readLocalNotes()
+    const index = items.findIndex((item) => item.id === editingNoteId.value)
+    if (index === -1) {
+      ElMessage.error('本地笔记不存在')
+      return
+    }
+    const updatedNote: Note = {
+      ...items[index],
+      ...payload,
+      updateTime: new Date().toISOString()
+    }
+    items.splice(index, 1, updatedNote)
+    writeLocalNotes(items)
+    ElMessage.success('已更新本地笔记')
+    showForm.value = false
+    isEditing.value = false
+    editingNoteId.value = null
+    resetForm()
+    loadLocalNotes()
+    currentNote.value = notes.value.find((item) => item.id === updatedNote.id) || updatedNote
+    return
+  }
+
   try {
     operationLoading.value = true
-    const response = await functionsRequest.put(`/api/notes/${editingNoteId.value}`, {
-      title: formData.title.trim(),
-      content: formData.content.trim()
-    })
+    const response = await functionsRequest.put(`/api/notes/${editingNoteId.value}`, payload)
 
     if (response.status === 200) {
       ElMessage.success('更新成功')
@@ -141,7 +279,11 @@ const updateNote = async () => {
     } else {
       ElMessage.error('更新失败')
     }
-  } catch (error) {
+  } catch (error: any) {
+    if (isUnauthorizedError(error)) {
+      switchToLocalMode('登录已过期，已切换为本地模式')
+      return
+    }
     console.error('更新笔记失败:', error)
     ElMessage.error('更新失败')
   } finally {
@@ -156,6 +298,16 @@ const deleteNote = async (note: Note) => {
     cancelButtonText: '取消',
     type: 'warning',
   })
+
+  if (!isCloudMode.value || !hasValidToken()) {
+    writeLocalNotes(readLocalNotes().filter((item) => item.id !== note.id))
+    ElMessage.success('已删除本地笔记')
+    if (currentNote.value?.id === note.id) {
+      currentNote.value = null
+    }
+    loadLocalNotes()
+    return
+  }
 
   try {
     operationLoading.value = true
@@ -175,7 +327,11 @@ const deleteNote = async (note: Note) => {
     } else {
       ElMessage.error('删除失败')
     }
-  } catch (error) {
+  } catch (error: any) {
+    if (isUnauthorizedError(error)) {
+      switchToLocalMode('登录已过期，已切换为本地模式')
+      return
+    }
     console.error('删除笔记失败:', error)
     ElMessage.error('删除失败')
   } finally {
@@ -227,6 +383,43 @@ const showNoteDetail = computed(() =>
   !isEditing.value
 )
 
+const syncLocalNotesToCloud = async () => {
+  if (!hasValidToken()) {
+    ElMessage.warning('请先登录后再同步本地笔记')
+    goToLogin()
+    return
+  }
+
+  const localNotes = readLocalNotes()
+  if (localNotes.length === 0) {
+    ElMessage.info('没有需要同步的本地笔记')
+    return
+  }
+
+  try {
+    syncingLocal.value = true
+    for (const note of localNotes) {
+      await functionsRequest.post('/api/notes', {
+        title: note.title,
+        content: note.content
+      })
+    }
+    localStorage.removeItem(LOCAL_NOTES_KEY)
+    localNoteCount.value = 0
+    ElMessage.success(`已同步 ${localNotes.length} 条本地笔记到云端`)
+    await fetchNotes(1, pagination.value.pageSize || 12)
+  } catch (error: any) {
+    if (isUnauthorizedError(error)) {
+      switchToLocalMode('登录已过期，请重新登录后再同步')
+      return
+    }
+    console.error('同步本地笔记失败:', error)
+    ElMessage.error('同步失败，请稍后重试')
+  } finally {
+    syncingLocal.value = false
+  }
+}
+
 onMounted(() => {
   fetchNotes()
 })
@@ -237,6 +430,29 @@ onMounted(() => {
     <DetailHeader :title="info.title"></DetailHeader>
 
     <div class="notes-container">
+      <div class="mode-banner" :class="{ 'mode-banner--cloud': isCloudMode }">
+        <div class="mode-copy">
+          <strong>{{ isCloudMode ? '云端模式' : '本地模式' }}</strong>
+          <span>
+            {{ isCloudMode ? '笔记已保存到账号，可跨设备使用。' : '无需登录即可记录，数据只保存在当前浏览器。' }}
+          </span>
+        </div>
+        <div class="mode-actions">
+          <el-button v-if="!isCloudMode" type="primary" plain @click="goToLogin">
+            登录后云同步
+          </el-button>
+          <el-button
+            v-if="isCloudMode && localNoteCount > 0"
+            type="primary"
+            :loading="syncingLocal"
+            :disabled="syncingLocal"
+            @click="syncLocalNotesToCloud"
+          >
+            同步 {{ localNoteCount }} 条本地笔记
+          </el-button>
+        </div>
+      </div>
+
       <!-- 操作栏 -->
       <div class="header-section">
         <div class="header-left">
@@ -334,7 +550,7 @@ onMounted(() => {
       </div>
 
       <!-- 分页组件 -->
-      <div v-if="pagination.total > 0" class="pagination-wrapper">
+      <div v-if="isCloudMode && pagination.total > 0" class="pagination-wrapper">
         <el-pagination
           v-model:current-page="pagination.page"
           v-model:page-size="pagination.pageSize"
@@ -485,6 +701,47 @@ onMounted(() => {
 .notes-container > * {
   position: relative;
   z-index: 1;
+}
+
+.mode-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 18px;
+  padding: 14px 18px;
+  border: 1px solid rgba(214, 227, 225, 0.95);
+  border-radius: 12px;
+  background: var(--youngbar-primary-soft);
+  color: #0f172a;
+}
+
+.mode-banner--cloud {
+  background: rgba(255, 255, 255, 0.95);
+}
+
+.mode-copy {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.mode-copy strong {
+  color: var(--warm-primary);
+  font-size: 15px;
+}
+
+.mode-copy span {
+  color: #64748b;
+  font-size: 14px;
+}
+
+.mode-actions {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  gap: 10px;
 }
 
 /* 头部样式 */
@@ -953,6 +1210,15 @@ onMounted(() => {
   .notes-container {
     padding: 16px;
     border-radius: 16px;
+  }
+
+  .mode-banner {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .mode-actions {
+    width: 100%;
   }
   
   .header-section {

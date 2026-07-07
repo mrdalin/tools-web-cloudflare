@@ -5,6 +5,7 @@ import DetailHeader from '@/components/Layout/DetailHeader/DetailHeader.vue'
 import ToolDetail from '@/components/Layout/ToolDetail/ToolDetail.vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { Refresh, Plus, Edit, Delete, Clock } from '@element-plus/icons-vue'
+import { getLocalToken, isTokenExpired, logout } from '@/utils/user'
 
 interface Todo {
   id: string
@@ -60,6 +61,104 @@ const formData = reactive({
 
 const loading = ref(false)
 const operationLoading = ref(false)
+const syncingLocal = ref(false)
+const isCloudMode = ref(false)
+const localTodoCount = ref(0)
+const LOCAL_TODOS_KEY = 'youngbar.todos.localTodos'
+
+const goToLogin = () => {
+  const currentPath = window.location.pathname
+  window.location.href = '/login?redirect=' + encodeURIComponent(currentPath)
+}
+
+const hasValidToken = () => {
+  const token = getLocalToken()
+  if (!token) return false
+  if (isTokenExpired(token)) {
+    logout()
+    return false
+  }
+  return true
+}
+
+const isUnauthorizedError = (error: any) => error?.response?.status === 401
+
+const buildTodoPayload = () => ({
+  title: formData.title.trim(),
+  priority: formData.priority,
+  dueDate: formData.dueDate ? formatDateTime(new Date(formData.dueDate)) : null,
+  category: formData.category.trim() || '默认'
+})
+
+const normalizeLocalTodo = (todo: any): Todo => {
+  const now = new Date().toISOString()
+  return {
+    id: String(todo?.id || `local-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`),
+    title: String(todo?.title || ''),
+    completed: Number(todo?.completed || 0),
+    priority: String(todo?.priority || 'medium'),
+    dueDate: todo?.dueDate ? String(todo.dueDate) : null,
+    category: String(todo?.category || '默认'),
+    createTime: String(todo?.createTime || now),
+    updateTime: String(todo?.updateTime || todo?.createTime || now)
+  }
+}
+
+const readLocalTodos = (): Todo[] => {
+  try {
+    const raw = localStorage.getItem(LOCAL_TODOS_KEY)
+    const parsed = raw ? JSON.parse(raw) : []
+    return Array.isArray(parsed) ? parsed.map(normalizeLocalTodo) : []
+  } catch (error) {
+    console.error('读取本地待办失败:', error)
+    return []
+  }
+}
+
+const writeLocalTodos = (items: Todo[]) => {
+  localStorage.setItem(LOCAL_TODOS_KEY, JSON.stringify(items))
+  localTodoCount.value = items.length
+}
+
+const refreshLocalTodoCount = () => {
+  localTodoCount.value = readLocalTodos().length
+}
+
+const getFilteredLocalTodos = (items: Todo[]) => {
+  return items.filter((todo) => {
+    const titleMatched = !filterData.title || todo.title.toLowerCase().includes(filterData.title.toLowerCase())
+    const priorityMatched = !filterData.priority || todo.priority === filterData.priority
+    const categoryMatched = !filterData.category || todo.category === filterData.category
+    return titleMatched && priorityMatched && categoryMatched
+  })
+}
+
+const loadLocalTodos = (page = 1, pageSize = pagination.value.pageSize) => {
+  const allItems = readLocalTodos()
+  const filteredItems = getFilteredLocalTodos(allItems)
+  const total = filteredItems.length
+  const totalPages = total > 0 ? Math.ceil(total / pageSize) : 0
+  const safePage = totalPages > 0 ? Math.min(page, totalPages) : 1
+  const start = (safePage - 1) * pageSize
+  isCloudMode.value = false
+  todos.value = filteredItems.slice(start, start + pageSize)
+  localTodoCount.value = allItems.length
+  pagination.value = {
+    total,
+    page: safePage,
+    pageSize,
+    totalPages,
+    hasNext: totalPages > 0 && safePage < totalPages,
+    hasPrev: safePage > 1
+  }
+}
+
+const switchToLocalMode = (message?: string) => {
+  loadLocalTodos()
+  if (message) {
+    ElMessage.warning(message)
+  }
+}
 
 // 从现有待办事项中提取分类列表
 const userCategories = computed(() => {
@@ -82,8 +181,15 @@ const handleCategorySearch = (queryString: string) => {
 }
 
 const fetchTodos = async (page = 1, pageSize = 10) => {
+  if (!hasValidToken()) {
+    loadLocalTodos(page, pageSize)
+    return
+  }
+
   try {
     loading.value = true
+    isCloudMode.value = true
+    refreshLocalTodoCount()
     const params: any = { page, pageSize }
     if (filterData.title) params.title = filterData.title
     if (filterData.priority) params.priority = filterData.priority
@@ -97,7 +203,11 @@ const fetchTodos = async (page = 1, pageSize = 10) => {
         pagination.value = data.pagination
       }
     }
-  } catch (error) {
+  } catch (error: any) {
+    if (isUnauthorizedError(error)) {
+      switchToLocalMode('登录已过期，已切换为本地模式')
+      return
+    }
     console.error('获取待办事项失败:', error)
     ElMessage.error('获取待办事项失败')
   } finally {
@@ -125,14 +235,28 @@ const createTodo = async () => {
     return
   }
 
+  const payload = buildTodoPayload()
+
+  if (!isCloudMode.value || !hasValidToken()) {
+    const now = new Date().toISOString()
+    const localTodo: Todo = {
+      id: `local-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+      ...payload,
+      completed: 0,
+      createTime: now,
+      updateTime: now
+    }
+    writeLocalTodos([localTodo, ...readLocalTodos()])
+    ElMessage.success('已保存到本地')
+    showForm.value = false
+    resetForm()
+    loadLocalTodos(pagination.value.page, pagination.value.pageSize)
+    return
+  }
+
   try {
     operationLoading.value = true
-    const response = await functionsRequest.post('/api/todos', {
-      title: formData.title.trim(),
-      priority: formData.priority,
-      dueDate: formData.dueDate ? formatDateTime(new Date(formData.dueDate)) : null,
-      category: formData.category.trim() || '默认'
-    })
+    const response = await functionsRequest.post('/api/todos', payload)
 
     if (response.status === 201) {
       ElMessage.success('创建成功')
@@ -140,7 +264,11 @@ const createTodo = async () => {
       resetForm()
       await fetchTodos(pagination.value.page, pagination.value.pageSize)
     }
-  } catch (error) {
+  } catch (error: any) {
+    if (isUnauthorizedError(error)) {
+      switchToLocalMode('登录已过期，已切换为本地模式')
+      return
+    }
     console.error('创建待办事项失败:', error)
     ElMessage.error('创建失败')
   } finally {
@@ -154,14 +282,33 @@ const updateTodo = async () => {
     return
   }
 
+  const payload = buildTodoPayload()
+
+  if (!isCloudMode.value || !hasValidToken()) {
+    const items = readLocalTodos()
+    const index = items.findIndex((item) => item.id === editingTodoId.value)
+    if (index === -1) {
+      ElMessage.error('本地待办不存在')
+      return
+    }
+    items.splice(index, 1, {
+      ...items[index],
+      ...payload,
+      updateTime: new Date().toISOString()
+    })
+    writeLocalTodos(items)
+    ElMessage.success('已更新本地待办')
+    showForm.value = false
+    isEditing.value = false
+    editingTodoId.value = null
+    resetForm()
+    loadLocalTodos(pagination.value.page, pagination.value.pageSize)
+    return
+  }
+
   try {
     operationLoading.value = true
-    const response = await functionsRequest.put(`/api/todos/${editingTodoId.value}`, {
-      title: formData.title.trim(),
-      priority: formData.priority,
-      dueDate: formData.dueDate ? formatDateTime(new Date(formData.dueDate)) : null,
-      category: formData.category.trim() || '默认'
-    })
+    const response = await functionsRequest.put(`/api/todos/${editingTodoId.value}`, payload)
 
     if (response.status === 200) {
       ElMessage.success('更新成功')
@@ -171,7 +318,11 @@ const updateTodo = async () => {
       resetForm()
       await fetchTodos(pagination.value.page, pagination.value.pageSize)
     }
-  } catch (error) {
+  } catch (error: any) {
+    if (isUnauthorizedError(error)) {
+      switchToLocalMode('登录已过期，已切换为本地模式')
+      return
+    }
     console.error('更新待办事项失败:', error)
     ElMessage.error('更新失败')
   } finally {
@@ -180,6 +331,21 @@ const updateTodo = async () => {
 }
 
 const toggleComplete = async (todo: Todo) => {
+  if (!isCloudMode.value || !hasValidToken()) {
+    const items = readLocalTodos()
+    const index = items.findIndex((item) => item.id === todo.id)
+    if (index === -1) return
+    items.splice(index, 1, {
+      ...items[index],
+      completed: todo.completed === 1 ? 0 : 1,
+      updateTime: new Date().toISOString()
+    })
+    writeLocalTodos(items)
+    ElMessage.success(todo.completed === 1 ? '已标记为未完成' : '已标记为完成')
+    loadLocalTodos(pagination.value.page, pagination.value.pageSize)
+    return
+  }
+
   try {
     const response = await functionsRequest.put(`/api/todos/${todo.id}`, {
       completed: todo.completed === 1 ? 0 : 1
@@ -202,6 +368,13 @@ const deleteTodo = async (id: string) => {
       cancelButtonText: '取消',
       type: 'warning',
     })
+
+    if (!isCloudMode.value || !hasValidToken()) {
+      writeLocalTodos(readLocalTodos().filter((item) => item.id !== id))
+      ElMessage.success('已删除本地待办')
+      loadLocalTodos(pagination.value.page, pagination.value.pageSize)
+      return
+    }
 
     const response = await functionsRequest.delete(`/api/todos/${id}`)
 
@@ -265,6 +438,49 @@ const getPriorityText = (priority: string) => {
   return texts[priority] || priority
 }
 
+const syncLocalTodosToCloud = async () => {
+  if (!hasValidToken()) {
+    ElMessage.warning('请先登录后再同步本地待办')
+    goToLogin()
+    return
+  }
+
+  const localTodos = readLocalTodos()
+  if (localTodos.length === 0) {
+    ElMessage.info('没有需要同步的本地待办')
+    return
+  }
+
+  try {
+    syncingLocal.value = true
+    for (const todo of localTodos) {
+      const response = await functionsRequest.post('/api/todos', {
+        title: todo.title,
+        priority: todo.priority,
+        dueDate: todo.dueDate,
+        category: todo.category
+      })
+      const createdId = response.data?.id || response.data?.data?.id
+      if (todo.completed === 1 && createdId) {
+        await functionsRequest.put(`/api/todos/${createdId}`, { completed: 1 })
+      }
+    }
+    localStorage.removeItem(LOCAL_TODOS_KEY)
+    localTodoCount.value = 0
+    ElMessage.success(`已同步 ${localTodos.length} 条本地待办到云端`)
+    await fetchTodos(1, pagination.value.pageSize || 10)
+  } catch (error: any) {
+    if (isUnauthorizedError(error)) {
+      switchToLocalMode('登录已过期，请重新登录后再同步')
+      return
+    }
+    console.error('同步本地待办失败:', error)
+    ElMessage.error('同步失败，请稍后重试')
+  } finally {
+    syncingLocal.value = false
+  }
+}
+
 // 实时搜索（防抖）
 let searchTimer: ReturnType<typeof setTimeout> | null = null
 watch(() => [filterData.title, filterData.priority, filterData.category], () => {
@@ -282,6 +498,29 @@ onMounted(() => {
 <template>
   <DetailHeader :info="info" />
   <div class="flex flex-col flex-1 bg-white rounded-md p-4 c-sm:p-6 mt-3">
+    <div class="mode-banner" :class="{ 'mode-banner--cloud': isCloudMode }">
+      <div class="mode-copy">
+        <strong>{{ isCloudMode ? '云端模式' : '本地模式' }}</strong>
+        <span>
+          {{ isCloudMode ? '待办已保存到账号，可跨设备使用。' : '无需登录即可管理待办，数据只保存在当前浏览器。' }}
+        </span>
+      </div>
+      <div class="mode-actions">
+        <el-button v-if="!isCloudMode" type="primary" plain @click="goToLogin">
+          登录后云同步
+        </el-button>
+        <el-button
+          v-if="isCloudMode && localTodoCount > 0"
+          type="primary"
+          :loading="syncingLocal"
+          :disabled="syncingLocal"
+          @click="syncLocalTodosToCloud"
+        >
+          同步 {{ localTodoCount }} 条本地待办
+        </el-button>
+      </div>
+    </div>
+
     <!-- 筛选栏 -->
     <div class="mb-4 p-3 border border-gray-200 rounded-lg bg-gray-50">
       <div class="flex flex-col sm:flex-row gap-3 items-start sm:items-end">
@@ -431,7 +670,59 @@ onMounted(() => {
 </template>
 
 <style scoped>
+.mode-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 18px;
+  padding: 14px 18px;
+  border: 1px solid rgba(214, 227, 225, 0.95);
+  border-radius: 12px;
+  background: var(--youngbar-primary-soft);
+  color: #0f172a;
+}
+
+.mode-banner--cloud {
+  background: rgba(255, 255, 255, 0.95);
+}
+
+.mode-copy {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.mode-copy strong {
+  color: var(--warm-primary);
+  font-size: 15px;
+}
+
+.mode-copy span {
+  color: #64748b;
+  font-size: 14px;
+}
+
+.mode-actions {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  gap: 10px;
+}
+
 .el-checkbox {
   margin-right: 0;
+}
+
+@media (max-width: 768px) {
+  .mode-banner {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .mode-actions {
+    width: 100%;
+  }
 }
 </style>
