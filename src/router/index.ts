@@ -1,6 +1,7 @@
 //通过vue-router插件实现模板路由配置
 import { createRouter, createWebHistory } from 'vue-router'
 import { constantRoute } from './router'
+import { getToolSeoMeta } from '@/components/Layout/ToolSeoContent/toolSeoContent'
 
 const appTitle = import.meta.env.VITE_APP_TITLE || 'Youngbar工具箱'
 const appDesc = import.meta.env.VITE_APP_DESC || '一个轻量的在线工具箱'
@@ -24,6 +25,19 @@ const getCanonicalPath = (path: string) => {
 }
 
 const getCanonicalUrl = (path: string) => `${siteUrl}${getCanonicalPath(path)}`
+
+const resolvePageMeta = (
+  path: string,
+  meta: { title?: unknown; keywords?: unknown; description?: unknown },
+) => {
+  const seoMeta = getToolSeoMeta(path)
+
+  return {
+    title: seoMeta?.title || meta.title,
+    keywords: seoMeta?.keywords || meta.keywords,
+    description: seoMeta?.description || meta.description,
+  }
+}
 
 const updateCanonical = (href: string) => {
   let canonical = document.querySelector<HTMLLinkElement>('link[rel="canonical"]')
@@ -68,15 +82,16 @@ router.beforeEach((to, _from, next) => {
     return
   }
 
-  if (to.meta.title) {
-    document.title = `${to.meta.title as string}-${appTitle}`
+  const { title } = resolvePageMeta(to.path, to.meta)
+  if (title) {
+    document.title = `${title as string}-${appTitle}`
   }
   next()
 })
 
 //路由后置卫士
 router.afterEach((to) => {
-  const { title, keywords, description } = to.meta
+  const { title, keywords, description } = resolvePageMeta(to.path, to.meta)
   const canonicalUrl = getCanonicalUrl(to.path)
 
   if (title) {

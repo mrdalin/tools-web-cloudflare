@@ -8,6 +8,10 @@ const Discuss = defineAsyncComponent({
   loader: () => import('@/components/Layout/Discuss.vue'),
   delay: 100,
 })
+const ToolSeoContent = defineAsyncComponent({
+  loader: () => import('@/components/Layout/ToolSeoContent/ToolSeoContent.vue'),
+  delay: 100,
+})
 
 // 布局组件异步化：减少首屏主 bundle 体积；用骨架占位避免布局抖动
 const Header = defineAsyncComponent({
@@ -29,6 +33,7 @@ const Floor = defineAsyncComponent({
 import { useRoute } from 'vue-router';
 import { Top } from '@element-plus/icons-vue';
 import zhCn from 'element-plus/dist/locale/zh-cn.mjs'
+import { getToolSeoContent } from '@/components/Layout/ToolSeoContent/toolSeoContent'
 
 const showBackTop = ref(false)
 const onScroll = () => {
@@ -72,6 +77,7 @@ const isSpecialPage = computed(() => {
 const isHomePage = computed(() => {
   return route.name === 'home' || route.path === '/';
 });
+const hasToolSeoContent = computed(() => Boolean(getToolSeoContent(route.path)));
 
 </script>
 
@@ -110,6 +116,7 @@ const isHomePage = computed(() => {
             <component :is="Component" :key="route.path"></component>
           </transition>
         </router-view>
+        <ToolSeoContent v-if="!isSpecialPage && !isHomePage && !componentStore.hideAllUI && hasToolSeoContent" />
         <Discuss v-if="!isSpecialPage && !isHomePage && !componentStore.hideAllUI" />
       </el-main>
       <el-footer v-if="!isSpecialPage" class="md:mb-6 mt-12 c-xs:mb-12">
