@@ -20,7 +20,7 @@
         </button>
       </div>
       <p class="text-xs text-gray-500 mt-2">
-        {{ isLoggedIn ? 'API Key将保存到服务器（需登录）' : 'API Key将保存到本地浏览器' }}
+        {{ isLoggedIn ? 'API Key将保存到服务器（需登录）' : 'API Key将保存到本地浏览器，清除浏览器数据、更换浏览器或设备后可能丢失' }}
       </p>
     </div>
 

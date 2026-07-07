@@ -598,7 +598,7 @@ onMounted(() => {
           <el-icon><Connection /></el-icon> 已登录，可管理所有配方
         </el-tag>
         <el-tag v-else type="info" effect="plain">
-          未登录，可创建匿名配方
+          未登录，本地配方清除浏览器数据后可能丢失
           <el-link type="primary" :underline="false" class="ml-1" @click="goToLogin">去登录</el-link>
         </el-tag>
         <el-tag v-if="syncing" type="warning" effect="plain">同步中…</el-tag>
@@ -783,7 +783,7 @@ onMounted(() => {
           <li>点击"加载示例"可一键导入预置的用户/文章/商品 Schema；</li>
           <li>在左侧编辑字段名、类型、范围（前缀/枚举/最小最大值）；</li>
           <li>右侧实时预览生成的 JSON 数据，无需手动点击，支持复制与下载；</li>
-          <li>点击"保存配方"将当前 Schema 持久化（未登录存本地，登录后自动同步至云端）；</li>
+          <li>点击"保存配方"将当前 Schema 持久化（未登录存本地，清除浏览器数据、更换浏览器或设备后可能丢失；登录后自动同步至云端）；</li>
           <li>登录后切换设备登录同一账号，可自动拉取云端配方。</li>
         </ol>
         <p class="mt-2 text-gray-500 text-xs">

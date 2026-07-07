@@ -538,7 +538,7 @@ const renderCustomContent = (content: string) => renderSafeMarkdown(content)
         <div class="mode-copy">
           <strong>{{ isCloudMode ? '云端模式' : '本地模式' }}</strong>
           <span>
-            {{ isCloudMode ? 'QA页面已保存到账号，可生成公开链接。' : '无需登录即可制作和预览，公开链接需登录并同步到云端后生成。' }}
+            {{ isCloudMode ? 'QA页面已保存到账号，可生成公开链接。' : '无需登录即可制作和预览，数据只保存在当前浏览器；清除浏览器数据、更换浏览器或设备后，本地内容可能丢失；公开链接需登录并同步到云端后生成。' }}
           </span>
         </div>
         <div class="mode-actions">

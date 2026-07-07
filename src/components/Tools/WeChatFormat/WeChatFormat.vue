@@ -1967,6 +1967,10 @@ const quickSyntaxButtons = [
         </div>
       </template>
 
+      <div class="mb-4 rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-xs leading-relaxed text-amber-800">
+        草稿保存在当前浏览器本地；清除浏览器数据、更换浏览器或设备后可能丢失。
+      </div>
+
       <div v-if="draftList.length === 0" class="text-center text-gray-400 py-12">
         <p class="text-4xl mb-3">📝</p>
         <p>暂无草稿</p>

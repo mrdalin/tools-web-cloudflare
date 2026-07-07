@@ -547,7 +547,7 @@ onMounted(async () => {
       <div v-if="!userStore.isLoggedIn" class="mode-banner mode-local" style="justify-content:space-between">
         <span>
           <el-icon class="mode-icon"><Link /></el-icon>
-          本地存储模式，登录后可同步到云端
+          本地存储模式，数据只保存在当前浏览器；清除浏览器数据、更换浏览器或设备后可能丢失。登录后可同步到云端
         </span>
         <el-button size="small" type="primary" @click="goToLogin">登录</el-button>
       </div>
@@ -863,7 +863,7 @@ onMounted(async () => {
     <ToolDetail title="工具描述">
       <el-text>
         在线收藏夹与稍后读工具，帮你收藏和管理感兴趣的网页链接。支持标签分类、阅读状态标记、搜索筛选。
-        未登录时数据保存在浏览器本地，登录后自动同步到云端，多设备共享。
+        未登录时数据保存在浏览器本地，清除浏览器数据、更换浏览器或设备后可能丢失；登录后自动同步到云端，多设备共享。
       </el-text>
     </ToolDetail>
   </div>
