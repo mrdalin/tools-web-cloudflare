@@ -42,9 +42,10 @@ onMounted(async () => {
       </p>
 
       <h1 class="text-2xl font-bold mt-6 mb-6">Youngbar 的来历</h1>
-      <p>
-        <el-text>Youngbar.com 这个域名，源于 2006 年一位 QQ 昵称叫「飘」的好友提出的想法，并由此注册。今天把它用在这个工具站上，也像给这段二十多年的友情留下一盏灯。愿多年以后，念起仍是少年；一切来自 2006 年的「飘」。</el-text>
+      <p class="origin-story">
+        <el-text>Youngbar.com 这个域名，源于 2006 年一位 QQ 昵称叫「飘」的好友提出的想法，并由此注册。这个名字陪我们走过二十多年，今天我们依然是很好的好友，也愿意把这份情义继续带向未来。把它用在这个工具站上，是想给这段一起走来的友情留下一盏灯。愿多年以后，念起仍是少年。</el-text>
       </p>
+      <p class="origin-signature">— 一切来自 2006 年的「飘」</p>
 
       <h1 class="text-2xl font-bold mt-6 mb-6">项目来源</h1>
       <div class="space-y-3">
@@ -105,6 +106,19 @@ onMounted(async () => {
   border: 1px solid rgba(214, 227, 225, 0.95);
   border-radius: 8px;
   background: #f8fafc;
+}
+
+.origin-story {
+  margin-bottom: 0;
+}
+
+.origin-signature {
+  margin-top: 12px;
+  color: var(--warm-primary);
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 1.8;
+  text-align: right;
 }
 
 .privacy-link {
