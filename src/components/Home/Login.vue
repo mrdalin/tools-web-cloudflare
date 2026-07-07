@@ -48,6 +48,7 @@ const redirectUrl = computed(() => {
 
 // 谷歌登录配置
 const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID;
+const isGoogleConfigured = computed(() => Boolean(GOOGLE_CLIENT_ID));
 
 // 计算属性检查用户是否已登录
 const isLoggedIn = computed(() => userStore.getLoginStatus);
@@ -63,6 +64,10 @@ onMounted(() => {
   }
 
   // 加载谷歌登录SDK
+  if (!isGoogleConfigured.value) {
+    return;
+  }
+
   const script = document.createElement("script");
   script.src = "https://accounts.google.com/gsi/client";
   script.async = true;
@@ -76,6 +81,11 @@ onMounted(() => {
 
 // 添加自定义谷歌登录处理函数
 const handleCustomGoogleLogin = () => {
+  if (!isGoogleConfigured.value) {
+    ElMessage.error("Google 登录未配置");
+    return;
+  }
+
   if (typeof window.google !== "undefined") {
     // 触发Google One Tap登录
     window.google.accounts.id.prompt((notification) => {
@@ -572,14 +582,14 @@ const handleSignOut = () => {
         </div>
 
         <!-- 分割线 -->
-        <div class="flex items-center">
+        <div v-if="isGoogleConfigured" class="flex items-center">
           <div class="flex-1 border-t border-gray-300"></div>
           <span class="px-3 text-sm text-gray-500">或</span>
           <div class="flex-1 border-t border-gray-300"></div>
         </div>
 
         <!-- 自定义谷歌登录按钮 -->
-        <div class="flex justify-center">
+        <div v-if="isGoogleConfigured" class="flex justify-center">
           <button
             @click="handleCustomGoogleLogin"
             :disabled="loading"
@@ -604,7 +614,7 @@ const handleSignOut = () => {
         </div>
 
         <!-- 隐藏的Google SDK按钮 -->
-        <div style="display: none;">
+        <div v-if="isGoogleConfigured" style="display: none;">
           <div id="google-signin-button"></div>
         </div>
 
@@ -616,8 +626,8 @@ const handleSignOut = () => {
 
         <!-- 登录说明 -->
         <div class="text-center text-gray-500 text-xs sm:text-sm px-2">
-          <p>支持邮箱验证码登录 / 谷歌账号登录</p>
-          <p class="mt-2">登录后可以享受更多个性化功能</p>
+          <p>{{ isGoogleConfigured ? '支持邮箱验证码登录 / Google 账号登录' : '支持邮箱验证码登录' }}</p>
+          <p class="mt-2">登录后可以使用更多个性化功能</p>
         </div>
 
         <!-- 退出登录按钮 -->

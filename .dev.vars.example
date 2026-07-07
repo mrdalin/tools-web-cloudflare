@@ -2,6 +2,9 @@ JWT_SECRET="replace-with-a-random-32-byte-secret"
 RESEND_API_KEY="re_xxx"
 RESEND_FROM_EMAIL="Tools Web <noreply@example.com>"
 
+VITE_GOOGLE_CLIENT_ID=""
+GOOGLE_CLIENT_ID=""
+
 LINUXDO_CLIENT_ID=""
 LINUXDO_CLIENT_SECRET=""
 LINUXDO_REDIRECT_URI="http://127.0.0.1:8788/linuxdo-auth"
@@ -17,4 +20,3 @@ GITEE_REDIRECT_URI="http://127.0.0.1:8788/gitee-auth"
 GITHUB_CLIENT_ID=""
 GITHUB_CLIENT_SECRET=""
 GITHUB_REDIRECT_URI="http://127.0.0.1:8788/github-auth"
-

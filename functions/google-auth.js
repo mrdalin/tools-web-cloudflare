@@ -1,86 +1,151 @@
 import { getCORSHeaders } from './utils/cors.js'
 
-// 谷歌登录回调
+const GOOGLE_JWKS_URL = 'https://www.googleapis.com/oauth2/v3/certs'
+const GOOGLE_ISSUERS = new Set(['accounts.google.com', 'https://accounts.google.com'])
+
+let jwksCache = null
+let jwksCacheExpiresAt = 0
+
+const jsonResponse = (data, status, origin) =>
+  new Response(JSON.stringify(data), {
+    status,
+    headers: {
+      'Content-Type': 'application/json; charset=utf-8',
+      ...getCORSHeaders(origin)
+    }
+  })
+
+const base64urlToBytes = (value) => {
+  let base64 = value.replace(/-/g, '+').replace(/_/g, '/')
+  while (base64.length % 4) base64 += '='
+
+  const binary = atob(base64)
+  const bytes = new Uint8Array(binary.length)
+  for (let i = 0; i < binary.length; i += 1) {
+    bytes[i] = binary.charCodeAt(i)
+  }
+  return bytes
+}
+
+const decodeBase64urlJson = (value) => JSON.parse(new TextDecoder().decode(base64urlToBytes(value)))
+
+const getGoogleJwks = async () => {
+  const now = Date.now()
+  if (jwksCache && now < jwksCacheExpiresAt) {
+    return jwksCache
+  }
+
+  const response = await fetch(GOOGLE_JWKS_URL)
+  if (!response.ok) {
+    throw new Error('Unable to fetch Google public keys')
+  }
+
+  const maxAge = response.headers.get('cache-control')?.match(/max-age=(\d+)/)?.[1]
+  jwksCacheExpiresAt = now + (Number(maxAge || 300) * 1000)
+  jwksCache = await response.json()
+  return jwksCache
+}
+
+const verifyGoogleCredential = async (credential, clientId) => {
+  const parts = String(credential || '').split('.')
+  if (parts.length !== 3) {
+    throw new Error('Invalid Google credential format')
+  }
+
+  const [headerPart, payloadPart, signaturePart] = parts
+  const header = decodeBase64urlJson(headerPart)
+  const payload = decodeBase64urlJson(payloadPart)
+
+  if (header.alg !== 'RS256' || !header.kid) {
+    throw new Error('Unsupported Google credential signature')
+  }
+
+  const jwks = await getGoogleJwks()
+  const jwk = jwks.keys?.find((key) => key.kid === header.kid)
+  if (!jwk) {
+    throw new Error('Google public key not found')
+  }
+
+  const cryptoKey = await crypto.subtle.importKey(
+    'jwk',
+    jwk,
+    { name: 'RSASSA-PKCS1-v1_5', hash: 'SHA-256' },
+    false,
+    ['verify']
+  )
+
+  const signedData = new TextEncoder().encode(`${headerPart}.${payloadPart}`)
+  const signature = base64urlToBytes(signaturePart)
+  const signatureValid = await crypto.subtle.verify(
+    { name: 'RSASSA-PKCS1-v1_5' },
+    cryptoKey,
+    signature,
+    signedData
+  )
+
+  if (!signatureValid) {
+    throw new Error('Invalid Google credential signature')
+  }
+
+  const now = Math.floor(Date.now() / 1000)
+  if (!GOOGLE_ISSUERS.has(payload.iss)) {
+    throw new Error('Invalid Google credential issuer')
+  }
+  if (payload.aud !== clientId) {
+    throw new Error('Invalid Google credential audience')
+  }
+  if (!payload.exp || payload.exp < now) {
+    throw new Error('Google credential has expired')
+  }
+  if (!payload.sub || !payload.email || payload.email_verified !== true) {
+    throw new Error('Google account email is not verified')
+  }
+
+  return payload
+}
+
 export async function onRequest(context) {
-  const { request, env } = context;
-  const origin = request.headers.get('Origin');
-  const corsHeaders = getCORSHeaders(origin);
+  const { request, env } = context
+  const origin = request.headers.get('Origin')
+
+  if (request.method === 'OPTIONS') {
+    return new Response(null, {
+      status: 204,
+      headers: {
+        ...getCORSHeaders(origin),
+        'Access-Control-Allow-Methods': 'POST, OPTIONS'
+      }
+    })
+  }
 
   if (request.method !== 'POST') {
-    return new Response('Method not allowed', { status: 405, headers: corsHeaders });
+    return jsonResponse({ success: false, error: 'Method not allowed' }, 405, origin)
   }
 
   try {
-    const { credential } = await request.json();
+    const clientId = env.GOOGLE_CLIENT_ID || env.VITE_GOOGLE_CLIENT_ID
+    if (!clientId) {
+      return jsonResponse({ success: false, error: 'Google 登录未配置' }, 500, origin)
+    }
 
+    const { credential } = await request.json()
     if (!credential) {
-      return new Response('Missing credential', { status: 400 });
+      return jsonResponse({ success: false, error: '缺少 Google 登录凭证' }, 400, origin)
     }
 
-    // 安全地解析JWT token
-    let payload;
-    try {
-      const parts = credential.split('.');
-      if (parts.length !== 3) {
-        throw new Error('Invalid JWT format');
-      }
-      const payloadBase64 = parts[1];
-      let base64 = payloadBase64.replace(/-/g, '+').replace(/_/g, '/');
-      while (base64.length % 4) {
-        base64 += '=';
-      }
-      const binaryString = atob(base64);
-      const bytes = new Uint8Array(binaryString.length);
-      for (let i = 0; i < binaryString.length; i++) {
-        bytes[i] = binaryString.charCodeAt(i);
-      }
-      const decodedString = new TextDecoder('utf-8').decode(bytes);
-      payload = JSON.parse(decodedString);
-    } catch (parseError) {
-      return new Response(JSON.stringify({
-        success: false,
-        error: '无效的认证凭据',
-        message: 'JWT解析失败: ' + parseError.message
-      }), { status: 400 });
-    }
+    const payload = await verifyGoogleCredential(credential, clientId)
+    const email = String(payload.email).trim().toLowerCase()
+    const avatar = payload.picture || ''
+    const username = payload.name || email.split('@')[0]
+    const thirdPartyUid = payload.sub
+    const db = env.DB
+    const nowStr = new Date().toISOString()
 
-    // 验证token的有效性
-    const currentTime = Math.floor(Date.now() / 1000);
-    if (payload.exp && payload.exp < currentTime) {
-      return new Response(JSON.stringify({
-        success: false,
-        error: '认证凭据已过期',
-        message: '请重新登录'
-      }), { status: 401 });
-    }
+    let found = await db.prepare('SELECT id FROM user WHERE email = ?').bind(email).first()
 
-    // 验证必要的字段
-    if (!payload.email) {
-      return new Response(JSON.stringify({
-        success: false,
-        error: '认证凭据不完整',
-        message: '缺少必要的用户信息'
-      }), { status: 400 });
-    }
-
-    const email = payload.email;
-    const avatar = payload.picture || '';
-    const username = payload.name || email.split('@')[0];
-    const thirdPartyUid = payload.sub;
-
-    // D1: user 表写入/更新
-    const db = env.DB;
-    const nowStr = formatNow();
-
-    // 优先通过邮箱查找用户（统一账号）
-    let found = await db.prepare(`
-      SELECT id FROM user WHERE email = ?
-    `).bind(email).first();
-
-    let userId;
-    if (found && found.id) {
-      userId = found.id;
-      // 更新用户信息，关联第三方账号
+    let userId
+    if (found?.id) {
+      userId = found.id
       await db.prepare(`
         UPDATE user SET
           avatar = ?,
@@ -90,19 +155,19 @@ export async function onRequest(context) {
           third_party_type = 'google',
           user_level = ?
         WHERE id = ?
-      `).bind(avatar, nowStr, username, thirdPartyUid, 0, userId).run();
+      `).bind(avatar, nowStr, username, thirdPartyUid, 0, userId).run()
     } else {
-      userId = crypto.randomUUID();
+      userId = crypto.randomUUID()
       await db.prepare(`
         INSERT INTO user (id, email, avatar, created_at, last_login, third_party_uid, username, user_level, third_party_type)
         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-      `).bind(userId, email, avatar, nowStr, nowStr, thirdPartyUid, username, 0, 'google').run();
+      `).bind(userId, email, avatar, nowStr, nowStr, thirdPartyUid, username, 0, 'google').run()
     }
 
-    // 生成JWT（HS256）
     if (!env.JWT_SECRET) {
-      throw new Error('缺少 JWT_SECRET 环境变量');
+      throw new Error('JWT_SECRET is not configured')
     }
+
     const token = await signJWT(
       {
         uid: userId,
@@ -111,77 +176,34 @@ export async function onRequest(context) {
         username,
         thirdPartyType: 'google',
         thirdPartyUid,
-        thirdPartyLevel: 0,  // Google没有等级概念，默认0
+        thirdPartyLevel: 0,
         iat: Math.floor(Date.now() / 1000),
         exp: Math.floor(Date.now() / 1000) + 24 * 60 * 60 * 7
       },
       env.JWT_SECRET
-    );
+    )
 
-    return new Response(JSON.stringify({
-      success: true,
-      token,
-      message: '登录成功'
-    }), {
-      status: 200,
-      headers: {
-        'Content-Type': 'application/json; charset=utf-8',
-        ...corsHeaders,
-        'Access-Control-Allow-Methods': 'POST, OPTIONS'
-      }
-    });
-
+    return jsonResponse({ success: true, token, message: '登录成功' }, 200, origin)
   } catch (error) {
-    console.error('Google auth error:', error);
-    return new Response(JSON.stringify({
+    console.error('Google auth error:', error)
+    return jsonResponse({
       success: false,
-      error: '认证失败',
+      error: 'Google 登录失败',
       message: error.message
-    }), {
-      status: 500,
-      headers: {
-        'Content-Type': 'application/json; charset=utf-8',
-        ...corsHeaders
-      }
-    });
+    }, 401, origin)
   }
 }
 
-// 处理OPTIONS请求（CORS预检）
-export async function onRequestOptions(context) {
-  const origin = context.request.headers.get('Origin');
-  return new Response(null, {
-    status: 204,
-    headers: {
-      ...getCORSHeaders(origin),
-      'Access-Control-Allow-Methods': 'POST, OPTIONS'
-    }
-  });
-}
-
-// 工具函数
-function formatNow() {
-  const d = new Date();
-  const p = (n) => String(n).padStart(2, '0');
-  const y = d.getFullYear();
-  const m = p(d.getMonth() + 1);
-  const day = p(d.getDate());
-  const hh = p(d.getHours());
-  const mm = p(d.getMinutes());
-  const ss = p(d.getSeconds());
-  return `${y}-${m}-${day} ${hh}:${mm}:${ss}`;
-}
-
 async function signJWT(payload, secret) {
-  const enc = new TextEncoder();
-  const header = { alg: 'HS256', typ: 'JWT' };
+  const enc = new TextEncoder()
+  const header = { alg: 'HS256', typ: 'JWT' }
   const base64url = (buf) =>
     btoa(String.fromCharCode(...new Uint8Array(buf)))
-      .replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/g, '');
+      .replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/g, '')
 
-  const headerB64 = base64url(enc.encode(JSON.stringify(header)));
-  const payloadB64 = base64url(enc.encode(JSON.stringify(payload)));
-  const data = `${headerB64}.${payloadB64}`;
+  const headerB64 = base64url(enc.encode(JSON.stringify(header)))
+  const payloadB64 = base64url(enc.encode(JSON.stringify(payload)))
+  const data = `${headerB64}.${payloadB64}`
 
   const key = await crypto.subtle.importKey(
     'raw',
@@ -189,9 +211,9 @@ async function signJWT(payload, secret) {
     { name: 'HMAC', hash: 'SHA-256' },
     false,
     ['sign']
-  );
-  const sig = await crypto.subtle.sign('HMAC', key, enc.encode(data));
-  const sigB64 = base64url(sig);
+  )
+  const sig = await crypto.subtle.sign('HMAC', key, enc.encode(data))
+  const sigB64 = base64url(sig)
 
-  return `${data}.${sigB64}`;
+  return `${data}.${sigB64}`
 }
