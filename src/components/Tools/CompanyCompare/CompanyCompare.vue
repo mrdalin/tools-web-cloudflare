@@ -88,37 +88,113 @@ const formData = reactive({
 // 添加loading状态
 const loading = ref(false)
 const operationLoading = ref(false)
-const requiresLogin = ref(false)
+const syncingLocal = ref(false)
+const isCloudMode = ref(false)
+const localCompanyCount = ref(0)
+const LOCAL_COMPANIES_KEY = 'youngbar.companyCompare.localCompanies'
 
 const goToLogin = () => {
   const currentPath = window.location.pathname
   router.push('/login?redirect=' + encodeURIComponent(currentPath))
 }
 
-const ensureAuthenticated = (showMessage = true) => {
+const hasValidToken = () => {
   const token = getLocalToken()
   if (!token) {
-    requiresLogin.value = true
-    if (showMessage) {
-      ElMessage.warning('请先登录后使用公司对比')
-    }
     return false
   }
 
   if (isTokenExpired(token)) {
     logout()
-    requiresLogin.value = true
-    if (showMessage) {
-      ElMessage.warning('登录已过期，请重新登录后继续使用公司对比')
-    }
     return false
   }
 
-  requiresLogin.value = false
   return true
 }
 
 const isUnauthorizedError = (error: any) => error?.response?.status === 401
+
+const buildCompanyPayload = () => ({
+  name: formData.name.trim(),
+  position: formData.position.trim(),
+  salary: formData.salary.trim(),
+  benefits: formData.benefits.trim(),
+  workDays: formData.workDays.trim(),
+  workHours: formData.workHours.trim(),
+  location: formData.location.trim(),
+  welfare: formData.welfare.trim(),
+  overtime: formData.overtime.trim(),
+  leavePolicy: formData.leavePolicy.trim(),
+  notes: formData.notes.trim()
+})
+
+const normalizeLocalCompany = (company: any): Company => {
+  const now = new Date().toISOString()
+  return {
+    id: String(company?.id || `local-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`),
+    name: String(company?.name || ''),
+    position: String(company?.position || ''),
+    salary: String(company?.salary || ''),
+    benefits: String(company?.benefits || ''),
+    workDays: String(company?.workDays || ''),
+    workHours: String(company?.workHours || ''),
+    location: String(company?.location || ''),
+    welfare: String(company?.welfare || ''),
+    overtime: String(company?.overtime || ''),
+    leavePolicy: String(company?.leavePolicy || ''),
+    notes: String(company?.notes || ''),
+    createTime: String(company?.createTime || now),
+    updateTime: String(company?.updateTime || company?.createTime || now)
+  }
+}
+
+const readLocalCompanies = (): Company[] => {
+  try {
+    const raw = localStorage.getItem(LOCAL_COMPANIES_KEY)
+    const parsed = raw ? JSON.parse(raw) : []
+    return Array.isArray(parsed) ? parsed.map(normalizeLocalCompany) : []
+  } catch (error) {
+    console.error('读取本地公司记录失败:', error)
+    return []
+  }
+}
+
+const writeLocalCompanies = (items: Company[]) => {
+  localStorage.setItem(LOCAL_COMPANIES_KEY, JSON.stringify(items))
+  localCompanyCount.value = items.length
+}
+
+const refreshLocalCompanyCount = () => {
+  localCompanyCount.value = readLocalCompanies().length
+}
+
+const setLocalPagination = (total: number) => {
+  pagination.value = {
+    total,
+    page: 1,
+    pageSize: total || 12,
+    totalPages: total > 0 ? 1 : 0,
+    hasNext: false,
+    hasPrev: false
+  }
+}
+
+const loadLocalCompanies = () => {
+  const items = readLocalCompanies()
+  isCloudMode.value = false
+  companies.value = items
+  localCompanyCount.value = items.length
+  selectedCompanies.value = []
+  currentCompany.value = null
+  setLocalPagination(items.length)
+}
+
+const switchToLocalMode = (message?: string) => {
+  loadLocalCompanies()
+  if (message) {
+    ElMessage.warning(message)
+  }
+}
 
 // 添加搜索相关变量
 const searchKeyword = ref('')
@@ -255,10 +331,15 @@ const isAllSelected = computed(() =>
 
 // 获取公司列表（支持分页）
 const fetchCompanies = async (page = 1, pageSize = 12) => {
-  if (!ensureAuthenticated()) return
+  if (!hasValidToken()) {
+    switchToLocalMode()
+    return
+  }
 
   try {
     loading.value = true
+    isCloudMode.value = true
+    refreshLocalCompanyCount()
     const response = await functionsRequest.get('/api/companies', {
       params: { page, pageSize }
     })
@@ -271,7 +352,7 @@ const fetchCompanies = async (page = 1, pageSize = 12) => {
     }
   } catch (error: any) {
     if (isUnauthorizedError(error)) {
-      requiresLogin.value = true
+      switchToLocalMode('登录已过期，已切换为本地模式')
       return
     }
     console.error('获取公司列表失败:', error)
@@ -294,28 +375,32 @@ const handleSizeChange = (pageSize: number) => {
 
 // 创建公司记录
 const createCompany = async () => {
-  if (!ensureAuthenticated()) return
-
   if (!formData.name.trim() || !formData.position.trim()) {
     ElMessage.warning('公司名称和职位不能为空')
     return
   }
 
+  const payload = buildCompanyPayload()
+
+  if (!isCloudMode.value || !hasValidToken()) {
+    const now = new Date().toISOString()
+    const localCompany: Company = {
+      id: `local-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+      ...payload,
+      createTime: now,
+      updateTime: now
+    }
+    writeLocalCompanies([localCompany, ...readLocalCompanies()])
+    ElMessage.success('已保存到本地')
+    showForm.value = false
+    resetForm()
+    loadLocalCompanies()
+    return
+  }
+
   try {
     operationLoading.value = true
-    const response = await functionsRequest.post('/api/companies', {
-      name: formData.name.trim(),
-      position: formData.position.trim(),
-      salary: formData.salary.trim(),
-      benefits: formData.benefits.trim(),
-      workDays: formData.workDays.trim(),
-      workHours: formData.workHours.trim(),
-      location: formData.location.trim(),
-      welfare: formData.welfare.trim(),
-      overtime: formData.overtime.trim(),
-      leavePolicy: formData.leavePolicy.trim(),
-      notes: formData.notes.trim()
-    })
+    const response = await functionsRequest.post('/api/companies', payload)
 
     if (response.status === 201) {
       ElMessage.success('创建成功')
@@ -327,7 +412,7 @@ const createCompany = async () => {
     }
   } catch (error: any) {
     if (isUnauthorizedError(error)) {
-      requiresLogin.value = true
+      switchToLocalMode('登录已过期，已切换为本地模式')
       return
     }
     console.error('创建公司记录失败:', error)
@@ -339,28 +424,41 @@ const createCompany = async () => {
 
 // 更新公司记录
 const updateCompany = async () => {
-  if (!ensureAuthenticated()) return
-
   if (!editingCompanyId.value || !formData.name.trim() || !formData.position.trim()) {
     ElMessage.warning('公司名称和职位不能为空')
     return
   }
 
+  const payload = buildCompanyPayload()
+
+  if (!isCloudMode.value || !hasValidToken()) {
+    const items = readLocalCompanies()
+    const index = items.findIndex((item) => item.id === editingCompanyId.value)
+    if (index === -1) {
+      ElMessage.error('本地记录不存在')
+      return
+    }
+
+    const updatedCompany: Company = {
+      ...items[index],
+      ...payload,
+      updateTime: new Date().toISOString()
+    }
+    items.splice(index, 1, updatedCompany)
+    writeLocalCompanies(items)
+    ElMessage.success('已更新本地记录')
+    showForm.value = false
+    isEditing.value = false
+    editingCompanyId.value = null
+    resetForm()
+    loadLocalCompanies()
+    currentCompany.value = companies.value.find((item) => item.id === updatedCompany.id) || updatedCompany
+    return
+  }
+
   try {
     operationLoading.value = true
-    const response = await functionsRequest.put(`/api/companies/${editingCompanyId.value}`, {
-      name: formData.name.trim(),
-      position: formData.position.trim(),
-      salary: formData.salary.trim(),
-      benefits: formData.benefits.trim(),
-      workDays: formData.workDays.trim(),
-      workHours: formData.workHours.trim(),
-      location: formData.location.trim(),
-      welfare: formData.welfare.trim(),
-      overtime: formData.overtime.trim(),
-      leavePolicy: formData.leavePolicy.trim(),
-      notes: formData.notes.trim()
-    })
+    const response = await functionsRequest.put(`/api/companies/${editingCompanyId.value}`, payload)
 
     if (response.status === 200) {
       ElMessage.success('更新成功')
@@ -374,7 +472,7 @@ const updateCompany = async () => {
     }
   } catch (error: any) {
     if (isUnauthorizedError(error)) {
-      requiresLogin.value = true
+      switchToLocalMode('登录已过期，已切换为本地模式')
       return
     }
     console.error('更新公司记录失败:', error)
@@ -386,13 +484,21 @@ const updateCompany = async () => {
 
 // 删除公司记录
 const deleteCompany = async (company: Company) => {
-  if (!ensureAuthenticated()) return
-
   await ElMessageBox.confirm('确定要删除这条公司记录吗？', '提示', {
     confirmButtonText: '确定',
     cancelButtonText: '取消',
     type: 'warning',
   })
+
+  if (!isCloudMode.value || !hasValidToken()) {
+    writeLocalCompanies(readLocalCompanies().filter((item) => item.id !== company.id))
+    ElMessage.success('已删除本地记录')
+    if (currentCompany.value?.id === company.id) {
+      currentCompany.value = null
+    }
+    loadLocalCompanies()
+    return
+  }
 
   try {
     operationLoading.value = true
@@ -413,7 +519,7 @@ const deleteCompany = async (company: Company) => {
     }
   } catch (error: any) {
     if (isUnauthorizedError(error)) {
-      requiresLogin.value = true
+      switchToLocalMode('登录已过期，已切换为本地模式')
       return
     }
     console.error('删除公司记录失败:', error)
@@ -450,8 +556,6 @@ const viewCompany = (company: Company) => {
 
 // 新建公司记录
 const newCompany = () => {
-  if (!ensureAuthenticated()) return
-
   currentCompany.value = null
   isEditing.value = false
   resetForm()
@@ -634,8 +738,6 @@ const toggleSelectCompany = (company: Company) => {
 }
 
 const batchDelete = async () => {
-  if (!ensureAuthenticated()) return
-
   if (selectedCompanies.value.length === 0) {
     ElMessage.warning('请选择要删除的公司')
     return
@@ -651,6 +753,15 @@ const batchDelete = async () => {
     }
   )
 
+  if (!isCloudMode.value || !hasValidToken()) {
+    const selectedIds = new Set(selectedCompanies.value.map((company) => company.id))
+    writeLocalCompanies(readLocalCompanies().filter((company) => !selectedIds.has(company.id)))
+    ElMessage.success(`成功删除 ${selectedCompanies.value.length} 条本地记录`)
+    selectedCompanies.value = []
+    loadLocalCompanies()
+    return
+  }
+
   try {
     operationLoading.value = true
     const deletePromises = selectedCompanies.value.map(company => 
@@ -664,7 +775,7 @@ const batchDelete = async () => {
     await fetchCompanies(pagination.value.page, pagination.value.pageSize)
   } catch (error: any) {
     if (isUnauthorizedError(error)) {
-      requiresLogin.value = true
+      switchToLocalMode('登录已过期，已切换为本地模式')
       return
     }
     console.error('批量删除失败:', error)
@@ -674,14 +785,59 @@ const batchDelete = async () => {
   }
 }
 
+const syncLocalCompaniesToCloud = async () => {
+  if (!hasValidToken()) {
+    ElMessage.warning('请先登录后再同步本地记录')
+    goToLogin()
+    return
+  }
+
+  const localCompanies = readLocalCompanies()
+  if (localCompanies.length === 0) {
+    ElMessage.info('没有需要同步的本地记录')
+    return
+  }
+
+  try {
+    syncingLocal.value = true
+    for (const company of localCompanies) {
+      await functionsRequest.post('/api/companies', {
+        name: company.name,
+        position: company.position,
+        salary: company.salary,
+        benefits: company.benefits,
+        workDays: company.workDays,
+        workHours: company.workHours,
+        location: company.location,
+        welfare: company.welfare,
+        overtime: company.overtime,
+        leavePolicy: company.leavePolicy,
+        notes: company.notes
+      })
+    }
+
+    localStorage.removeItem(LOCAL_COMPANIES_KEY)
+    localCompanyCount.value = 0
+    ElMessage.success(`已同步 ${localCompanies.length} 条本地记录到云端`)
+    await fetchCompanies(1, pagination.value.pageSize || 12)
+  } catch (error: any) {
+    if (isUnauthorizedError(error)) {
+      switchToLocalMode('登录已过期，请重新登录后再同步')
+      return
+    }
+    console.error('同步本地公司记录失败:', error)
+    ElMessage.error('同步失败，请稍后重试')
+  } finally {
+    syncingLocal.value = false
+  }
+}
+
 const handleSearch = () => {
   // 搜索功能已通过computed属性实现
 }
 
 onMounted(() => {
-  if (ensureAuthenticated(false)) {
-    fetchCompanies()
-  }
+  fetchCompanies()
 })
 </script>
 
@@ -689,16 +845,30 @@ onMounted(() => {
   <div class="flex flex-col mt-3 flex-1">
     <DetailHeader :title="info.title"></DetailHeader>
 
-    <div v-if="requiresLogin" class="company-login-required">
-      <div class="login-icon-wrapper">
-        <el-icon><OfficeBuilding /></el-icon>
+    <div class="companies-container">
+      <div class="mode-banner" :class="{ 'mode-banner--cloud': isCloudMode }">
+        <div class="mode-copy">
+          <strong>{{ isCloudMode ? '云端模式' : '本地模式' }}</strong>
+          <span>
+            {{ isCloudMode ? '公司记录已保存到账号，可跨设备使用。' : '无需登录即可使用，记录只保存在当前浏览器。' }}
+          </span>
+        </div>
+        <div class="mode-actions">
+          <el-button v-if="!isCloudMode" type="primary" plain @click="goToLogin">
+            登录后云同步
+          </el-button>
+          <el-button
+            v-if="isCloudMode && localCompanyCount > 0"
+            type="primary"
+            :loading="syncingLocal"
+            :disabled="syncingLocal"
+            @click="syncLocalCompaniesToCloud"
+          >
+            同步 {{ localCompanyCount }} 条本地记录
+          </el-button>
+        </div>
       </div>
-      <h2>登录后使用公司对比</h2>
-      <p>公司记录会保存到你的账号中，方便以后继续编辑、筛选和对比。</p>
-      <el-button type="primary" size="large" @click="goToLogin">前往登录</el-button>
-    </div>
 
-    <div v-else class="companies-container">
       <!-- 操作栏 -->
       <div class="header-section">
         <div class="header-left">
@@ -887,7 +1057,7 @@ onMounted(() => {
       </div>
 
       <!-- 分页组件 -->
-      <div v-if="pagination.total > 0" class="pagination-wrapper">
+      <div v-if="isCloudMode && pagination.total > 0" class="pagination-wrapper">
         <el-pagination
           v-model:current-page="pagination.page"
           v-model:page-size="pagination.pageSize"
@@ -1426,7 +1596,7 @@ onMounted(() => {
     <!-- desc -->
     <ToolDetail title="描述">
       <el-text>
-        公司对比工具，帮助你记录和对比不同公司的待遇信息。支持录入薪资、工作时间、福利待遇、加班情况等多维度信息，并提供直观的对比功能，让你更好地评估和选择心仪的工作机会。所有数据安全存储在云端，支持历史记录管理。
+        公司对比工具，帮助你记录和对比不同公司的待遇信息。未登录时数据保存在当前浏览器本地；登录后可保存到云端并跨设备使用。支持录入薪资、工作时间、福利待遇、加班情况等多维度信息，让你更好地评估和选择心仪的工作机会。
       </el-text>
     </ToolDetail>
   </div>
@@ -1443,43 +1613,45 @@ onMounted(() => {
   overflow: hidden;
 }
 
-.company-login-required {
-  width: min(520px, calc(100vw - 32px));
-  margin: 48px auto 0;
-  padding: 36px 28px;
+.mode-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 18px;
+  padding: 14px 18px;
   border: 1px solid rgba(214, 227, 225, 0.95);
   border-radius: 12px;
-  background: rgba(255, 255, 255, 0.94);
-  box-shadow: 0 16px 36px rgba(15, 23, 42, 0.08);
-  text-align: center;
-}
-
-.login-icon-wrapper {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 64px;
-  height: 64px;
-  margin-bottom: 18px;
-  border-radius: 50%;
   background: var(--youngbar-primary-soft);
-  color: var(--warm-primary);
-  font-size: 30px;
-}
-
-.company-login-required h2 {
-  margin: 0;
   color: #0f172a;
-  font-size: 24px;
-  font-weight: 800;
-  line-height: 1.35;
 }
 
-.company-login-required p {
-  margin: 12px auto 22px;
-  color: #64748b;
+.mode-banner--cloud {
+  background: rgba(255, 255, 255, 0.95);
+}
+
+.mode-copy {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.mode-copy strong {
+  color: var(--warm-primary);
   font-size: 15px;
-  line-height: 1.8;
+}
+
+.mode-copy span {
+  color: #64748b;
+  font-size: 14px;
+}
+
+.mode-actions {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  gap: 10px;
 }
 
 .companies-container::before {
@@ -2323,6 +2495,15 @@ onMounted(() => {
   .companies-container {
     padding: 16px;
     border-radius: 16px;
+  }
+
+  .mode-banner {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .mode-actions {
+    width: 100%;
   }
 
   .header-section {
