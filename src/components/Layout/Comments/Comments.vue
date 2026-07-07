@@ -6,7 +6,8 @@ const route = useRoute()
 const giscusLoaded = ref(false)
 
 // 从环境变量获取配置
-const gitUrl = import.meta.env.VITE_GIT_URL || ''
+const gitUrl = (import.meta.env.VITE_GIT_URL || 'https://github.com/ideajoker/tools-web-cloudflare').replace(/\/$/, '')
+const issueUrl = `${gitUrl}/issues/new`
 // 从 GitHub URL 中提取 owner 和 repo
 // 格式: https://github.com/owner/repo
 const match = gitUrl.match(/github\.com\/([^\/]+)\/([^\/]+)/)
@@ -89,7 +90,7 @@ watch(() => route.path, () => {
       </h3>
       <p class="text-sm text-gray-500 mb-4">
         欢迎在下方留言讨论，如有问题或建议请提交
-        <a :href="gitUrl + '/issues'" target="_blank" class="text-warm-600 hover:text-warm-700">GitHub Issue</a>
+        <a :href="issueUrl" target="_blank" class="text-warm-600 hover:text-warm-700">GitHub Issue</a>
       </p>
       <div id="giscus-container"></div>
     </div>
