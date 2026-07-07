@@ -1,8 +1,19 @@
 ﻿<script setup lang="ts">
 import { ref, computed, onMounted } from 'vue';
 import { useToolsStore } from '@/store/modules/tools';
-const gitUrl = ref(import.meta.env.VITE_GIT_URL || '')
-const rawGitUrl = ref(import.meta.env.VITE_RAW_GIT_URL || '')
+const gitUrl = ref(import.meta.env.VITE_GIT_URL || 'https://github.com/ideajoker/tools-web-cloudflare')
+const sourceLinks = [
+  {
+    name: 'naroat/tools-web',
+    href: 'https://github.com/naroat/tools-web',
+    desc: 'Tools-Web 源站',
+  },
+  {
+    name: '2424004764/tools-web',
+    href: 'https://github.com/2424004764/tools-web',
+    desc: 'Tools-Web 项目版本',
+  },
+]
 const appTitle = ref(import.meta.env.VITE_APP_TITLE || '')
 const toolsStore = useToolsStore()
 
@@ -27,8 +38,25 @@ onMounted(async () => {
     <div class="p-5 w-2/3">
       <h1 class="text-2xl font-bold">关于 {{appTitle}}（源自：Tools-Web）</h1>
       <p class="mt-6">
-        <el-text>本站是一个开源免费的工具站，基于（<el-link :href="gitUrl" target="_blank" type="primary">Tools-Web</el-link>）二次开发，部署在Cloudflare上。包含开发、文本、媒体、图表、生活、查询等 <span class="text-primary font-bold">{{ totalTools }}</span> 种实用工具，完全开源免费；如果对您有帮助，请将其分享给您的朋友，并且添加到收藏夹中！顺便再点个⭐️吧（<el-link :href="rawGitUrl" target="_blank" type="primary">Tools-Web源站</el-link>）！因为是纯前端，所以请求外部第三方接口用的Cloudflare 的functions实现。</el-text>
+        <el-text>本站是一个开源免费的工具站，基于 Tools-Web 二次开发，部署在 Cloudflare 上。包含开发、文本、媒体、图表、生活、查询等 <span class="text-primary font-bold">{{ totalTools }}</span> 种实用工具，完全开源免费；如果对您有帮助，请将其分享给您的朋友，并且添加到收藏夹中。因为是纯前端，所以请求外部第三方接口用 Cloudflare Functions 实现。</el-text>
       </p>
+
+      <h1 class="text-2xl font-bold mt-6 mb-6">项目来源</h1>
+      <div class="space-y-3">
+        <div
+          v-for="link in sourceLinks"
+          :key="link.href"
+          class="source-link-row"
+        >
+          <div>
+            <div class="font-medium text-slate-900">{{ link.desc }}</div>
+            <div class="text-sm text-slate-500">{{ link.name }}</div>
+          </div>
+          <el-link :href="link.href" target="_blank" type="primary">
+            访问 GitHub
+          </el-link>
+        </div>
+      </div>
 
       <h1 class="text-2xl font-bold mt-6 mb-6">技术</h1>
       <p>
@@ -58,5 +86,21 @@ onMounted(async () => {
 </template>
 
 <style scoped>
-/* 友链页面样式，暂时无独立类 */
+.source-link-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 14px 16px;
+  border: 1px solid rgba(214, 227, 225, 0.95);
+  border-radius: 8px;
+  background: #f8fafc;
+}
+
+@media (max-width: 640px) {
+  .source-link-row {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+}
 </style>
