@@ -502,7 +502,7 @@ onMounted(() => {
       <div class="mode-copy">
         <strong>{{ isCloudMode ? '云端模式' : '本地模式' }}</strong>
         <span>
-          {{ isCloudMode ? '待办已保存到账号，可跨设备使用。' : '无需登录即可管理待办，数据只保存在当前浏览器。' }}
+          {{ isCloudMode ? '待办已保存到账号，可跨设备使用。' : '无需登录即可管理待办，数据只保存在当前浏览器；登录后可长期保存并在多个设备之间同步。' }}
         </span>
       </div>
       <div class="mode-actions">
@@ -709,6 +709,19 @@ onMounted(() => {
   flex-shrink: 0;
   align-items: center;
   gap: 10px;
+}
+
+.mode-actions :deep(.el-button--primary) {
+  background: var(--warm-primary) !important;
+  border-color: var(--warm-primary) !important;
+  color: #fff !important;
+}
+
+.mode-actions :deep(.el-button--primary:hover),
+.mode-actions :deep(.el-button--primary:focus) {
+  background: var(--warm-primary-hover) !important;
+  border-color: var(--warm-primary-hover) !important;
+  color: #fff !important;
 }
 
 .el-checkbox {

@@ -1104,6 +1104,19 @@ const renderCustomContent = (content: string) => renderSafeMarkdown(content)
   gap: 10px;
 }
 
+.mode-actions :deep(.el-button--primary) {
+  background: var(--warm-primary) !important;
+  border-color: var(--warm-primary) !important;
+  color: #fff !important;
+}
+
+.mode-actions :deep(.el-button--primary:hover),
+.mode-actions :deep(.el-button--primary:focus) {
+  background: var(--warm-primary-hover) !important;
+  border-color: var(--warm-primary-hover) !important;
+  color: #fff !important;
+}
+
 /* 头部样式 */
 .header-section {
   display: flex;
@@ -1464,15 +1477,16 @@ const renderCustomContent = (content: string) => renderSafeMarkdown(content)
   margin-top: 16px;
   padding: 12px 24px;
   font-weight: 600;
-  border: 2px dashed #667eea;
-  background: rgba(102, 126, 234, 0.05);
-  color: #667eea;
+  border: 2px dashed var(--warm-primary) !important;
+  background: var(--warm-primary) !important;
+  color: #fff !important;
   transition: all 0.3s ease;
 }
 
 .add-qa-btn:hover {
-  background: rgba(102, 126, 234, 0.1);
-  border-color: #667eea;
+  background: var(--warm-primary-hover) !important;
+  border-color: var(--warm-primary-hover) !important;
+  color: #fff !important;
   transform: translateY(-2px);
 }
 

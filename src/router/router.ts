@@ -1104,6 +1104,10 @@ export const constantRoute = [
     }
   },
   {
+    path: '/todos',
+    redirect: '/userinfo/todos',
+  },
+  {
     path: '/userinfo/todos',
     component: () => import('@/components/Tools/Todos/Todos.vue'),
     name: 'userinfo-todos',
