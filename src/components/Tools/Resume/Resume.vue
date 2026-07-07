@@ -8,6 +8,7 @@ import { Refresh, Plus, Edit, Delete, View, Briefcase, Picture, Document } from 
 import html2canvas from 'html2canvas'
 import jsPDF from 'jspdf'
 import type { FormRules } from 'element-plus'
+import { getLocalToken, isTokenExpired, logout } from '@/utils/user'
 
 interface Resume {
   id: string
@@ -122,6 +123,27 @@ const formData = reactive(getDefaultFormData())
 const loading = ref(false)
 // 2. 优化：独立化操作loading状态
 const operationLoadings = ref<Record<string, boolean>>({})
+const syncingLocal = ref(false)
+const isCloudMode = ref(false)
+const localResumeCount = ref(0)
+const LOCAL_RESUMES_KEY = 'youngbar.resume.localResumes'
+
+const goToLogin = () => {
+  const currentPath = window.location.pathname
+  window.location.href = '/login?redirect=' + encodeURIComponent(currentPath)
+}
+
+const hasValidToken = () => {
+  const token = getLocalToken()
+  if (!token) return false
+  if (isTokenExpired(token)) {
+    logout()
+    return false
+  }
+  return true
+}
+
+const isUnauthorizedError = (error: any) => error?.response?.status === 401
 
 // 3. 优化：表单校验规则 - 修复类型错误
 const formRules: FormRules = {
@@ -172,10 +194,83 @@ const parseResumeData = (resume: any) => {
   }
 }
 
+const buildResumePayload = () => JSON.parse(JSON.stringify(formData))
+
+const normalizeLocalResume = (resume: any): Resume => {
+  const now = new Date().toISOString()
+  return parseResumeData({
+    id: String(resume?.id || `local-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`),
+    name: String(resume?.name || ''),
+    personalInfo: resume?.personalInfo || {},
+    workExperience: Array.isArray(resume?.workExperience) ? resume.workExperience : [],
+    education: Array.isArray(resume?.education) ? resume.education : [],
+    skills: Array.isArray(resume?.skills) ? resume.skills : [],
+    projects: Array.isArray(resume?.projects) ? resume.projects : [],
+    certificates: Array.isArray(resume?.certificates) ? resume.certificates : [],
+    others: resume?.others || {},
+    createTime: String(resume?.createTime || now),
+    updateTime: String(resume?.updateTime || resume?.createTime || now)
+  })
+}
+
+const readLocalResumes = (): Resume[] => {
+  try {
+    const raw = localStorage.getItem(LOCAL_RESUMES_KEY)
+    const parsed = raw ? JSON.parse(raw) : []
+    return Array.isArray(parsed) ? parsed.map(normalizeLocalResume) : []
+  } catch (error) {
+    console.error('读取本地简历失败:', error)
+    return []
+  }
+}
+
+const writeLocalResumes = (items: Resume[]) => {
+  localStorage.setItem(LOCAL_RESUMES_KEY, JSON.stringify(items))
+  localResumeCount.value = items.length
+}
+
+const refreshLocalResumeCount = () => {
+  localResumeCount.value = readLocalResumes().length
+}
+
+const setLocalPagination = (total: number) => {
+  pagination.value = {
+    total,
+    page: 1,
+    pageSize: total || 12,
+    totalPages: total > 0 ? 1 : 0,
+    hasNext: false,
+    hasPrev: false
+  }
+}
+
+const loadLocalResumes = () => {
+  const items = readLocalResumes()
+  isCloudMode.value = false
+  resumes.value = items
+  localResumeCount.value = items.length
+  currentResume.value = null
+  setLocalPagination(items.length)
+}
+
+const switchToLocalMode = (message?: string) => {
+  loadLocalResumes()
+  if (message) {
+    ElMessage.warning(message)
+  }
+}
+
 // 6. 优化：分页逻辑，处理删除最后一页最后一条数据的情况
 const fetchResumes = async (page = 1, pageSize = 12) => {
+  if (!hasValidToken()) {
+    switchToLocalMode()
+    return
+  }
+
   try {
     loading.value = true
+    isCloudMode.value = true
+    refreshLocalResumeCount()
     const response = await functionsRequest.get('/api/resumes', {
       params: { page, pageSize }
     })
@@ -192,7 +287,11 @@ const fetchResumes = async (page = 1, pageSize = 12) => {
         }
       }
     }
-  } catch (error) {
+  } catch (error: any) {
+    if (isUnauthorizedError(error)) {
+      switchToLocalMode('登录已过期，已切换为本地模式')
+      return
+    }
     console.error('获取简历列表失败:', error)
     ElMessage.error('获取简历列表失败')
   } finally {
@@ -227,9 +326,27 @@ const validateForm = async () => {
 const createResume = async () => {
   if (!await validateForm()) return
 
+  const payload = buildResumePayload()
+
+  if (!isCloudMode.value || !hasValidToken()) {
+    const now = new Date().toISOString()
+    const localResume: Resume = normalizeLocalResume({
+      id: `local-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+      ...payload,
+      createTime: now,
+      updateTime: now
+    })
+    writeLocalResumes([localResume, ...readLocalResumes()])
+    ElMessage.success('已保存到本地')
+    showForm.value = false
+    resetForm()
+    loadLocalResumes()
+    return
+  }
+
   try {
     operationLoadings.value['create'] = true
-    const response = await functionsRequest.post('/api/resumes', formData)
+    const response = await functionsRequest.post('/api/resumes', payload)
 
     if (response.status === 201) {
       ElMessage.success('创建成功')
@@ -239,7 +356,11 @@ const createResume = async () => {
     } else {
       ElMessage.error('创建失败')
     }
-  } catch (error) {
+  } catch (error: any) {
+    if (isUnauthorizedError(error)) {
+      switchToLocalMode('登录已过期，已切换为本地模式')
+      return
+    }
     console.error('创建简历失败:', error)
     ElMessage.error('创建失败')
   } finally {
@@ -251,9 +372,36 @@ const createResume = async () => {
 const updateResume = async () => {
   if (!editingResumeId.value || !await validateForm()) return
 
+  const resumeId = editingResumeId.value
+  const payload = buildResumePayload()
+
+  if (!isCloudMode.value || !hasValidToken()) {
+    const items = readLocalResumes()
+    const index = items.findIndex((item) => item.id === resumeId)
+    if (index === -1) {
+      ElMessage.error('本地简历不存在')
+      return
+    }
+    const updatedResume: Resume = normalizeLocalResume({
+      ...items[index],
+      ...payload,
+      updateTime: new Date().toISOString()
+    })
+    items.splice(index, 1, updatedResume)
+    writeLocalResumes(items)
+    ElMessage.success('已更新本地简历')
+    showForm.value = false
+    isEditing.value = false
+    editingResumeId.value = null
+    resetForm()
+    loadLocalResumes()
+    currentResume.value = resumes.value.find((item) => item.id === updatedResume.id) || updatedResume
+    return
+  }
+
   try {
-    operationLoadings.value[editingResumeId.value] = true
-    const response = await functionsRequest.put(`/api/resumes/${editingResumeId.value}`, formData)
+    operationLoadings.value[resumeId] = true
+    const response = await functionsRequest.put(`/api/resumes/${resumeId}`, payload)
 
     if (response.status === 200) {
       ElMessage.success('更新成功')
@@ -265,13 +413,15 @@ const updateResume = async () => {
     } else {
       ElMessage.error('更新失败')
     }
-  } catch (error) {
+  } catch (error: any) {
+    if (isUnauthorizedError(error)) {
+      switchToLocalMode('登录已过期，已切换为本地模式')
+      return
+    }
     console.error('更新简历失败:', error)
     ElMessage.error('更新失败')
   } finally {
-    if (editingResumeId.value) {
-      operationLoadings.value[editingResumeId.value] = false
-    }
+    operationLoadings.value[resumeId] = false
   }
 }
 
@@ -289,6 +439,16 @@ const deleteResume = async (resume: Resume) => {
       }
     )
 
+    if (!isCloudMode.value || !hasValidToken()) {
+      writeLocalResumes(readLocalResumes().filter((item) => item.id !== resume.id))
+      ElMessage.success('已删除本地简历')
+      if (currentResume.value?.id === resume.id) {
+        currentResume.value = null
+      }
+      loadLocalResumes()
+      return
+    }
+
     operationLoadings.value[resume.id] = true
     const response = await functionsRequest.delete(`/api/resumes/${resume.id}`)
 
@@ -298,8 +458,12 @@ const deleteResume = async (resume: Resume) => {
     } else {
       ElMessage.error('删除失败')
     }
-  } catch (error) {
+  } catch (error: any) {
     if (error !== 'cancel') {
+      if (isUnauthorizedError(error)) {
+        switchToLocalMode('登录已过期，已切换为本地模式')
+        return
+      }
       console.error('删除简历失败:', error)
       ElMessage.error('删除失败')
     }
@@ -421,6 +585,50 @@ const isAnyOperationLoading = (): boolean => {
 }
 
 // 导出相关状态
+const syncLocalResumesToCloud = async () => {
+  if (!hasValidToken()) {
+    ElMessage.warning('请先登录后再同步本地简历')
+    goToLogin()
+    return
+  }
+
+  const localResumes = readLocalResumes()
+  if (localResumes.length === 0) {
+    ElMessage.info('没有需要同步的本地简历')
+    return
+  }
+
+  try {
+    syncingLocal.value = true
+    for (const resume of localResumes) {
+      await functionsRequest.post('/api/resumes', {
+        name: resume.name,
+        template: 'modern',
+        personalInfo: resume.personalInfo,
+        workExperience: resume.workExperience,
+        education: resume.education,
+        skills: resume.skills,
+        projects: resume.projects,
+        certificates: resume.certificates,
+        others: resume.others
+      })
+    }
+    localStorage.removeItem(LOCAL_RESUMES_KEY)
+    localResumeCount.value = 0
+    ElMessage.success(`已同步 ${localResumes.length} 份本地简历到云端`)
+    await fetchResumes(1, pagination.value.pageSize || 12)
+  } catch (error: any) {
+    if (isUnauthorizedError(error)) {
+      switchToLocalMode('登录已过期，请重新登录后再同步')
+      return
+    }
+    console.error('同步本地简历失败:', error)
+    ElMessage.error('同步失败，请稍后重试')
+  } finally {
+    syncingLocal.value = false
+  }
+}
+
 const exportLoading = ref(false)
 
 // 导出为图片
@@ -571,6 +779,29 @@ onMounted(() => {
     <DetailHeader :title="info.title"></DetailHeader>
 
     <div class="resume-container">
+      <div class="mode-banner" :class="{ 'mode-banner--cloud': isCloudMode }">
+        <div class="mode-copy">
+          <strong>{{ isCloudMode ? '云端模式' : '本地模式' }}</strong>
+          <span>
+            {{ isCloudMode ? '简历已保存到账号，可跨设备使用。' : '无需登录即可制作简历，数据只保存在当前浏览器；登录后可长期保存并在多个设备之间同步。' }}
+          </span>
+        </div>
+        <div class="mode-actions">
+          <el-button v-if="!isCloudMode" type="primary" plain @click="goToLogin">
+            登录后云同步
+          </el-button>
+          <el-button
+            v-if="isCloudMode && localResumeCount > 0"
+            type="primary"
+            :loading="syncingLocal"
+            :disabled="syncingLocal"
+            @click="syncLocalResumesToCloud"
+          >
+            同步 {{ localResumeCount }} 份本地简历
+          </el-button>
+        </div>
+      </div>
+
       <!-- 操作栏 -->
       <div class="header-section">
         <div class="header-left">
@@ -1247,6 +1478,59 @@ onMounted(() => {
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
+.mode-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 14px 18px;
+  border: 1px solid rgba(214, 227, 225, 0.95);
+  border-radius: 12px;
+  background: var(--youngbar-primary-soft);
+  color: #0f172a;
+}
+
+.mode-banner--cloud {
+  background: rgba(255, 255, 255, 0.95);
+}
+
+.mode-copy {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.mode-copy strong {
+  color: var(--warm-primary);
+  font-size: 15px;
+}
+
+.mode-copy span {
+  color: #64748b;
+  font-size: 14px;
+}
+
+.mode-actions {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  gap: 10px;
+}
+
+.mode-actions :deep(.el-button--primary) {
+  background: var(--warm-primary) !important;
+  border-color: var(--warm-primary) !important;
+  color: #fff !important;
+}
+
+.mode-actions :deep(.el-button--primary:hover),
+.mode-actions :deep(.el-button--primary:focus) {
+  background: var(--warm-primary-hover) !important;
+  border-color: var(--warm-primary-hover) !important;
+  color: #fff !important;
+}
+
 .header-section {
   display: flex;
   justify-content: space-between;
@@ -1735,6 +2019,19 @@ onMounted(() => {
   
   .header-actions {
     justify-content: center;
+  }
+
+  .mode-banner {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .mode-actions {
+    width: 100%;
+  }
+
+  .mode-actions :deep(.el-button) {
+    width: 100%;
   }
   
   .resume-grid {

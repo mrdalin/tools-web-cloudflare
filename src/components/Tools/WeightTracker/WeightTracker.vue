@@ -10,6 +10,7 @@ import { weightApi } from './api'
 import type { WeightMember, WeightRecord, WeightStatistics, ChartDataPoint, TimeRange, WeightUnit, HealthyRange, Achievement } from './types'
 import { NOTE_TAGS } from './types'
 import { useUserStore } from '@/store/modules/user'
+import { getLocalToken, isTokenExpired, logout } from '@/utils/user'
 
 const info = { title: '体重记录' }
 
@@ -65,9 +66,32 @@ const editingRecord = ref<WeightRecord | null>(null)
 const editingMember = ref<WeightMember | null>(null)
 const loading = ref(false)
 const isFirstTime = ref(false)
+const syncingLocal = ref(false)
+const isCloudMode = ref(false)
+const localMemberCount = ref(0)
+const localRecordCount = ref(0)
 
 // ===== localStorage 持久化 =====
 const userStore = useUserStore()
+const LOCAL_WEIGHT_KEY = 'youngbar.weight.localData'
+
+interface LocalWeightData {
+  members: WeightMember[]
+  records: WeightRecord[]
+}
+
+const hasValidToken = () => {
+  const token = getLocalToken()
+  if (!token) return false
+  if (isTokenExpired(token)) {
+    logout()
+    userStore.clearUser()
+    return false
+  }
+  return true
+}
+
+const isUnauthorizedError = (error: any) => error?.response?.status === 401
 
 // 获取当前选中的成员ID（从localStorage）
 const getSavedMemberId = (): string => {
@@ -79,6 +103,238 @@ const getSavedMemberId = (): string => {
 const saveMemberId = (memberId: string) => {
   const uid = userStore.getUserInfo?.uid || 'anonymous'
   localStorage.setItem(`weight_tracker_member_${uid}`, memberId)
+}
+
+const createLocalId = (prefix: string) => `local-${prefix}-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`
+
+const normalizeLocalMember = (member: any): WeightMember => {
+  const now = new Date().toISOString()
+  return {
+    id: String(member?.id || createLocalId('member')),
+    uid: String(member?.uid || 'local'),
+    name: String(member?.name || ''),
+    height: member?.height === null || member?.height === undefined || member?.height === '' ? null : Number(member.height),
+    goalWeight: member?.goalWeight === null || member?.goalWeight === undefined || member?.goalWeight === '' ? null : Number(member.goalWeight),
+    avatarColor: String(member?.avatarColor || '#409EFF'),
+    avatarEmoji: member?.avatarEmoji ? String(member.avatarEmoji) : undefined,
+    isDefault: Number(member?.isDefault || 0),
+    createTime: String(member?.createTime || now),
+    updateTime: String(member?.updateTime || member?.createTime || now)
+  }
+}
+
+const normalizeLocalRecord = (record: any): WeightRecord => {
+  const now = new Date().toISOString()
+  return {
+    id: String(record?.id || createLocalId('record')),
+    uid: String(record?.uid || 'local'),
+    memberId: String(record?.memberId || ''),
+    weight: Number(record?.weight || 0),
+    height: record?.height === null || record?.height === undefined || record?.height === '' ? null : Number(record.height),
+    note: String(record?.note || ''),
+    recordDate: String(record?.recordDate || now.split('T')[0]),
+    recordTime: String(record?.recordTime || '00:00'),
+    createTime: String(record?.createTime || now),
+    updateTime: String(record?.updateTime || record?.createTime || now)
+  }
+}
+
+const readLocalWeightData = (): LocalWeightData => {
+  try {
+    const raw = localStorage.getItem(LOCAL_WEIGHT_KEY)
+    const parsed = raw ? JSON.parse(raw) : {}
+    return {
+      members: Array.isArray(parsed.members) ? parsed.members.map(normalizeLocalMember) : [],
+      records: Array.isArray(parsed.records) ? parsed.records.map(normalizeLocalRecord) : []
+    }
+  } catch (error) {
+    console.error('读取本地体重数据失败:', error)
+    return { members: [], records: [] }
+  }
+}
+
+const writeLocalWeightData = (data: LocalWeightData) => {
+  const normalized = {
+    members: data.members.map(normalizeLocalMember),
+    records: data.records.map(normalizeLocalRecord).filter(record => record.memberId && record.weight > 0)
+  }
+  localStorage.setItem(LOCAL_WEIGHT_KEY, JSON.stringify(normalized))
+  localMemberCount.value = normalized.members.length
+  localRecordCount.value = normalized.records.length
+}
+
+const refreshLocalWeightCount = () => {
+  const data = readLocalWeightData()
+  localMemberCount.value = data.members.length
+  localRecordCount.value = data.records.length
+}
+
+const toDateText = (value: any) => {
+  if (!value) return ''
+  return typeof value === 'string' ? value.slice(0, 10) : value.toISOString().split('T')[0]
+}
+
+const compareRecordTime = (a: WeightRecord, b: WeightRecord) => {
+  const dateCompare = a.recordDate.localeCompare(b.recordDate)
+  if (dateCompare !== 0) return dateCompare
+  return (a.recordTime || '00:00').localeCompare(b.recordTime || '00:00')
+}
+
+const getCurrentLocalRecords = () => {
+  const data = readLocalWeightData()
+  return data.records
+    .filter(record => record.memberId === currentMemberId.value)
+    .sort(compareRecordTime)
+}
+
+const buildLocalReport = (items: WeightRecord[], days: number) => {
+  if (items.length === 0) return null
+  const end = new Date(`${items[items.length - 1].recordDate}T00:00:00`)
+  const start = new Date(end)
+  start.setDate(end.getDate() - days + 1)
+  const scoped = items.filter(record => {
+    const current = new Date(`${record.recordDate}T00:00:00`)
+    return current >= start && current <= end
+  })
+  if (scoped.length === 0) return null
+  const weights = scoped.map(record => record.weight)
+  const uniqueDays = new Set(scoped.map(record => record.recordDate)).size
+  return {
+    days,
+    startWeight: scoped[0].weight,
+    endWeight: scoped[scoped.length - 1].weight,
+    change: Number((scoped[scoped.length - 1].weight - scoped[0].weight).toFixed(2)),
+    maxWeight: Math.max(...weights),
+    minWeight: Math.min(...weights),
+    avgWeight: Number((weights.reduce((sum, weight) => sum + weight, 0) / weights.length).toFixed(2)),
+    recordDays: uniqueDays
+  }
+}
+
+const calculateConsecutiveDays = (items: WeightRecord[]) => {
+  const dates = [...new Set(items.map(record => record.recordDate))].sort().reverse()
+  if (dates.length === 0) return 0
+  let count = 1
+  let cursor = new Date(`${dates[0]}T00:00:00`)
+  for (let index = 1; index < dates.length; index += 1) {
+    cursor.setDate(cursor.getDate() - 1)
+    if (dates[index] !== cursor.toISOString().split('T')[0]) break
+    count += 1
+  }
+  return count
+}
+
+const calculateLocalStatistics = (memberId: string): WeightStatistics => {
+  if (!memberId) return { ...defaultStatistics }
+  const items = getCurrentLocalRecords()
+  if (items.length === 0) return { ...defaultStatistics }
+
+  const weights = items.map(record => record.weight)
+  const latest = items[items.length - 1]
+  const previous = items.length > 1 ? items[items.length - 2] : latest
+  const yesterday = new Date(`${latest.recordDate}T00:00:00`)
+  yesterday.setDate(yesterday.getDate() - 1)
+  const yesterdayText = yesterday.toISOString().split('T')[0]
+  const yesterdayRecord = [...items].reverse().find(record => record.recordDate === yesterdayText)
+  const weeklyReport = buildLocalReport(items, 7)
+  const monthlyReport = buildLocalReport(items, 30)
+
+  return {
+    currentWeight: latest.weight,
+    lastWeight: previous.weight,
+    changeFromLast: Number((latest.weight - previous.weight).toFixed(2)),
+    changeFromYesterday: Number((latest.weight - (yesterdayRecord?.weight ?? latest.weight)).toFixed(2)),
+    maxWeight: Math.max(...weights),
+    minWeight: Math.min(...weights),
+    avgWeight: Number((weights.reduce((sum, weight) => sum + weight, 0) / weights.length).toFixed(2)),
+    totalDays: new Set(items.map(record => record.recordDate)).size,
+    totalRecords: items.length,
+    consecutiveDays: calculateConsecutiveDays(items),
+    weeklyReport,
+    monthlyReport,
+    weeklyChangeRate: weeklyReport ? weeklyReport.change : 0,
+    monthlyChangeRate: monthlyReport ? monthlyReport.change : 0,
+    bmr: null,
+    healthyRange: null
+  }
+}
+
+const loadLocalRecords = () => {
+  if (!currentMemberId.value) {
+    records.value = []
+    return
+  }
+  let items = getCurrentLocalRecords().sort((a, b) => -compareRecordTime(a, b))
+  if (dateFilter.value && dateFilter.value.length === 2) {
+    const [start, end] = dateFilter.value
+    const startDate = toDateText(start)
+    const endDate = toDateText(end)
+    items = items.filter(record => record.recordDate >= startDate && record.recordDate <= endDate)
+  }
+  records.value = items
+}
+
+const loadLocalStatistics = () => {
+  statistics.value = calculateLocalStatistics(currentMemberId.value)
+}
+
+const loadLocalChartData = () => {
+  if (!currentMemberId.value) {
+    chartData.value = []
+    renderChart()
+    return
+  }
+  const days = timeRange.value === 'all' ? 365 : parseInt(timeRange.value)
+  const cutoff = new Date()
+  cutoff.setDate(cutoff.getDate() - days + 1)
+  const byDate = new Map<string, WeightRecord>()
+  getCurrentLocalRecords().forEach(record => {
+    const recordDate = new Date(`${record.recordDate}T00:00:00`)
+    if (timeRange.value !== 'all' && recordDate < cutoff) return
+    const existing = byDate.get(record.recordDate)
+    if (!existing || compareRecordTime(existing, record) < 0) {
+      byDate.set(record.recordDate, record)
+    }
+  })
+  chartData.value = [...byDate.values()]
+    .sort(compareRecordTime)
+    .map(record => ({
+      date: record.recordDate,
+      weight: record.weight,
+      memberId: record.memberId
+    }))
+  renderChart()
+}
+
+const loadLocalMembers = () => {
+  const data = readLocalWeightData()
+  isCloudMode.value = false
+  notLoggedIn.value = false
+  members.value = data.members
+  localMemberCount.value = data.members.length
+  localRecordCount.value = data.records.length
+
+  const savedMemberId = getSavedMemberId()
+  if (savedMemberId && members.value.find(member => member.id === savedMemberId)) {
+    currentMemberId.value = savedMemberId
+  } else if (members.value.length > 0) {
+    const defaultMember = members.value.find(member => member.isDefault) || members.value[0]
+    currentMemberId.value = defaultMember.id
+  } else {
+    currentMemberId.value = ''
+  }
+
+  isFirstTime.value = members.value.length === 0
+  loadLocalRecords()
+  loadLocalStatistics()
+  loadLocalChartData()
+}
+
+const switchToLocalMode = (message?: string) => {
+  loadLocalMembers()
+  if (message) {
+    ElMessage.warning(message)
+  }
 }
 
 // 记录表单
@@ -301,7 +557,15 @@ const changeSpeedRating = computed(() => {
 
 // ===== API 调用 =====
 const fetchMembers = async () => {
+  if (!hasValidToken()) {
+    switchToLocalMode()
+    return
+  }
+
   try {
+    isCloudMode.value = true
+    notLoggedIn.value = false
+    refreshLocalWeightCount()
     members.value = await weightApi.getMembers()
     // 优先使用保存的成员ID，其次使用默认成员
     const savedMemberId = getSavedMemberId()
@@ -313,27 +577,39 @@ const fetchMembers = async () => {
     }
     isFirstTime.value = members.value.length === 0
   } catch (error: any) {
-    if (error?.response?.status === 401) {
-      notLoggedIn.value = true
-    } else {
-      ElMessage.error('获取成员列表失败')
+    if (isUnauthorizedError(error)) {
+      switchToLocalMode('登录已过期，已切换为本地模式')
+      return
     }
+    ElMessage.error('获取成员列表失败')
   }
 }
 
 const fetchRecords = async () => {
-  if (!currentMemberId.value) return
+  if (!currentMemberId.value) {
+    records.value = []
+    return
+  }
+  if (!isCloudMode.value || !hasValidToken()) {
+    loadLocalRecords()
+    return
+  }
+
   loading.value = true
   try {
     const params: any = { memberId: currentMemberId.value }
     if (dateFilter.value && dateFilter.value.length === 2) {
       const [start, end] = dateFilter.value
-      params.startDate = start.toISOString().split('T')[0]
-      params.endDate = end.toISOString().split('T')[0]
+      params.startDate = toDateText(start)
+      params.endDate = toDateText(end)
     }
     const data = await weightApi.getRecords(params)
     records.value = Array.isArray(data) ? data : []
-  } catch (error) {
+  } catch (error: any) {
+    if (isUnauthorizedError(error)) {
+      switchToLocalMode('登录已过期，已切换为本地模式')
+      return
+    }
     ElMessage.error('获取记录列表失败')
     records.value = []
   } finally {
@@ -342,23 +618,48 @@ const fetchRecords = async () => {
 }
 
 const fetchStatistics = async () => {
-  if (!currentMemberId.value) return
+  if (!currentMemberId.value) {
+    statistics.value = { ...defaultStatistics }
+    return
+  }
+  if (!isCloudMode.value || !hasValidToken()) {
+    loadLocalStatistics()
+    return
+  }
+
   try {
     const data = await weightApi.getStatistics(currentMemberId.value)
     statistics.value = data || defaultStatistics
-  } catch (error) {
+  } catch (error: any) {
+    if (isUnauthorizedError(error)) {
+      switchToLocalMode('登录已过期，已切换为本地模式')
+      return
+    }
     statistics.value = defaultStatistics
   }
 }
 
 const fetchChartData = async () => {
-  if (!currentMemberId.value) return
+  if (!currentMemberId.value) {
+    chartData.value = []
+    renderChart()
+    return
+  }
+  if (!isCloudMode.value || !hasValidToken()) {
+    loadLocalChartData()
+    return
+  }
+
   try {
     const days = timeRange.value === 'all' ? 365 : parseInt(timeRange.value)
     const data = await weightApi.getChartData(currentMemberId.value, days)
     chartData.value = Array.isArray(data) ? data : []
     renderChart()
-  } catch (error) {
+  } catch (error: any) {
+    if (isUnauthorizedError(error)) {
+      switchToLocalMode('登录已过期，已切换为本地模式')
+      return
+    }
     chartData.value = []
   }
 }
@@ -439,6 +740,27 @@ const handleAddRecord = async () => {
       recordDate: recordForm.value.recordDate,
       recordTime: recordForm.value.recordTime
     }
+
+    if (!isCloudMode.value || !hasValidToken()) {
+      const localData = readLocalWeightData()
+      const member = localData.members.find(item => item.id === data.memberId)
+      localData.records.push(normalizeLocalRecord({
+        id: createLocalId('record'),
+        uid: 'local',
+        ...data,
+        height: member?.height ?? null,
+        createTime: new Date().toISOString(),
+        updateTime: new Date().toISOString()
+      }))
+      writeLocalWeightData(localData)
+      ElMessage.success('已保存到本地')
+      showRecordDialog.value = false
+      recordForm.value.noteTag = ''
+      await nextTick()
+      await refreshData()
+      return
+    }
+
     await weightApi.createRecord(data)
     ElMessage.success('记录成功')
     showRecordDialog.value = false
@@ -464,6 +786,18 @@ const handleDeleteRecord = async (record: WeightRecord) => {
       cancelButtonText: '取消',
       type: 'warning'
     })
+
+    if (!isCloudMode.value || !hasValidToken()) {
+      const localData = readLocalWeightData()
+      writeLocalWeightData({
+        members: localData.members,
+        records: localData.records.filter(item => item.id !== record.id)
+      })
+      ElMessage.success('已删除本地记录')
+      await refreshData()
+      return
+    }
+
     await weightApi.deleteRecord(record.id)
     ElMessage.success('删除成功')
     await refreshData()
@@ -483,6 +817,29 @@ const handleEditRecord = (record: WeightRecord) => {
 
 const handleUpdateRecord = async () => {
   if (!editingRecord.value) return
+
+  if (!isCloudMode.value || !hasValidToken()) {
+    const localData = readLocalWeightData()
+    const index = localData.records.findIndex(record => record.id === editingRecord.value?.id)
+    if (index === -1) {
+      ElMessage.error('本地记录不存在')
+      return
+    }
+    localData.records.splice(index, 1, normalizeLocalRecord({
+      ...localData.records[index],
+      weight: editingRecord.value.weight,
+      note: editingRecord.value.note,
+      recordDate: editingRecord.value.recordDate,
+      recordTime: editingRecord.value.recordTime,
+      updateTime: new Date().toISOString()
+    }))
+    writeLocalWeightData(localData)
+    ElMessage.success('已更新本地记录')
+    showEditDialog.value = false
+    await refreshData()
+    return
+  }
+
   try {
     await weightApi.updateRecord(editingRecord.value.id, {
       weight: editingRecord.value.weight,
@@ -507,15 +864,52 @@ const handleAddMember = async () => {
     ElMessage.warning('请输入成员名称')
     return
   }
+
+  const memberPayload = {
+    name: memberForm.value.name,
+    height: memberForm.value.height ? parseFloat(memberForm.value.height) : null,
+    goalWeight: memberForm.value.goalWeight ? parseFloat(memberForm.value.goalWeight) : null,
+    avatarColor: memberForm.value.avatarColor,
+    avatarEmoji: memberForm.value.avatarEmoji || undefined,
+    isDefault: members.value.length === 0 ? 1 : 0
+  }
+
+  if (!isCloudMode.value || !hasValidToken()) {
+    const localData = readLocalWeightData()
+    const now = new Date().toISOString()
+    const existingIndex = localData.members.findIndex(member => member.name === memberPayload.name)
+    let localMember: WeightMember
+    if (existingIndex >= 0) {
+      localMember = normalizeLocalMember({
+        ...localData.members[existingIndex],
+        ...memberPayload,
+        updateTime: now
+      })
+      localData.members.splice(existingIndex, 1, localMember)
+      ElMessage.success('成员已存在，信息已更新到本地')
+    } else {
+      localMember = normalizeLocalMember({
+        id: createLocalId('member'),
+        uid: 'local',
+        ...memberPayload,
+        createTime: now,
+        updateTime: now
+      })
+      localData.members.push(localMember)
+      ElMessage.success('已添加到本地')
+    }
+    writeLocalWeightData(localData)
+    memberForm.value = { name: '', height: '', goalWeight: '', avatarColor: '#409EFF', avatarEmoji: '' }
+    showMemberDialog.value = false
+    saveMemberId(localMember.id)
+    loadLocalMembers()
+    currentMemberId.value = localMember.id
+    isFirstTime.value = false
+    return
+  }
+
   try {
-    const result = await weightApi.createMember({
-      name: memberForm.value.name,
-      height: memberForm.value.height ? parseFloat(memberForm.value.height) : null,
-      goalWeight: memberForm.value.goalWeight ? parseFloat(memberForm.value.goalWeight) : null,
-      avatarColor: memberForm.value.avatarColor,
-      avatarEmoji: memberForm.value.avatarEmoji || undefined,
-      isDefault: members.value.length === 0 ? 1 : 0
-    })
+    const result = await weightApi.createMember(memberPayload)
     if (result.updated) {
       ElMessage.success('成员已存在，信息已更新')
     } else {
@@ -538,6 +932,22 @@ const handleDeleteMember = async (member: WeightMember) => {
       cancelButtonText: '取消',
       type: 'warning'
     })
+
+    if (!isCloudMode.value || !hasValidToken()) {
+      const localData = readLocalWeightData()
+      const nextMember = localData.members.find(item => item.id !== member.id)
+      writeLocalWeightData({
+        members: localData.members.filter(item => item.id !== member.id),
+        records: localData.records.filter(record => record.memberId !== member.id)
+      })
+      currentMemberId.value = nextMember?.id || ''
+      if (currentMemberId.value) saveMemberId(currentMemberId.value)
+      ElMessage.success('已删除本地成员')
+      loadLocalMembers()
+      await refreshData()
+      return
+    }
+
     await weightApi.deleteMember(member.id)
     ElMessage.success('删除成功')
     if (currentMemberId.value === member.id) {
@@ -568,14 +978,38 @@ const handleUpdateMember = async () => {
     ElMessage.warning('请输入成员名称')
     return
   }
+
+  const memberPayload = {
+    name: memberForm.value.name,
+    height: memberForm.value.height ? parseFloat(memberForm.value.height) : null,
+    goalWeight: memberForm.value.goalWeight ? parseFloat(memberForm.value.goalWeight) : null,
+    avatarColor: memberForm.value.avatarColor,
+    avatarEmoji: memberForm.value.avatarEmoji || undefined
+  }
+
+  if (!isCloudMode.value || !hasValidToken()) {
+    const localData = readLocalWeightData()
+    const index = localData.members.findIndex(member => member.id === editingMember.value?.id)
+    if (index === -1) {
+      ElMessage.error('本地成员不存在')
+      return
+    }
+    localData.members.splice(index, 1, normalizeLocalMember({
+      ...localData.members[index],
+      ...memberPayload,
+      updateTime: new Date().toISOString()
+    }))
+    writeLocalWeightData(localData)
+    ElMessage.success('已更新本地成员')
+    showEditMemberDialog.value = false
+    editingMember.value = null
+    loadLocalMembers()
+    await refreshData()
+    return
+  }
+
   try {
-    await weightApi.updateMember(editingMember.value.id, {
-      name: memberForm.value.name,
-      height: memberForm.value.height ? parseFloat(memberForm.value.height) : null,
-      goalWeight: memberForm.value.goalWeight ? parseFloat(memberForm.value.goalWeight) : null,
-      avatarColor: memberForm.value.avatarColor,
-      avatarEmoji: memberForm.value.avatarEmoji || undefined
-    })
+    await weightApi.updateMember(editingMember.value.id, memberPayload)
     ElMessage.success('更新成功')
     showEditMemberDialog.value = false
     editingMember.value = null
@@ -587,6 +1021,64 @@ const handleUpdateMember = async () => {
 }
 
 // ===== 图表相关 =====
+const syncLocalWeightToCloud = async () => {
+  if (!hasValidToken()) {
+    ElMessage.warning('请先登录后再同步本地体重数据')
+    goToLogin()
+    return
+  }
+
+  const localData = readLocalWeightData()
+  if (localData.members.length === 0 && localData.records.length === 0) {
+    ElMessage.info('没有需要同步的本地体重数据')
+    return
+  }
+
+  try {
+    syncingLocal.value = true
+    const memberIdMap = new Map<string, string>()
+    for (const member of localData.members) {
+      const result = await weightApi.createMember({
+        name: member.name,
+        height: member.height,
+        goalWeight: member.goalWeight,
+        avatarColor: member.avatarColor,
+        avatarEmoji: member.avatarEmoji,
+        isDefault: member.isDefault
+      })
+      memberIdMap.set(member.id, result.id)
+    }
+
+    for (const record of localData.records) {
+      const cloudMemberId = memberIdMap.get(record.memberId)
+      if (!cloudMemberId) continue
+      await weightApi.createRecord({
+        memberId: cloudMemberId,
+        weight: record.weight,
+        note: record.note,
+        recordDate: record.recordDate,
+        recordTime: record.recordTime
+      })
+    }
+
+    localStorage.removeItem(LOCAL_WEIGHT_KEY)
+    localMemberCount.value = 0
+    localRecordCount.value = 0
+    ElMessage.success(`已同步 ${localData.members.length} 个成员、${localData.records.length} 条记录到云端`)
+    await fetchMembers()
+    await refreshData()
+  } catch (error: any) {
+    if (isUnauthorizedError(error)) {
+      switchToLocalMode('登录已过期，请重新登录后再同步')
+      return
+    }
+    console.error('同步本地体重数据失败:', error)
+    ElMessage.error('同步失败，请稍后重试')
+  } finally {
+    syncingLocal.value = false
+  }
+}
+
 const initChart = () => {
   if (!chartRef.value) return
   chartInstance = echarts.init(chartRef.value)
@@ -694,10 +1186,6 @@ watch(dateFilter, async () => {
 // ===== 生命周期 =====
 onMounted(async () => {
   userStore.initUserState()
-  if (!userStore.isLoggedIn) {
-    notLoggedIn.value = true
-    return
-  }
   await fetchMembers()
   if (currentMemberId.value) {
     await refreshData()
@@ -712,6 +1200,29 @@ onMounted(async () => {
 <template>
   <div class="flex flex-col mt-3 min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-purple-50">
     <DetailHeader :title="info.title" />
+
+    <div class="mode-banner mx-3 sm:mx-0" :class="{ 'mode-banner--cloud': isCloudMode }">
+      <div class="mode-copy">
+        <strong>{{ isCloudMode ? '云端模式' : '本地模式' }}</strong>
+        <span>
+          {{ isCloudMode ? '体重数据已保存到账号，可跨设备使用。' : '无需登录即可记录体重，数据只保存在当前浏览器；登录后可长期保存并在多个设备之间同步。' }}
+        </span>
+      </div>
+      <div class="mode-actions">
+        <el-button v-if="!isCloudMode" type="primary" plain @click="goToLogin">
+          登录后云同步
+        </el-button>
+        <el-button
+          v-if="isCloudMode && (localMemberCount > 0 || localRecordCount > 0)"
+          type="primary"
+          :loading="syncingLocal"
+          :disabled="syncingLocal"
+          @click="syncLocalWeightToCloud"
+        >
+          同步 {{ localMemberCount }} 个成员 / {{ localRecordCount }} 条记录
+        </el-button>
+      </div>
+    </div>
 
     <!-- 未登录提示 -->
     <div v-if="notLoggedIn" class="mx-3 sm:mx-0 p-8 rounded-3xl bg-gradient-to-br from-indigo-500 via-purple-500 to-pink-500 mb-6 text-center shadow-xl">
@@ -1392,6 +1903,60 @@ export default {
 </script>
 
 <style scoped>
+.mode-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 18px;
+  padding: 14px 18px;
+  border: 1px solid rgba(214, 227, 225, 0.95);
+  border-radius: 12px;
+  background: var(--youngbar-primary-soft);
+  color: #0f172a;
+}
+
+.mode-banner--cloud {
+  background: rgba(255, 255, 255, 0.95);
+}
+
+.mode-copy {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.mode-copy strong {
+  color: var(--warm-primary);
+  font-size: 15px;
+}
+
+.mode-copy span {
+  color: #64748b;
+  font-size: 14px;
+}
+
+.mode-actions {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  gap: 10px;
+}
+
+.mode-actions :deep(.el-button--primary) {
+  background: var(--warm-primary) !important;
+  border-color: var(--warm-primary) !important;
+  color: #fff !important;
+}
+
+.mode-actions :deep(.el-button--primary:hover),
+.mode-actions :deep(.el-button--primary:focus) {
+  background: var(--warm-primary-hover) !important;
+  border-color: var(--warm-primary-hover) !important;
+  color: #fff !important;
+}
+
 /* 毛玻璃背景 */
 .glass-card {
   background: rgba(255, 255, 255, 0.85);
@@ -1631,5 +2196,20 @@ export default {
 
 .tag-capsule:hover {
   transform: scale(1.05);
+}
+
+@media (max-width: 768px) {
+  .mode-banner {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .mode-actions {
+    width: 100%;
+  }
+
+  .mode-actions :deep(.el-button) {
+    width: 100%;
+  }
 }
 </style>
