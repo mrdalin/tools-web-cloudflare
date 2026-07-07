@@ -118,10 +118,7 @@ const main = async () => {
     '',
   ].join('\n')
 
-  await Promise.all([
-    writeFile('public/sitemap.xml', xml),
-    writeFile('sitemap.xml', xml),
-  ])
+  await writeFile('public/sitemap.xml', xml)
 
   console.log(`Generated ${paths.length} sitemap URLs.`)
 }
