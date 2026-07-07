@@ -10,6 +10,26 @@ export const constantRoute = [
       description: '一站式在线工具箱：覆盖开发运维、文本处理、图片处理、数据图表、趣味互动、选择随机、教育学术与 AI 工具；提供 JSON/CSV/TSV 互转、随机密码/UUID、时间戳与进制转换、单位换算、URL 编解码/参数解析、正则测试、Markdown、文本对比/去重、Base64 编解码、哈希校验、文件大小转换、HTTP 状态码、JWT 解析、Cron 表达式、HTML 实体、二维码生成与识别、在线图片编辑/分割、图片与 Base64 双向互转、文本转图片、色板取色器、柱状/折线/饼/散点图、摩斯电码，以及贪吃蛇/2048/俄罗斯方块/扫雷/打地鼠/数字华容道/数独等小游戏，另含 IP 查询、网站信息获取、AI 起名/变量名/文生图/翻译与在线请求调试等实用功能。另附收藏夹与稍后读功能方便管理网络链接。'
     }
   },
+  {
+    path: '/privacy',
+    component: () => import('@/components/Home/Privacy.vue'),
+    name: 'privacy',
+    meta: {
+      title: '隐私政策',
+      keywords: 'Youngbar工具箱,隐私政策,Google登录,数据保护',
+      description: 'Youngbar工具箱隐私政策，说明账号、Google登录、工具数据、AI请求和第三方服务的数据处理方式。',
+    }
+  },
+  {
+    path: '/privacy-policy',
+    component: () => import('@/components/Home/Privacy.vue'),
+    name: 'privacyPolicy',
+    meta: {
+      title: '隐私政策',
+      keywords: 'Youngbar工具箱,隐私政策,Google登录,数据保护',
+      description: 'Youngbar工具箱隐私政策，说明账号、Google登录、工具数据、AI请求和第三方服务的数据处理方式。',
+    }
+  },
   // 用户信息页
   {
     path: '/userinfo',

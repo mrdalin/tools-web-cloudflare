@@ -222,6 +222,21 @@ watch(() => toolsStore.cates.length, () => {
 
 <template>
   <div class="md:mr-6 c-xs:mr-0">
+    <section class="home-trust-panel">
+      <div>
+        <p class="home-trust-kicker">Youngbar 工具箱</p>
+        <h1>开源免费的在线工具站</h1>
+        <p class="home-trust-copy">
+          提供开发、文本、图片、数据图表、生活记录和 AI 辅助等工具。大多数工具无需登录即可使用；
+          当你使用账号同步、邮箱验证码或 Google 登录时，本站只处理完成这些功能所需的必要信息。
+        </p>
+      </div>
+      <div class="home-trust-actions">
+        <router-link to="/privacy" class="home-trust-link home-trust-link--primary">隐私政策</router-link>
+        <router-link to="/about" class="home-trust-link">关于本站</router-link>
+      </div>
+    </section>
+
     <!-- list -->
     <div v-for="(cate, index) in toolsStore.cates" :key="index">
       <!-- cate title -->
@@ -280,6 +295,83 @@ watch(() => toolsStore.cates.length, () => {
 </template>
 
 <style scoped>
+.home-trust-panel {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  margin: 10px 0 22px;
+  padding: 22px 24px;
+  border: 1px solid rgba(214, 227, 225, 0.95);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.9);
+  box-shadow: 0 12px 28px rgba(15, 23, 42, 0.06);
+}
+
+.home-trust-kicker {
+  margin: 0 0 6px;
+  color: var(--warm-primary);
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.home-trust-panel h1 {
+  margin: 0;
+  color: #0f172a;
+  font-size: 24px;
+  font-weight: 800;
+  line-height: 1.3;
+}
+
+.home-trust-copy {
+  max-width: 760px;
+  margin: 10px 0 0;
+  color: #475569;
+  font-size: 14px;
+  line-height: 1.75;
+}
+
+.home-trust-actions {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  gap: 10px;
+}
+
+.home-trust-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 36px;
+  padding: 0 14px;
+  border: 1px solid var(--warm-border);
+  border-radius: 8px;
+  color: var(--warm-primary);
+  font-size: 14px;
+  font-weight: 700;
+  background: #fff;
+  transition: color 0.18s ease, border-color 0.18s ease, background-color 0.18s ease;
+}
+
+.home-trust-link:hover,
+.home-trust-link:focus-visible {
+  border-color: rgba(15, 118, 110, 0.4);
+  color: var(--warm-primary-hover);
+  background: var(--youngbar-primary-soft);
+}
+
+.home-trust-link--primary {
+  border-color: var(--warm-primary);
+  color: #fff;
+  background: var(--warm-primary);
+}
+
+.home-trust-link--primary:hover,
+.home-trust-link--primary:focus-visible {
+  color: #fff;
+  background: var(--warm-primary-hover);
+}
+
 .category-title {
   display: flex;
   align-items: center;
@@ -342,5 +434,27 @@ watch(() => toolsStore.cates.length, () => {
 .fade-enter-from,
 .fade-leave-to {
   opacity: 0;
+}
+
+@media (max-width: 768px) {
+  .home-trust-panel {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 16px;
+    margin-top: 0;
+    padding: 18px;
+  }
+
+  .home-trust-panel h1 {
+    font-size: 21px;
+  }
+
+  .home-trust-actions {
+    width: 100%;
+  }
+
+  .home-trust-link {
+    flex: 1;
+  }
 }
 </style>

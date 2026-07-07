@@ -81,6 +81,11 @@ onMounted(async () => {
         <el-text>如果您发现了 Bug，或者某些功能未能按预期工作，请在 GitHub 仓库的 <el-link type="primary" target="_blank" :href="gitUrl + '/issues/new'" class="">issues</el-link> 中提交错误报告。</el-text>
       </p>
 
+      <h1 class="text-2xl font-bold mt-6 mb-6">隐私政策</h1>
+      <p>
+        <el-text>账号、Google 登录、AI 请求和第三方服务的数据处理说明，请查看 <router-link to="/privacy" class="privacy-link">隐私政策</router-link>。</el-text>
+      </p>
+
       <h1 class="text-2xl font-bold mt-6 mb-6">友情链接</h1>
       <p>
         <el-text>linux.do：<el-link href="https://linux.do" type="primary" target="_blank">https://linux.do</el-link></el-text>
@@ -100,6 +105,17 @@ onMounted(async () => {
   border: 1px solid rgba(214, 227, 225, 0.95);
   border-radius: 8px;
   background: #f8fafc;
+}
+
+.privacy-link {
+  color: var(--warm-primary);
+  font-weight: 700;
+}
+
+.privacy-link:hover,
+.privacy-link:focus-visible {
+  color: var(--warm-primary-hover);
+  text-decoration: underline;
 }
 
 @media (max-width: 640px) {
