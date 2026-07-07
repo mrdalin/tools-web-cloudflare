@@ -33,6 +33,12 @@ const userStore = useUserStore()
 // 用户相关状态
 const userMenuVisible = ref(false)
 const hideTimeout = ref<number | null>(null)
+const floatingHeaderVisible = ref(false)
+
+const FLOATING_SHOW_OFFSET = 180
+const SCROLL_DELTA = 6
+let lastScrollTop = 0
+let scrollFrame = 0
 
 // 计算属性：判断用户是否已登录
 const isLoggedIn = computed(() => userStore.getLoginStatus)
@@ -76,6 +82,7 @@ const searchTools = async (query: string) => {
 }
 
 const optionClick = (item: any) => {
+  floatingHeaderVisible.value = false
   // 如果是好物网站,直接打开外部链接
   if (item.isExternalSite && item.externalUrl) {
     window.open(item.externalUrl, '_blank')
@@ -157,16 +164,49 @@ const handleClickOutside = (event: Event) => {
   }
 }
 
+const getScrollTop = () => {
+  return window.pageYOffset || document.documentElement.scrollTop || document.body.scrollTop || 0
+}
+
+const updateFloatingHeader = () => {
+  const currentScrollTop = Math.max(getScrollTop(), 0)
+  const scrollDistance = currentScrollTop - lastScrollTop
+
+  if (currentScrollTop <= FLOATING_SHOW_OFFSET) {
+    floatingHeaderVisible.value = false
+  } else if (scrollDistance < -SCROLL_DELTA) {
+    floatingHeaderVisible.value = true
+  } else if (scrollDistance > SCROLL_DELTA) {
+    floatingHeaderVisible.value = false
+  }
+
+  lastScrollTop = currentScrollTop
+}
+
+const handleWindowScroll = () => {
+  if (scrollFrame) return
+  scrollFrame = window.requestAnimationFrame(() => {
+    updateFloatingHeader()
+    scrollFrame = 0
+  })
+}
+
 onMounted(() => {
   // 初始化用户状态
   userStore.initUserState()
+  lastScrollTop = getScrollTop()
   // 添加全局点击事件监听
   document.addEventListener('click', handleClickOutside)
+  window.addEventListener('scroll', handleWindowScroll, { passive: true })
 })
 
 onUnmounted(() => {
   // 移除事件监听
   document.removeEventListener('click', handleClickOutside)
+  window.removeEventListener('scroll', handleWindowScroll)
+  if (scrollFrame) {
+    window.cancelAnimationFrame(scrollFrame)
+  }
   // 清理定时器
   if (hideTimeout.value) {
     clearTimeout(hideTimeout.value)
@@ -175,7 +215,13 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <header class="h-24 w-full flex justify-between pt-2 pb-2 c-xs:h-16 c-xs:border-b-[1px] border-warm-200 items-center c-xs:fixed c-xs:top-0 c-xs:left-0 c-xs:right-0 c-xs:z-50 c-xs:bg-white">
+  <header
+    class="site-header h-24 w-full flex justify-between pt-2 pb-2 c-xs:h-16 c-xs:border-b-[1px] border-warm-200 items-center c-xs:fixed c-xs:top-0 c-xs:left-0 c-xs:right-0 c-xs:z-50 c-xs:bg-white"
+    :class="{
+      'site-header--floating': floatingHeaderVisible,
+      'site-header--with-sidebar': floatingHeaderVisible && !componentStore.leftCom
+    }"
+  >
     <div class="flex items-center w-full">
       <Transition name="fold" class="hidden c-sm:block c-md:hidden c-xs:block">
         <svg v-if="!componentStore.leftComDrawer" @click="componentStore.setleftComDrawerStatus(true)" t="1702978210636" class="icon" viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg" p-id="7618" width="30" height="30">
@@ -308,6 +354,38 @@ onUnmounted(() => {
 </template>
 
 <style scoped>
+.site-header {
+  transition: background-color 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+}
+
+.site-header--floating {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  width: auto;
+  z-index: 60;
+  padding-left: 16px;
+  padding-right: 16px;
+  background: rgba(255, 251, 235, 0.96);
+  border-bottom: 1px solid rgba(253, 186, 116, 0.45);
+  box-shadow: 0 12px 28px rgba(120, 53, 15, 0.12);
+  backdrop-filter: blur(12px);
+}
+
+@media (min-width: 992px) {
+  .site-header--floating.site-header--with-sidebar {
+    left: 240px;
+  }
+}
+
+@media (max-width: 768px) {
+  .site-header--floating {
+    padding-left: 0;
+    padding-right: 0;
+  }
+}
+
 .fold-enter-active {
   transition: all 1s ease-out;
 }
