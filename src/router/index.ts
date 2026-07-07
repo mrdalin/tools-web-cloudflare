@@ -17,6 +17,16 @@ const router = createRouter({
 })
 
 router.beforeEach((to, _from, next) => {
+  if (to.path.length > 1 && to.path.endsWith('/')) {
+    next({
+      path: to.path.replace(/\/+$/, ''),
+      query: to.query,
+      hash: to.hash,
+      replace: true,
+    })
+    return
+  }
+
   if (to.meta.title) {
     document.title = `${to.meta.title as string}-${appTitle}`
   }

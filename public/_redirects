@@ -1,1 +1,6 @@
+/userinfo/todos /todos 301
+/userinfo/todos/ /todos 301
+/ai/text-to-image /ai-text-to-image 301
+/ai/text-to-image/ /ai-text-to-image 301
+/:tool/ /:tool 301
 /* /index.html 200

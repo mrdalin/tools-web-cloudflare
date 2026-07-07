@@ -709,7 +709,7 @@ export const constantRoute = [
     }
   },
   {
-    path: '/led-display/',
+    path: '/led-display',
     component: () => import('@/components/Tools/LedDisplay/LedDisplay.vue'),
     name: 'ledDisplay',
     meta: {
@@ -924,7 +924,7 @@ export const constantRoute = [
     }
   },
   {
-    path: '/letter-writer/',
+    path: '/letter-writer',
     component: () => import('@/components/Tools/LetterWriter/LetterWriter.vue'),
     name: 'letterWriter',
     meta: {
@@ -1104,13 +1104,13 @@ export const constantRoute = [
     }
   },
   {
-    path: '/todos',
-    redirect: '/userinfo/todos',
+    path: '/userinfo/todos',
+    redirect: '/todos',
   },
   {
-    path: '/userinfo/todos',
+    path: '/todos',
     component: () => import('@/components/Tools/Todos/Todos.vue'),
-    name: 'userinfo-todos',
+    name: 'todos',
     meta: {
       title: "待办事项",
       keywords: '待办事项,任务管理,TODO,优先级,截止日期,任务清单',
@@ -1308,7 +1308,7 @@ export const constantRoute = [
     }
   },
   {
-    path: '/old-photo-caption/',
+    path: '/old-photo-caption',
     component: () => import('@/components/Tools/OldPhotoCaption/OldPhotoCaption.vue'),
     name: 'oldPhotoCaption',
     meta: {
