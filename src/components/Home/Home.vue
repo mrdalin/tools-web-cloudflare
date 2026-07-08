@@ -23,6 +23,7 @@ const router = useRouter()
 
 const showBackTop = ref(false)
 const isLoadingCates = ref(false)
+const HOME_TOP_EVENT = 'youngbar:home-top'
 
 const ensureToolCates = async () => {
   if (toolsStore.cates.length > 0 || isLoadingCates.value) return
@@ -36,19 +37,51 @@ const ensureToolCates = async () => {
   }
 }
 
+const getFirstCategoryAnchor = () => {
+  const firstCate = toolsStore.cates[0]
+  return firstCate ? `cate_${firstCate.id}` : ''
+}
+
 const scrollToTop = () => {
   history.replaceState(null, '', '/')
+  const wasActive = isScrollListenerActive.value
+  isScrollListenerActive.value = false
+  isUserClickingCategory.value = true
+
+  const restoreScrollState = () => {
+    if (wasActive && route.path === '/') {
+      isScrollListenerActive.value = true
+    }
+    window.setTimeout(() => {
+      isUserClickingCategory.value = false
+      handleScroll()
+    }, 50)
+  }
+
   const scrollTop = document.documentElement.scrollTop || document.body.scrollTop
-  if (scrollTop <= 0) return
+  if (scrollTop <= 0) {
+    restoreScrollState()
+    return
+  }
   const step = () => {
     const current = document.documentElement.scrollTop || document.body.scrollTop
-    if (current <= 0) return
+    if (current <= 0) {
+      restoreScrollState()
+      return
+    }
     const distance = Math.max(current / 12, 3)
     document.documentElement.scrollTop = current - distance
     document.body.scrollTop = current - distance
     requestAnimationFrame(step)
   }
   requestAnimationFrame(step)
+}
+
+const resetHomeToTop = async () => {
+  await ensureToolCates()
+  componentStore.setActiveCategory(getFirstCategoryAnchor())
+  await nextTick()
+  scrollToTop()
 }
 
 const scrollToAnchor = async () => {
@@ -203,12 +236,14 @@ onMounted(async () => {
       window.addEventListener('scroll', throttledHandleScroll)
     }
   }, 500) // 延迟500ms
+  window.addEventListener(HOME_TOP_EVENT, resetHomeToTop)
 })
 
 onUnmounted(() => {
   // 清理滚动监听
   isScrollListenerActive.value = false
   window.removeEventListener('scroll', throttledHandleScroll)
+  window.removeEventListener(HOME_TOP_EVENT, resetHomeToTop)
   if (scrollTimer) {
     cancelAnimationFrame(scrollTimer)
   }
@@ -226,8 +261,14 @@ watch(() => route.path, async (newPath) => {
   }
 })
 
-watch(() => route.query.value, () => {
-  scrollToAnchor()
+watch(() => route.query.value, async (value) => {
+  if (route.path !== '/') return
+  const anchor = Array.isArray(value) ? value[0] : value
+  if (typeof anchor === 'string' && anchor) {
+    scrollToAnchor()
+    return
+  }
+  await resetHomeToTop()
 })
 
 watch(() => toolsStore.cates.length, () => {

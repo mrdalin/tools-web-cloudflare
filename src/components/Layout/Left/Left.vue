@@ -80,6 +80,28 @@ const gotoAbout = () => {
   router.push("about");
 };
 
+const gotoHome = async () => {
+  componentStore.setleftComDrawerStatus(false);
+  componentStore.setActiveCategory('');
+
+  const hasAnchorQuery = Boolean(route.query?.value);
+
+  if (route.path === '/' && !hasAnchorQuery) {
+    window.dispatchEvent(new CustomEvent('youngbar:home-top'));
+    return;
+  }
+
+  if (route.path === '/') {
+    await router.replace({ path: '/', query: {} });
+    return;
+  }
+
+  await router.push({ path: '/', query: {} });
+  window.setTimeout(() => {
+    window.dispatchEvent(new CustomEvent('youngbar:home-top'));
+  }, 0);
+};
+
 const updateActive = async () => {
   const rawPath = route.path;
   const path = rawPath === "/" ? "/" : rtrim(rawPath, "/");
@@ -183,7 +205,7 @@ onMounted(async () => {
   <el-scrollbar>
     <!-- logo -->
     <div class="flex justify-center">
-      <router-link class="flex flex-row h-24" to="/">
+      <a class="flex flex-row h-24" href="/" @click.prevent="gotoHome">
         <img
           class="h-12 w-auto rounded-lg mr-2 mt-auto mb-auto"
           src="@/assets/logo.png"
@@ -193,7 +215,7 @@ onMounted(async () => {
           <div class="text-xl font-semibold text-slate-900 tracking-tight">{{ appName }}</div>
           <div class="text-xs text-slate-500">{{ appNet }}</div>
         </div>
-      </router-link>
+      </a>
     </div>
     <!-- menu -->
     <div class="flex justify-center pl-8 pr-8">
