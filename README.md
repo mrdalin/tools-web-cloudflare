@@ -1,420 +1,340 @@
-<div align="center">
-  <pre>
-    _______          _         __          __  _     
- |__   __|        | |        \ \        / / | |    
-    | | ___   ___ | |___ _____\ \  /\  / /__| |__  
-    | |/ _ \ / _ \| / __|______\ \/  \/ / _ \ '_ \ 
-    | | (_) | (_) | \__ \       \  /\  /  __/ |_) |
-    |_|\___/ \___/|_|___/        \/  \/ \___|_.__/ 
-                                                                                                 
-  </pre>
-  <p> 只需简单几步，即可快速搭建属于自己的在线工具箱。</p> 
+# Youngbar 工具箱
 
-[![node](https://img.shields.io/badge/any_text-22.13.1-red?label=node)](node)
-[![pnpm](https://img.shields.io/badge/any_text-10.14.0-white?label=pnpm)](pnpm)
-[![vue](https://img.shields.io/badge/any_text-3.3.10-origin?label=vue)](vue)
-[![tailwindcss](https://img.shields.io/badge/any_text-3.3.5-yellow?label=tailwindcss)](tailwindcss)
-[![elementplus](https://img.shields.io/badge/any_text-2.7-blue?label=element-plus)](elementplus)
-[![license](https://img.shields.io/github/license/ideajoker/tools-web-cloudflare)](LICENSE)
+Youngbar 工具箱是部署在 Cloudflare Pages 上的一站式在线工具站，当前生产站点为：
 
-</div>
+- 站点地址：https://youngbar.com
+- GitHub 仓库：https://github.com/ideajoker/tools-web-cloudflare
+- Cloudflare Pages 项目：`tools-web`
+- D1 数据库：`tools-web-db`
 
-本仓库用于 Youngbar 工具箱的 Cloudflare 部署与维护：<a href="https://github.com/ideajoker/tools-web-cloudflare" target="_blank">tools-web-cloudflare</a>。
+本项目基于以下开源项目继续维护和改造：
 
-一站式在线工具箱：覆盖开发运维、文本处理、图片处理、数据图表、趣味互动、选择随机、教育学术与 AI 工具；提供 JSON/CSV/TSV 互转、随机密码/UUID、时间戳与进制转换、单位换算、URL 编解码/参数解析、正则测试、Markdown、文本对比/去重、哈希校验、文件大小转换、HTTP 状态码、JWT 解析、Cron 表达式、HTML 实体、二维码生成与识别、在线图片编辑/分割/转 Base64、文本转图片、色板取色器、柱状/折线/饼/散点图、摩斯电码，以及贪吃蛇/2048/俄罗斯方块/扫雷/打地鼠/数字华容道/数独等小游戏，另含 IP 查询、网站信息获取、AI 起名/变量名/文生图/翻译与在线请求调试等实用功能。
+- 源站：[naroat/tools-web](https://github.com/naroat/tools-web)
+- 二次项目：[2424004764/tools-web](https://github.com/2424004764/tools-web)
 
-## 目录
+## 当前状态
 
-- [功能展览](#功能展览)
-- [开始使用](#开始使用)
-  - [Docker部署](#Docker部署)
-  - [手动部署](#手动部署)
-  - [cloudflare部署](#Cloudflare部署)
-- [工具列表](#工具列表)
-- [其他](#其他)
+本仓库已经按 Youngbar 的 Cloudflare 部署方式完成整理：
 
-## 功能展示
+- 前端：Vue 3 + Vite + Element Plus
+- 部署：Cloudflare Pages
+- 后端：Cloudflare Pages Functions
+- 数据库：Cloudflare D1，绑定名为 `DB`
+- 域名：`youngbar.com`
+- 主要 AI 服务：Agnes API，备用/历史兼容包含 Pollinations
+- 邮件验证码：Resend
+- 登录：邮箱验证码、邮箱密码、Google 登录
+- 统计：Google Analytics 4
+- SEO：已配置 `robots.txt`、`sitemap.xml`、canonical、基础 Open Graph、核心工具页 SEO 内容模块
 
-在线站点：<a href="https://youngbar.com/" target="_blank">Tools-Web</a>
+## 常用功能
 
-## 网站效果图
-<img width="1896" height="939" alt="image" src="https://github.com/user-attachments/assets/a84b26dc-561f-41b9-92a3-5c8ec8c34828" />
-<img width="1895" height="838" alt="image" src="https://github.com/user-attachments/assets/bc2e19b0-d788-460c-9199-93ae142b7dec" />
-<img width="1873" height="970" alt="image" src="https://github.com/user-attachments/assets/92784ca1-f570-43fc-888b-b7e95203e2f8" />
-<img width="1878" height="980" alt="image" src="https://github.com/user-attachments/assets/a9e2597e-5327-409d-a45f-c04f6546fdd7" />
-<img width="1721" height="866" alt="image" src="https://github.com/user-attachments/assets/2d6e6c4c-af25-49d3-9a19-354823a3d507" />
+工具箱覆盖以下类型：
 
+- 开发运维：JSON、Base64、MD5、JWT、URL、正则、Cron、HTTP 状态码、Mock 数据等。
+- 文本处理：Markdown、文本对比、字数统计、文本去重、字符串清理等。
+- 图片处理：二维码、图片压缩、图片裁剪、图片转 Base64、证件照、签名图片等。
+- 内容管理：笔记、待办、QA、收藏夹、体重记录、简历、公司对比等。
+- AI 工具：AI 对话、AI 翻译、AI 起名、每日文案、文生图、文生视频等。
+- 趣味工具：2048、扫雷、数独、五子棋、记忆训练等。
 
-## 开始使用
+内容管理类功能的基本策略：
 
-我的node版本：22.13.1、pnpm版本：10.14.0
+- 未登录：尽量允许直接使用，数据保存在当前浏览器本地。
+- 登录后：支持保存到云端，便于长期保存和多设备同步。
+- 必须登录的功能：页面需要明确提示用户先登录。
 
+## 本地开发
 
+推荐环境：
 
-### Docker部署
+```bash
+node -v
+# 建议 Node.js 20 或 22
 
-```
-docker run -d --name tools-web --restart unless-stopped -p 8080:80 docker0796/tools-web:latest
-```
-
-访问：`http://127.0.0.1:8080`
-
-
-### 手动部署
-
-安装`pnpm`
-```
-npm install pnpm -g
+pnpm -v
+# 建议 pnpm 10+
 ```
 
-克隆
-```
-git clone https://github.com/ideajoker/tools-web-cloudflare.git
-```
+安装依赖：
 
-安装
-```
-# 进入项目
-cd tools-web
-
-# 复制配置文件
-cp .env.example .env.development
-
-# 安装
+```bash
 pnpm install
 ```
 
-启动
-```
+启动前端开发服务：
+
+```bash
 pnpm dev
 ```
 
-打包
-```
-windows命令
-// 打包并且将根目录的functions文件夹全部内容和wrangler.toml文件复制到/dist文件夹下
-pnpm build && xcopy /E /I /H /Y .\functions\* .\dist\functions\ && xcopy /Y .\wrangler.toml .\dist\ && xcopy /Y .\robots.txt .\dist\ && xcopy /Y .\sitemap.xml .\dist\
+生产构建：
 
-// 打包静态页面并且将根目录的functions文件夹全部内容和wrangler.toml文件复制到/dist文件夹下
-pnpm build:pro && xcopy /E /I /H /Y .\functions\* .\dist\functions\ && xcopy /Y .\wrangler.toml .\dist\ && xcopy /Y .\robots.txt .\dist\ && xcopy /Y .\sitemap.xml .\dist\
-
-linux只需要改一下复制的命令即可:
-pnpm build && cp -r ./functions/* ./dist/functions/ && cp ./wrangler.toml ./dist/ && cp ./robots.txt ./dist/ && cp ./sitemap.xml ./dist/ && git add . && git commit -m "debug" && git push origin master
-
-```
-
-编译 && 移动 && 提交一条命令搞定：
-```
-pnpm build && cp -r ./functions/* ./dist/functions/ && cp ./wrangler.toml ./dist/ && cp ./robots.txt ./dist/ && cp ./sitemap.xml ./dist/
-```
-
-打包seo静态页面:复制`.env.development`文件，并将文件名修改为`.env.production`,将里面的`NODE_ENV`的值改为`production`,然后运行下面打包命令
-```
+```bash
 pnpm build:pro
 ```
 
-git提交
-```
-git add . && git commit -m "feat 新增xx功能" && git push origin master
-```
+本地预览：
 
-### Cloudflare部署
-
-详见我的公众号文章：[https://mp.weixin.qq.com/s/kIrz2uAv0cmT3f2rPWbtdQ](https://mp.weixin.qq.com/s/RXWAGN6OpKw2qa1DKF_5-g)
-
-## 本地调试functions
-根目录执行命令：
-```
-pnpm install wrangler
-wrangler pages dev .
-```
-然后会启动一个服务，之后就可以像请求functions一样的方式调用的，只是把请求地址改成本地的
-
-## 功能开发日志
-- 2025年8月2日 新增文生图
-- 2025年8月5日 新增cron表达式生成器
-- 2025年8月6日 新增二维码识别、文件大小转换、贪吃蛇小游戏、记忆力翻牌、俄罗斯方块小游戏、打地鼠小游戏功能
-- 2025-08-07 新增数独小游戏
-- 2025-08-08 新增AI工具导航、postman lite功能
-- 2025-08-10 新增哈希校验功能
-- 2025-08-11 新增CSV/TSV互转JSON、命名风格转换、AI起变量名、AI起名功能
-- 2025-08-12 新增AI翻译、AI小学作文功能
-- 2025-08-12 新增 AI每日励志鸡汤文 功能
-- 2025-08-14 新增 图片在线压缩 功能
-- 2025-08-15 新增AI五子棋功能
-- 2025-08-15 新增好物网站导航功能
-- 2025-08-16 新增用户登录功能
-- 2025-08-20 新增谷歌登录方式
-- 2025-08-21 新增笔记备忘录功能，支持在线创建、编辑、删除笔记，数据安全存储在D1数据库
-- 2025-08-28 新增物品辐射量示例功能、Cookie解析功能
-- 2025-08-19 新增猜数字游戏
-- 2025-08-30 点击功能时，增加loading效果、新增3D数学方程式、算法可视化功能
-- 2025-08-31 新增假如你有100亿、AI提示词仓库功能、接入linux.do（https://connect.linux.do/dash/sso）登录方式
- - 2025-09-01 新增pdf转图片功能
- - 2025-09-02 接入gitee（https://gitee.com/oauth/applications）、github（https://github.com/settings/developers）登录方式
- - 2025-09-02 接入QQ（https://connect.qq.com/manage.html#/）登录方式
- - 2025-09-06 新增MySQL转Go结构体功能
- - 2025-09-07 新增数字序号记忆小游戏
- - 2025-09-08 新增个人简历功能
- - 2025-09-09 新增公司对比功能，支持多维度对比公司薪资、福利、工作时间等信息，历史记录存储
-- 2025-09-10 新增AI面试功能，模拟真实面试场景，支持前端、后端、产品等多种岗位类型，提升面试表现
-- 2025-09-14: 新增最低工资标准查询功能，支持全国31个省市最低工资标准查询
-- 2025-09-14: 新增QA问答页面制作功能，支持创建个性化问答页面，可生成公开链接
-- 2025-01-13: 新增字符串去空格功能，支持去除所有空格、去除首尾空格、去除多余空格、去除空行等多种模式
-- 2025-01-13: 新增Base64编码/解码功能，支持文本的Base64编码与解码，双向实时转换
-- 2025-01-13: 图片转Base64功能升级，支持Base64转图片，实现图片与Base64双向互转
-- 2025-03-20: 新增逻辑思维训练功能，包含真话谎话题、逻辑推理题、数学思维题、序列推理题等多种题型
-- 2025-03-28: 新增证件照生成功能，支持一寸、二寸、护照、身份证等预设尺寸，支持矩形和四边形透视裁剪，可导出JPG和PNG格式
-- 2026-04-25: 新增MongoDB JSON转SQLite功能，支持JSON数组和NDJSON格式导入，自动推断表结构，支持嵌套对象展开和下载SQLite数据库文件
-- 2026-05-02: 新增PNG/JPG格式互转功能
-- 2026-05-03: 新增短链接生成器功能，支持自定义后缀和访问统计
-- 2026-06-06: 新增 Mock 数据生成器，可视化定义字段 Schema 生成测试用假数据，预置用户/文章/商品示例，登录后自动同步配方至云端（Cloudflare D1）
-- 2026-06-10: 新增在线写信工具，支持多种信纸风格（正式商务/友好随意/浪漫温馨/复古怀旧/简约现代），生成永久分享链接，登录用户云端保存
-- 2026-06-10: 新增邮箱注册登录功能，支持邮箱验证码登录、注册和找回密码，使用 Resend 发送验证码邮件，密码采用 SHA-256 + 随机盐加密
-- 2026-06-27: 新增老照片加字工具，上传图片添加「2026年春，xx同志在xx地方留影」风格题字条带，支持黑金/红金/黄黑三种预设样式和自由配色
-
-## 工具列表
-
-### 用户管理
-- 用户登录（Google / GitHub / Gitee / QQ / Linux.do OAuth）
-- 用户信息管理
-- 个人简历
-
-### 开发运维
-- 随机密码生成
-- URL编码/解码
-- UUID生成器
-- 时间戳转换
-- MD5在线加密
-- Json在线转换
-- CSV/TSV ↔ JSON 互转
-- 正则测试工具
-- Unicode转中文
-- HTTP状态码
-- JWT解析
-- 文件大小转换
-- Cron表达式生成器
-- html实体转义
-- 在线请求调试
-- URL 参数解析/构造
-- 命名风格转换
-- 哈希校验/HMAC
-- Cookie解析
-- Base64编码/解码
-- 算法可视化
-- MySQL转Go结构体
-- MongoDB JSON 转 SQLite
-- Mock 数据生成器
-
-### 文本处理
-- 文本对比
-- markdown编辑器
-- 字数统计
-- 文本去重
-- 字符串去空格
-- ASCII字形生成器
-- 在线文本编辑/HTML获取
-
-### 图片处理
-- 二维码生成
-- 二维码识别
-- 文本转图片
-- 图片分割
-- 图片转Base64（支持Base64转图片）
-- 在线编辑图片
-- pdf转图片
-- 证件照生成
-- 图片水印
-- PNG/JPG格式互转
-- 老照片加字
-
-### 数据图表
-- 柱状图
-- 折线图
-- 饼图
-- 散点图
-
-### 选择随机
-- 生成随机数
-- 帮我决定
-- 抛硬币
-- 投骰子
-
-### 教育学术
-- 单位换算
-- 常用进制转换
-- ASCII码表
-- 长度单位转换
-- 面积单位转换
-- 重量单位转换
-- 时间单位转换
-- 温度单位转换
-- 压力单位转换
-- 热量单位转换
-- 功率单位转换
-- 摩斯电码
-- 数学公式查询
-- 物品辐射量示例
-- 3D数学方程式
-- 逻辑思维训练
-- 毛选名句
-
-### 趣味互动
-- 贪吃蛇
-- 记忆力翻牌
-- 俄罗斯方块
-- 打地鼠
-- 2048
-- 扫雷
-- 数字华容道
-- 数独游戏
-- AI五子棋
-- 猜数字游戏
-- 假如你有100亿
-- 数字序号记忆
-- LED 显示屏
-
-### 好物网站
-- 好物网站导航
-- AI工具导航
-
-### 查询相关
-- IP查询
-- 网站信息获取
-
-### 其他工具
-- 数字转金额大写
-- 手持弹幕
-- 色板
-- Color选择器
-- 简历管理
-- 公司对比
-- 最低工资标准查询
-- 号码一览
-- QA问答页面制作
-- 在线写信工具
-- 短链接生成器
-
-### AI 工具
-- 在线文生图
-- AI对话
-- AI起变量名
-- AI起名
-- AI翻译
-- AI小学作文
-- AI每日励志鸡汤文
-- AI面试
-- AI提示词仓库
-
-### 数据管理
-- 笔记备忘录 - 在线笔记记录工具，支持创建、编辑、删除笔记，数据安全存储在 D1 数据库
-- 临时聊天室 - 基于 Supabase Realtime 的临时聊天室，支持扫码加入、链接分享、口令进入
-
-## 环境变量配置
-
-项目使用 `.env.development` 和 `.env.production` 管理环境变量。复制 `.env.example` 文件并重命名后按需修改。主要配置项：
-
-```env
-# 站点信息
-VITE_APP_TITLE=Youngbar工具箱
-VITE_SITE_URL=https://your-domain.com
-
-# Google OAuth（用户登录功能需要）
-VITE_GOOGLE_CLIENT_ID=your-google-client-id
-VITE_GOOGLE_CLIENT_SECRET=your-google-client-secret
-
-# Supabase（临时聊天室功能需要）
-VITE_SUPABASE_URL=https://your-project.supabase.co
-VITE_SUPABASE_ANON_KEY=your-anon-key
-
-# AI 工具配置（文生图功能需要）
-# POLLINATIONS_API_KEY=your-api-key
-VITE_POLLINATIONS_PROXY_URL=https://your-domain.com/proxy
-```
-
-### Google OAuth 登录配置
-
-1. 访问 [Google Cloud Console](https://console.cloud.google.com/)
-2. 创建项目并启用 Google+ API
-3. 创建 OAuth 2.0 凭据，设置授权重定向 URI：`https://your-domain.com/login`
-4. 将 Client ID 和 Client Secret 填入环境变量
-
-### Resend 邮件服务配置（邮箱注册登录功能需要）
-
-1. 访问 [Resend](https://resend.com/signup) 注册账号
-2. 在 Settings > Domains 中添加并验证你的域名
-3. 在 API Keys 中创建 API Key
-4. 在 Cloudflare Pages 环境变量中添加：
-   - `RESEND_API_KEY`：你的 API Key
-   - `RESEND_FROM_EMAIL`：发件邮箱，格式如 `网站名 <noreply@your-domain.com>`
-
-**邮件功能说明：**
-- 支持邮箱验证码登录、注册、找回密码
-- 验证码 5 分钟有效
-- 密码采用 SHA-256 + 随机盐加密
-
-### Supabase 临时聊天室配置
-
-1. **创建 Supabase 项目**：访问 https://supabase.com 创建免费项目
-
-2. **创建数据表**：在 Supabase SQL Editor 中执行以下 SQL：
-```sql
-CREATE TABLE chat_messages (
-  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-  room_id TEXT NOT NULL,
-  nickname TEXT NOT NULL,
-  content TEXT NOT NULL,
-  created_at TIMESTAMPTZ DEFAULT NOW()
-);
-
--- 启用 Realtime 功能
-ALTER PUBLICATION supabase_realtime ADD TABLE chat_messages;
-```
-
-3. **获取密钥**：在 Project Settings > API 中复制 URL 和 anon key，填入环境变量
-
-### Cloudflare D1 数据库配置（需要部署到 Cloudflare Pages）
-
-本项目使用 Cloudflare D1 数据库存储用户数据（笔记、简历、公司对比、QA问答、在线写信、Mock数据配方、短链接等）。
-
-1. 创建 D1 数据库：
 ```bash
-wrangler d1 create tools-web-db
+pnpm preview
 ```
 
-2. 将返回的 database_id 填入 `wrangler.toml`：
+本地调试 Cloudflare Pages Functions：
+
+```bash
+pnpm build:pro
+npx wrangler pages dev dist
+```
+
+## Cloudflare 部署
+
+Cloudflare Pages 构建配置：
+
+```text
+框架预设：Vue / Vite / None 均可
+构建命令：pnpm build:pro
+构建输出目录：dist
+根目录：/
+Node.js 版本：20
+```
+
+`wrangler.toml` 中维护普通变量和 D1 绑定：
+
 ```toml
+name = "tools-web"
+compatibility_date = "2024-09-23"
+pages_build_output_dir = "dist"
+
+[vars]
+NODE_ENV = "production"
+VITE_APP_TITLE = "Youngbar工具箱"
+VITE_APP_DESC = "一个轻量的在线工具箱"
+VITE_SITE_URL = "https://youngbar.com"
+VITE_FUNCTIONS_BASE_URL = ""
+SITE_URL = "https://youngbar.com"
+
 [[d1_databases]]
 binding = "DB"
 database_name = "tools-web-db"
-database_id = "your-database-id"
+database_id = "你的 D1 database_id"
 ```
 
-3. 执行数据库初始化（项目根目录下应该有 SQL 初始化脚本）
+Cloudflare Pages 后台只需要维护加密变量，也就是“变量和密钥”里的密钥。
 
-4. 部署到 Cloudflare Pages 后，D1 数据库会自动绑定到 Functions
+## 必要密钥
 
-## 其他
+生产环境至少建议配置：
 
-Q: 我应该如何添加新功能？
+```env
+JWT_SECRET=替换成足够长的随机字符串
+RESEND_API_KEY=re_xxx
+RESEND_FROM_EMAIL=Youngbar <noreply@youngbar.com>
+AGNES_API_KEY=你的 Agnes API Key
+IMGBB_API_KEY=你的 ImgBB API Key
+```
 
-A: 
-  - 在`components/Tools/tools.ts`文件中添加工具信息
-  - 在`router/router.ts`中添加路由
-  - 拷贝示例目录`components/Tools/Example`修改名称，在这个拷贝出来的目录中开发工具即可
+可选变量：
 
-<br/>
+```env
+POLLINATIONS_API_KEY=
+AITOOLS_API_KEY=
 
-Q: 我可以参与开发 `Tools-Web` 吗？
+GOOGLE_CLIENT_ID=
+VITE_GOOGLE_CLIENT_ID=
 
-A: 当然可以，随时欢迎提交 `PR`
+GITHUB_CLIENT_ID=
+GITHUB_CLIENT_SECRET=
+GITHUB_REDIRECT_URI=https://youngbar.com/github-auth
 
-Q：有问题怎么反馈呢？
+GITEE_CLIENT_ID=
+GITEE_CLIENT_SECRET=
+GITEE_REDIRECT_URI=https://youngbar.com/gitee-auth
 
-A：可以提issue，或者加入微信群，如果群满或者二维码链接过期，则联系开发者，微信：yifang_self，微信群二维码：
-<img src="https://github.com/user-attachments/assets/7cba19dd-eba6-4458-aef3-e8169ef4fc45" width="300">
+LINUXDO_CLIENT_ID=
+LINUXDO_CLIENT_SECRET=
+LINUXDO_REDIRECT_URI=https://youngbar.com/linuxdo-auth
 
+QQ_CLIENT_ID=
+QQ_CLIENT_SECRET=
+QQ_REDIRECT_URI=https://youngbar.com/qq-auth
+```
 
+注意：
 
+- 不要把真实密钥写入 `wrangler.toml`。
+- 不要提交 `.dev.vars`、`.env.production`、`.env.development`。
+- 示例变量放在 `.dev.vars.example`。
 
-  
+## D1 数据库初始化
+
+新建 D1 数据库后，按顺序执行：
+
+```bash
+npx wrangler d1 execute tools-web-db --remote --file=functions/db/000_init_core_tables.sql
+npx wrangler d1 execute tools-web-db --remote --file=functions/db/001_create_short_links.sql
+npx wrangler d1 execute tools-web-db --remote --file=functions/db/002_create_bookmarks.sql
+npx wrangler d1 execute tools-web-db --remote --file=functions/db/003_create_letters.sql
+npx wrangler d1 execute tools-web-db --remote --file=functions/db/005_create_ai_apps.sql
+npx wrangler d1 execute tools-web-db --remote --file=functions/db/006_insert_ai_apps_data.sql
+npx wrangler d1 execute tools-web-db --remote --file=functions/db/007_update_system_apps_prompts.sql
+npx wrangler d1 execute tools-web-db --remote --file=functions/db/008_create_user_season_scenery.sql
+npx wrangler d1 execute tools-web-db --remote --file=functions/db/009_add_ultimate_essence_analysis.sql
+npx wrangler d1 execute tools-web-db --remote --file=functions/db/010_add_domain_crash_course.sql
+npx wrangler d1 execute tools-web-db --remote --file=functions/db/011_add_critical_knowledge.sql
+npx wrangler d1 execute tools-web-db --remote --file=functions/db/012_add_prompt_reverse_engineering.sql
+npx wrangler d1 execute tools-web-db --remote --file=functions/db/013_add_content_distillation.sql
+npx wrangler d1 execute tools-web-db --remote --file=functions/db/014_add_cynefin_analysis.sql
+npx wrangler d1 execute tools-web-db --remote --file=functions/db/015_add_x_viral_content.sql
+npx wrangler d1 execute tools-web-db --remote --file=functions/db/016_create_favorite_apps.sql
+npx wrangler d1 execute tools-web-db --remote --file=functions/db/017_create_verification_codes.sql
+```
+
+说明：
+
+- 新库一般跳过 `004_alter_user_table.sql`，因为 `000_init_core_tables.sql` 已包含核心用户字段。
+- 已执行过的 SQL 不要重复盲目执行；执行前先确认当前数据库状态。
+
+## 发布流程
+
+日常代码提交：
+
+```bash
+git status
+git add 需要提交的文件
+git commit -m "说明这次改了什么"
+git push
+```
+
+国内网络不稳定时，Windows CMD 可临时设置代理：
+
+```bat
+set HTTPS_PROXY=http://127.0.0.1:10808
+set HTTP_PROXY=http://127.0.0.1:10808
+git push
+```
+
+推送到 GitHub 后，Cloudflare Pages 会自动重新部署。
+
+部署后重点检查：
+
+```text
+https://youngbar.com
+https://youngbar.com/markdown
+https://youngbar.com/json
+https://youngbar.com/api/mock-samples
+https://youngbar.com/ai-chat
+https://youngbar.com/ai-text-to-image
+```
+
+## 已完成的重要改造
+
+安全与账号：
+
+- 清理仓库中的真实密钥，密钥改由 Cloudflare 加密变量管理。
+- Markdown/AI/QA 渲染收口，避免直接渲染不可信 HTML。
+- API CORS 和代理 URL 校验加固。
+- 邮箱验证码增加专门表和服务端校验逻辑。
+- 密码哈希升级为 PBKDF2，并兼容旧密码迁移。
+- 修复邮箱注册验证码一次性消耗导致注册失败的问题。
+- Google 登录已适配 Cloudflare Pages 部署。
+
+Cloudflare 部署：
+
+- `wrangler.toml` 维护 D1 绑定和普通变量。
+- `VITE_FUNCTIONS_BASE_URL` 支持前端和 Functions 分离，但当前 youngbar.com 使用同源 `/api/...`。
+- `dist/` 已从 Git 跟踪中移除，并加入 `.gitignore`。
+- `public/_redirects` 支持 SPA fallback 和旧路径重定向。
+
+产品体验：
+
+- 顶部搜索栏支持向上滚动时浮出。
+- 首页 logo/左上角区域点击后回到首页顶部和默认分类。
+- 内容管理类工具支持“未登录本地使用，登录后云同步”的方向。
+- 本地保存提示已补充“清除浏览器数据会丢失”的风险说明。
+- 页脚改为 Youngbar 版权和“一切来自 2006 年的「飘」”纪念文案。
+- 移除旧评论区、原作者备案信息和第三方统计/验证残留。
+
+AI：
+
+- 文本 AI 主要切到 Agnes `agnes-2.0-flash`。
+- 文生图/图生图支持 Agnes `agnes-image-2.1-flash` 方向。
+- 文生视频/图生视频支持 Agnes `agnes-video-v2.0` 方向。
+- 图床上传使用 ImgBB API Key。
+
+SEO 与统计：
+
+- 接入 GA4：`G-YVWF2H3GQ5`。
+- 隐私政策已补充 Google Analytics 匿名访问统计说明。
+- 已整理 sitemap/robots，提交 Google Search Console。
+- 已给核心工具页补 SEO 内容模块、FAQ 和相关工具内链。
+- 404 页面改为可搜索、可回首页的友好页面，并补 SEO meta。
+
+性能：
+
+- 构建前自动生成工具图标 sprite。
+- ECharts 改为按需注册，图表包体大幅下降。
+- 移除首页对 Element Plus、ECharts、Codemirror 的不必要预加载。
+- `vue-vendor` 单独缓存，工具依赖按页面懒加载。
+- 生产构建开启 gzip 和 brotli 压缩产物。
+
+## 维护注意事项
+
+- `dist/` 是构建产物，不要提交。
+- 修改路由后同步检查 `sitemap.xml` 和旧路径重定向。
+- 新增需要云同步的功能时，优先设计“未登录本地可用，登录后云同步”。
+- 新增用户可输入内容时，默认不要使用 `v-html`，必须先做可信过滤。
+- 新增外部 API 代理时，必须做 URL origin 白名单校验。
+- 新增密钥时，只放 Cloudflare 加密变量，并同步更新 `.dev.vars.example`。
+- 新增数据库表时，把 SQL 放到 `functions/db/`，使用递增编号。
+- 修改 Cloudflare 变量后需要重新部署 Pages。
+- 改动 UI 后建议检查桌面和移动端，尤其是按钮文字、浮动顶部栏、底部页脚。
+
+## 常见问题
+
+### Git 提示 dubious ownership 怎么办？
+
+在项目目录执行：
+
+```bash
+git config --global --add safe.directory F:/HTML/tools-web
+```
+
+### Wrangler 代理报 Invalid URL 怎么办？
+
+代理地址要带协议：
+
+```bat
+set HTTPS_PROXY=http://127.0.0.1:10808
+set HTTP_PROXY=http://127.0.0.1:10808
+set ALL_PROXY=http://127.0.0.1:10808
+```
+
+不要只写 `127.0.0.1:10808`。
+
+### Cloudflare Pages 后台为什么只能添加密钥？
+
+因为普通变量和绑定已经由 `wrangler.toml` 管理。Cloudflare 后台只允许继续维护加密变量，这是正常的。
+
+### 生成失败或 AI 偶发失败怎么办？
+
+AI 接口本身可能偶发超时或限流。优先检查：
+
+- `AGNES_API_KEY` 是否存在。
+- Cloudflare Pages 是否已重新部署。
+- 浏览器 Network 中 `/api/...` 是否返回错误。
+- Agnes 后台 Key 额度和调用状态。
+
+## 后续优化方向
+
+当前项目已经达到可稳定维护和推广的状态。后续如果继续优化，建议按优先级推进：
+
+1. 用 PageSpeed Insights 检查首页、JSON、Markdown、AI 生图等核心页。
+2. 针对大型工具页继续做依赖按需加载，例如 PDF、签名图片、富文本编辑器。
+3. 根据 Google Search Console 的未收录原因，继续优化薄内容页、重复标题和 404。
+4. 为注册、登录、验证码、AI 生成等关键 API 补充更系统的异常日志。
+5. 给核心功能补自动化测试，至少覆盖账号注册、登录、D1 读写和主要 AI 代理。
+
+## License
+
+本项目继承原开源项目协议。继续维护时请保留原项目来源链接。
