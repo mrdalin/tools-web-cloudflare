@@ -724,7 +724,9 @@ export const constantRoute = [
     component: () => import('@/components/404/404.vue'),
     name: '404',
     meta: {
-      title: "404"
+      title: '页面未找到',
+      keywords: '404,页面未找到,Youngbar工具箱,工具搜索',
+      description: 'Youngbar工具箱页面未找到，可通过搜索快速找到 JSON、Markdown、二维码、AI 翻译等在线工具。',
     }
   },
   {

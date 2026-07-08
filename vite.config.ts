@@ -116,6 +116,7 @@ export default defineConfig(({command, mode}) => {
       }),
       Components({
         resolvers: [ElementPlusResolver({ importStyle: 'sass' })],
+        globsExclude: ['src/components/Tools/AiChat/components/*.vue'],
         dts: false, // 生产环境禁用 dts 生成
       }),
       ElementPlus({}),
