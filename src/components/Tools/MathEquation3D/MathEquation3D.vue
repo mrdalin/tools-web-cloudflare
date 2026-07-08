@@ -28,6 +28,65 @@ const equationParams = reactive({
   wireframe: false
 })
 
+const mathFunctions = {
+  sin: Math.sin,
+  cos: Math.cos,
+  tan: Math.tan,
+  atan2: Math.atan2,
+  sqrt: Math.sqrt,
+  abs: Math.abs,
+  pow: Math.pow,
+  log: Math.log,
+  exp: Math.exp,
+  min: Math.min,
+  max: Math.max,
+  floor: Math.floor,
+  ceil: Math.ceil,
+  round: Math.round,
+}
+
+type MathFunctionName = keyof typeof mathFunctions
+
+const allowedMathNames = new Set([
+  ...Object.keys(mathFunctions),
+  'pi',
+  'e',
+  'u',
+  'v',
+  'x',
+  'y',
+])
+
+const evaluateMathExpression = (
+  expression: string,
+  variables: Record<string, number | undefined>,
+) => {
+  const compiled = expression
+    .trim()
+    .replace(/\^/g, '**')
+    .replace(/\b[A-Za-z_]\w*\b/g, (name) => {
+      const lowerName = name.toLowerCase()
+      if (!allowedMathNames.has(lowerName)) {
+        throw new Error(`不支持的标识符：${name}`)
+      }
+      if (lowerName === 'pi') return `(${Math.PI})`
+      if (lowerName === 'e') return `(${Math.E})`
+      if (lowerName in variables) {
+        const value = variables[lowerName]
+        return `(${value ?? 0})`
+      }
+      return lowerName
+    })
+
+  if (!/^[0-9+\-*/%().,\sA-Za-z_]+$/.test(compiled)) {
+    throw new Error('表达式包含不支持的字符')
+  }
+
+  const functionNames = Object.keys(mathFunctions) as MathFunctionName[]
+  const calculate = Function(...functionNames, `"use strict"; return (${compiled});`)
+  return calculate(...functionNames.map((name) => mathFunctions[name]))
+}
+
 // 预设方程式
 const presetEquations = [
   // === 基础几何体 ===
@@ -891,44 +950,8 @@ const evaluateEquation = (equations: string, u?: number, v?: number, x?: number,
     parts.forEach(part => {
       const [variable, expression] = part.split('=')
       if (variable && expression) {
-        // 创建安全的表达式替换
-        let expr = expression.trim()
-        
-        // 先替换数学常数和函数
-        expr = expr
-          .replace(/\bpi\b/g, 'Math.PI')
-          .replace(/\be\b(?!\w)/g, 'Math.E')  // 确保不匹配exp中的e
-          .replace(/\bexp\b/g, 'Math.exp')
-          .replace(/\blog\b/g, 'Math.log')
-          .replace(/\bpow\b/g, 'Math.pow')
-          .replace(/\bsqrt\b/g, 'Math.sqrt')
-          .replace(/\babs\b/g, 'Math.abs')
-          .replace(/\bcos\b/g, 'Math.cos')
-          .replace(/\bsin\b/g, 'Math.sin') 
-          .replace(/\btan\b/g, 'Math.tan')
-          .replace(/\batan2\b/g, 'Math.atan2')
-        
-        // 安全地替换变量 - 使用括号包围数值以避免语法错误
-        if (u !== undefined) {
-          expr = expr.replace(/\bu\b/g, `(${u})`)
-        }
-        if (v !== undefined) {
-          expr = expr.replace(/\bv\b/g, `(${v})`)
-        }
-        if (x !== undefined) {
-          expr = expr.replace(/\bx\b/g, `(${x})`)
-        }
-        if (y !== undefined) {
-          expr = expr.replace(/\by\b/g, `(${y})`)
-        }
-        
-        // 处理指数运算符 ^ 转换为 Math.pow
-        expr = expr.replace(/([^*\/+-]+)\^([^*\/+-]+)/g, 'Math.pow($1,$2)')
-        
-        // console.log('计算表达式:', expr) // 调试用
-        
-        const evalResult = eval(expr)
-        result[variable.trim()] = isNaN(evalResult) || !isFinite(evalResult) ? 0 : evalResult
+        const value = evaluateMathExpression(expression, { u, v, x, y })
+        result[variable.trim()] = Number.isFinite(value) ? value : 0
       }
     })
     
