@@ -171,7 +171,7 @@ const correctCount = computed(() => info.questions.filter(item => item.correct).
 .el-form-item {
   margin-bottom: 0;
 }
-.invalid-answer-input ::v-deep .el-input__inner {
+.invalid-answer-input :deep(.el-input__inner) {
   border-color: #f56c6c !important;
   box-shadow: 0 0 0 1px rgba(245, 108, 108, 0.25) !important;
 }

@@ -161,7 +161,8 @@ export default defineConfig(({command, mode}) => {
       rollupOptions: {
         output: {
           manualChunks: {
-            'vue-vendor': ['vue', 'vue-router', 'pinia', 'element-plus', '@element-plus/icons-vue'],
+            'vue-vendor': ['vue', 'vue-router', 'pinia'],
+            'element-plus': ['element-plus', '@element-plus/icons-vue'],
             'editor': ['@wangeditor/editor', '@wangeditor/editor-for-vue'],
             'charts': ['echarts'],
             'codemirror': ['codemirror', '@codemirror/commands', '@codemirror/lang-javascript', '@codemirror/lang-json'],
