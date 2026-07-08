@@ -162,10 +162,7 @@ export default defineConfig(({command, mode}) => {
         output: {
           manualChunks: {
             'vue-vendor': ['vue', 'vue-router', 'pinia'],
-            'element-plus': ['element-plus', '@element-plus/icons-vue'],
             'editor': ['@wangeditor/editor', '@wangeditor/editor-for-vue'],
-            'charts': ['echarts'],
-            'codemirror': ['codemirror', '@codemirror/commands', '@codemirror/lang-javascript', '@codemirror/lang-json'],
           },
           chunkFileNames: 'js/[name]-[hash].js',
           entryFileNames: 'js/[name]-[hash].js',
