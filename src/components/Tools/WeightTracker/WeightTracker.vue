@@ -3,8 +3,7 @@ import { ref, computed, onMounted, watch, nextTick } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import DetailHeader from '@/components/Layout/DetailHeader/DetailHeader.vue'
 import ToolDetail from '@/components/Layout/ToolDetail/ToolDetail.vue'
-import * as echarts from 'echarts'
-import type { ECharts } from 'echarts'
+import { init, type ECharts } from '@/utils/echartsCore'
 import html2canvas from 'html2canvas'
 import { weightApi } from './api'
 import type { WeightMember, WeightRecord, WeightStatistics, ChartDataPoint, TimeRange, WeightUnit, HealthyRange, Achievement } from './types'
@@ -1081,7 +1080,7 @@ const syncLocalWeightToCloud = async () => {
 
 const initChart = () => {
   if (!chartRef.value) return
-  chartInstance = echarts.init(chartRef.value)
+  chartInstance = init(chartRef.value)
   renderChart()
 }
 

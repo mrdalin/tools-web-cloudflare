@@ -7,14 +7,14 @@ import DetailHeader from '@/components/Layout/DetailHeader/DetailHeader.vue'
 import ToolDetail from '@/components/Layout/ToolDetail/ToolDetail.vue'
 // import { copy } from '@/utils/string'
 import { toEchartsData, toSpreadsheetData } from '@/utils/echarts'
-import * as echarts from 'echarts'
+import { init, type ECharts } from '@/utils/echartsCore'
 import * as XLSX from 'xlsx'
 const info = reactive({
   title: "折线图",
 })
 
 const chartDom = ref<HTMLElement|null>()
-const myChart = ref<echarts.ECharts>()
+const myChart = ref<ECharts>()
 const dataFileRef = ref()
 
 const setOptionName = ref(1)
@@ -170,7 +170,7 @@ const option = {
 
 //重新加载画布
 const reloadCanvas = () => {
-  myChart.value = echarts.init(chartDom.value)
+  myChart.value = init(chartDom.value)
   myChart.value.clear();
   myChart.value.resize({
     width: widthCanvas.value,
