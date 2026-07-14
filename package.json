@@ -3,6 +3,10 @@
   "private": true,
   "version": "0.0.0",
   "type": "module",
+  "packageManager": "pnpm@10.34.5",
+  "engines": {
+    "node": "22.x"
+  },
   "scripts": {
     "dev": "vite",
     "dev:wrangler": "wrangler pages dev dist",
@@ -89,6 +93,7 @@
     "vite-plugin-compression": "^0.5.1",
     "vite-plugin-pwa": "^1.3.0",
     "vue-router": "^4.2.5",
-    "vue-tsc": "^3.0.4"
+    "vue-tsc": "^3.0.4",
+    "wrangler": "4.110.0"
   }
 }

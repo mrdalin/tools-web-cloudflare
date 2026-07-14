@@ -17,13 +17,13 @@ Framework preset: None / Vue / Vite
 Build command: pnpm build:pro
 Build output directory: dist
 Root directory: /
-Node.js version: 20
+Node.js version: 22
 ```
 
 Production environment variables:
 
 ```env
-NODE_VERSION=20
+NODE_VERSION=22
 NODE_ENV=production
 VITE_SITE_URL=https://your-domain.example
 VITE_FUNCTIONS_BASE_URL=
@@ -59,6 +59,7 @@ wrangler d1 execute tools-web-db --remote --file=functions/db/013_add_content_di
 wrangler d1 execute tools-web-db --remote --file=functions/db/014_add_cynefin_analysis.sql
 wrangler d1 execute tools-web-db --remote --file=functions/db/015_add_x_viral_content.sql
 wrangler d1 execute tools-web-db --remote --file=functions/db/016_create_favorite_apps.sql
+wrangler d1 execute tools-web-db --remote --file=functions/db/017_create_verification_codes.sql
 ```
 
 Skip `004_alter_user_table.sql` for a new database because `000_init_core_tables.sql` already creates `password` and `salt` columns.

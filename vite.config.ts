@@ -215,14 +215,6 @@ export default defineConfig(({command, mode}) => {
           rewrite: (path) => path.replace(/^\/api\/agnes/, '/api/v1'),
           secure: false
         },
-        '/api/pollinations': {
-          target: 'https://image.pollinations.ai',
-          changeOrigin: true,
-          rewrite: (path) => path.replace(/^\/api\/pollinations/, ''),
-          headers: {
-            Authorization: 'Bearer NpgaKlHjioTlyo2B'
-          }
-        },
         [env.VITE_APP_BASE_API] : {
           target: env.VITE_SERVE,
           changeOrigin: true,
@@ -264,6 +256,38 @@ export default defineConfig(({command, mode}) => {
           changeOrigin: true,
         },
         '/api/favorite-apps': {
+          target: 'http://127.0.0.1:8788',
+          changeOrigin: true,
+        },
+        '/api': {
+          target: 'http://127.0.0.1:8788',
+          changeOrigin: true,
+        },
+        '/proxy': {
+          target: 'http://127.0.0.1:8788',
+          changeOrigin: true,
+        },
+        '/google-auth': {
+          target: 'http://127.0.0.1:8788',
+          changeOrigin: true,
+        },
+        '/github-auth': {
+          target: 'http://127.0.0.1:8788',
+          changeOrigin: true,
+        },
+        '/gitee-auth': {
+          target: 'http://127.0.0.1:8788',
+          changeOrigin: true,
+        },
+        '/linuxdo-auth': {
+          target: 'http://127.0.0.1:8788',
+          changeOrigin: true,
+        },
+        '/qq-auth': {
+          target: 'http://127.0.0.1:8788',
+          changeOrigin: true,
+        },
+        '/cron': {
           target: 'http://127.0.0.1:8788',
           changeOrigin: true,
         },

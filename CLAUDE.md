@@ -10,6 +10,8 @@ Tools-Web 是一个基于 Vue 3 + TypeScript + Vite 的在线工具箱应用。�
 
 **部署：** Cloudflare Pages + D1 数据库，Cloudflare Workers 无服务器函数
 
+**运行时：** Node.js 22 + pnpm 10.34.5
+
 ## ⚠️ 关键约束（必须遵守）
 
 ### Cloudflare Functions 路由注册
@@ -31,19 +33,18 @@ Tools-Web 是一个基于 Vue 3 + TypeScript + Vite 的在线工具箱应用。�
 **部署前自检清单：**
 1. ✅ API 文件已创建于 `functions/api/`
 2. ✅ 已在 `functions/_routes.json` 的 `include` 中添加对应路径
-3. ✅ 已同步 `dist/functions/_routes.json`（生产部署会读 dist 目录）
-4. ✅ 已同步 `dist/functions/api/` 下的新 API 文件
-5. ✅ 数据库迁移 SQL 已执行（线上：`--remote`）
-6. ✅ **已在 `vite.config.ts` 的 `server.proxy` 中添加同名路径代理**（指向 `http://127.0.0.1:8788`），否则 `pnpm dev` 下前端调用该 API 会 404
+3. ✅ 数据库迁移 SQL 已放在 `functions/db/`，并确认执行目标后再运行（线上才使用 `--remote`）
+4. ✅ `/api` 路径由 `vite.config.ts` 的通用代理转发到 `http://127.0.0.1:8788`
 
-> 现有代理路径参考：/api/agnes-chat、/api/ai-apps、/api/letters、/api/ai-apps 等都在 `vite.config.ts` 的 `server.proxy` 中。
+> Cloudflare Pages 直接读取仓库根目录的 `functions/`。不要把 Functions 复制进 `dist/functions/`。新增根级路由（非 `/api`）时，需要同时检查 `_routes.json` 和 Vite 本地代理。
 
 ### 本地开发注意事项
 
 ### 本地开发注意事项
 
 - `pnpm dev` 仅启动 Vite（端口 5173），**不加载 Cloudflare Functions**
-- 测试 API 必须使用 `pnpm dev:wrangler`（端口 8788），访问 `http://127.0.0.1:8788/`
+- 调试完整应用时，先运行 `pnpm build:pro`，然后在终端 1 运行 `pnpm dev:wrangler`（端口 8788），终端 2 运行 `pnpm dev`
+- Vite 会把 `/api`、`/proxy` 和登录回调代理到 Wrangler；也可直接访问 `http://127.0.0.1:8788/`
 - 修改 `_routes.json` 后如遇 404，重启 wrangler 即可（缓存目录 `.wrangler` 在 Windows 上可能无法直接删除，但重启会自动刷新函数扫描）
 
 ## 快速导航

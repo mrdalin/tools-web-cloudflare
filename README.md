@@ -50,16 +50,16 @@ Youngbar 工具箱是部署在 Cloudflare Pages 上的一站式在线工具站�
 
 ```bash
 node -v
-# 建议 Node.js 20 或 22
+# 使用 Node.js 22
 
 pnpm -v
-# 建议 pnpm 10+
+# 使用 pnpm 10.34.5
 ```
 
 安装依赖：
 
 ```bash
-pnpm install
+pnpm install --frozen-lockfile
 ```
 
 启动前端开发服务：
@@ -84,8 +84,21 @@ pnpm preview
 
 ```bash
 pnpm build:pro
-npx wrangler pages dev dist
+pnpm dev:wrangler
 ```
+
+需要一边使用 Vite 热更新、一边调试 Functions 时，使用两个终端：
+
+```bash
+# 终端 1：先构建一次，再启动本地 Pages Functions（端口 8788）
+pnpm build:pro
+pnpm dev:wrangler
+
+# 终端 2：启动 Vite（端口 5173），/api、/proxy 和登录回调会代理到 8788
+pnpm dev
+```
+
+本地 Wrangler 默认使用本地状态；不要在日常开发命令中添加 `--remote`。
 
 ## Cloudflare 部署
 
@@ -96,7 +109,7 @@ Cloudflare Pages 构建配置：
 构建命令：pnpm build:pro
 构建输出目录：dist
 根目录：/
-Node.js 版本：20
+Node.js 版本：22
 ```
 
 `wrangler.toml` 中维护普通变量和 D1 绑定：
@@ -197,13 +210,16 @@ npx wrangler d1 execute tools-web-db --remote --file=functions/db/017_create_ver
 
 ## 发布流程
 
-日常代码提交：
+日常开发从 `main` 创建功能分支，功能分支通过 CI 后再合并；`main` 推送后继续由 Cloudflare Pages 自动部署：
 
 ```bash
+git switch main
+git pull
+git switch -c feature/功能名称
 git status
 git add 需要提交的文件
 git commit -m "说明这次改了什么"
-git push
+git push -u origin feature/功能名称
 ```
 
 国内网络不稳定时，Windows CMD 可临时设置代理：
@@ -297,7 +313,7 @@ SEO 与统计：
 在项目目录执行：
 
 ```bash
-git config --global --add safe.directory F:/HTML/tools-web
+git config --global --add safe.directory F:/HTML/www.youngbar.com/tools-web-cloudflare
 ```
 
 ### Wrangler 代理报 Invalid URL 怎么办？

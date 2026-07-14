@@ -1,5 +1,7 @@
 # 待办事项功能实现完成
 
+> 历史记录：本文中的 `migrations/` 和 `yifang-tool` 命令不适用于当前生产环境。当前 `tools-web-db` 的初始化与迁移统一以 `functions/db/` 和根目录 `README.md` 为准。
+
 ## 已完成的工作
 
 ### 1. 数据库层
