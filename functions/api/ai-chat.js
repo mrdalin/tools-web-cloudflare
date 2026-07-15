@@ -8,6 +8,8 @@ const POLLINATIONS_MODEL = 'openai-fast'
 const MAX_MESSAGES = 30
 const MAX_CONTENT_LENGTH = 12000
 const MAX_REQUESTS_PER_MINUTE = 30
+const NON_STREAM_TOTAL_TIMEOUT_MS = 55_000
+const AGNES_PRIMARY_TIMEOUT_MS = 20_000
 
 const rateBuckets = new Map()
 
@@ -103,7 +105,7 @@ function getProviderError(provider, response, text) {
   return `${provider} failed with ${response.status}: ${text.slice(0, 200)}`
 }
 
-async function callProvider({ provider, url, apiKey, payload, timeoutMs }) {
+async function callProvider({ provider, url, apiKey, payload, timeoutMs, attempts }) {
   const headers = { 'Content-Type': 'application/json' }
   if (apiKey) headers.Authorization = `Bearer ${apiKey}`
 
@@ -115,7 +117,7 @@ async function callProvider({ provider, url, apiKey, payload, timeoutMs }) {
       body: JSON.stringify(payload)
     },
     {
-      attempts: payload.stream ? 2 : 3,
+      attempts: attempts ?? (payload.stream ? 2 : 3),
       timeoutMs
     }
   )
@@ -159,6 +161,7 @@ async function jsonProviderResponse(response, provider, origin) {
 
 async function callWithFallback(body, env, request, origin) {
   const timeoutMs = Number.isInteger(body.timeout_ms) ? Math.min(body.timeout_ms, 60_000) : 60_000
+  const deadline = Date.now() + Math.min(timeoutMs, NON_STREAM_TOTAL_TIMEOUT_MS)
   const providers = []
   if (env.AGNES_API_KEY) {
     providers.push({
@@ -180,12 +183,19 @@ async function callWithFallback(body, env, request, origin) {
   for (const provider of providers) {
     try {
       const payload = buildPayload(body, provider.model)
+      const remainingMs = Math.max(1_000, deadline - Date.now())
+      const providerTimeoutMs = body.stream === true
+        ? timeoutMs
+        : provider.name === 'agnes'
+          ? Math.min(remainingMs, AGNES_PRIMARY_TIMEOUT_MS)
+          : remainingMs
       const response = await callProvider({
         provider: provider.name,
         url: provider.url,
         apiKey: provider.apiKey,
         payload,
-        timeoutMs
+        timeoutMs: providerTimeoutMs,
+        attempts: body.stream === true ? 2 : 1
       })
 
       if (body.stream === true) {

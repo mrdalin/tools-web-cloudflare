@@ -18,7 +18,7 @@ function providerResponse(content, finishReason = 'stop') {
   })
 }
 
-async function requestWithProviderResponses(responses, ip) {
+async function requestWithProviderResponses(responses, ip, bodyOverrides = {}) {
   const originalFetch = globalThis.fetch
   const calls = []
 
@@ -26,7 +26,7 @@ async function requestWithProviderResponses(responses, ip) {
     calls.push({ url, body: JSON.parse(options.body) })
     const response = responses.shift()
     assert.ok(response, 'unexpected provider request')
-    return response
+    return typeof response === 'function' ? response(url, options) : response
   }
 
   try {
@@ -40,7 +40,8 @@ async function requestWithProviderResponses(responses, ip) {
       body: JSON.stringify({
         messages: [{ role: 'user', content: 'test' }],
         max_tokens: 2000,
-        stream: false
+        stream: false,
+        ...bodyOverrides
       })
     })
 
@@ -98,4 +99,24 @@ test('returns a usable Agnes response without calling Pollinations', async () =>
   assert.equal(result.data.provider, 'agnes')
   assert.equal(result.data.choices[0].message.content, 'agnes result')
   assert.equal(result.calls.length, 1)
+})
+
+test('falls back within the request budget when Agnes times out', async () => {
+  const waitForAbort = (_url, options) => new Promise((_, reject) => {
+    options.signal.addEventListener('abort', () => {
+      reject(new DOMException('Request aborted', 'AbortError'))
+    }, { once: true })
+  })
+  const startedAt = Date.now()
+
+  const result = await requestWithProviderResponses([
+    waitForAbort,
+    providerResponse('timely fallback result')
+  ], '198.51.100.4', { timeout_ms: 1 })
+
+  assert.equal(result.response.status, 200)
+  assert.equal(result.data.provider, 'pollinations')
+  assert.equal(result.data.choices[0].message.content, 'timely fallback result')
+  assert.equal(result.calls.length, 2)
+  assert.ok(Date.now() - startedAt < 2500)
 })
