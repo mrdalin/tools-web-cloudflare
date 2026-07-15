@@ -142,6 +142,18 @@ function streamResponse(response, provider, origin) {
 
 async function jsonProviderResponse(response, provider, origin) {
   const data = await response.json()
+
+  if (provider === 'agnes') {
+    const choice = data?.choices?.[0]
+    const content = typeof choice?.message?.content === 'string'
+      ? choice.message.content.trim()
+      : ''
+
+    if (!content || choice?.finish_reason === 'length') {
+      throw new Error(`agnes returned an unusable response: ${!content ? 'empty content' : 'length limit'}`)
+    }
+  }
+
   return jsonResponse({ ...data, provider }, 200, origin)
 }
 
