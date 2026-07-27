@@ -159,7 +159,7 @@ async function jsonProviderResponse(response, provider, origin) {
   return jsonResponse({ ...data, provider }, 200, origin)
 }
 
-async function callWithFallback(body, env, request, origin) {
+export async function callWithFallback(body, env, request, origin) {
   const timeoutMs = Number.isInteger(body.timeout_ms) ? Math.min(body.timeout_ms, 60_000) : 60_000
   const deadline = Date.now() + Math.min(timeoutMs, NON_STREAM_TOTAL_TIMEOUT_MS)
   const providers = []

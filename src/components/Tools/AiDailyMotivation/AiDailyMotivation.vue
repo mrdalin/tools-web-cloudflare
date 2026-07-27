@@ -1,10 +1,15 @@
 <script setup lang="ts">
 import { ref, reactive, onMounted, onUnmounted } from "vue";
 import axios from "axios";
-import { generateAIText } from "@/utils/aiText";
 import { generateAgnesImages } from "@/utils/agnesImage";
 import DetailHeader from "@/components/Layout/DetailHeader/DetailHeader.vue";
 import ToolDetail from "@/components/Layout/ToolDetail/ToolDetail.vue";
+import {
+  getNextSeenIds,
+  loadSeenIds,
+  saveSeenIds,
+  selectUnseenMotivations,
+} from "./motivationPool.js";
 
 const info = reactive({
   title: "AI每日励志鸡汤文",
@@ -22,10 +27,17 @@ const lastRefreshTime = ref<Date | null>(null);
 const refreshTimer = ref<ReturnType<typeof setInterval> | null>(null);
 const retryCount = ref(0); // 新增：重试次数
 
+interface MotivationRecord {
+  id: string;
+  content: string;
+  style: string;
+  createdAt: number;
+}
+
 // 鸡汤文数据
 const motivationList = ref<
   Array<{
-    id: number;
+    id: string;
     content: string;
     style: string;
     timestamp: Date;
@@ -62,53 +74,77 @@ const intervalOptions = [
   { value: 10, label: "10分钟" },
 ];
 
-// 生成鸡汤文
+const fetchMotivationPool = async (style: string) => {
+  const response = await axios.get<{ records: MotivationRecord[] }>(
+    "/api/daily-motivations",
+    { params: { style }, timeout: 10000 },
+  );
+  return Array.isArray(response.data.records) ? response.data.records : [];
+};
+
+const generateMissingMotivations = async (
+  style: string,
+  count: number,
+  seenIds: Set<string>,
+) => {
+  const response = await axios.post<{ records: MotivationRecord[] }>(
+    "/api/daily-motivations",
+    { style, count, seenIds: [...seenIds] },
+    { timeout: 60000 },
+  );
+  return Array.isArray(response.data.records) ? response.data.records : [];
+};
+
+// 优先加载未展示的库存，库存耗尽后才生成缺少的内容
 const generateMotivations = async (isAutoRefresh: boolean = false) => {
   if (loading.value) return;
 
   loading.value = true;
-  let retryCount = 0;
+  retryCount.value = 0;
   const maxRetries = 3;
 
-  while (retryCount < maxRetries) {
+  while (retryCount.value < maxRetries) {
     try {
-      // 添加随机种子确保每次结果不同
-      const seed = Math.floor(Math.random() * 100000000);
+      const style = selectedStyle.value;
+      const count = generateCount.value;
+      const pool = await fetchMotivationPool(style);
+      const previousSeenIds = loadSeenIds(style) as Set<string>;
+      const selected = selectUnseenMotivations(
+        pool,
+        previousSeenIds,
+        count,
+      ) as MotivationRecord[];
+      const seenIdsForGeneration = new Set([
+        ...previousSeenIds,
+        ...selected.map((record) => record.id),
+      ]);
+      const generated =
+        selected.length < count
+          ? await generateMissingMotivations(
+              style,
+              count - selected.length,
+              seenIdsForGeneration,
+            )
+          : [];
+      const displayed = [...selected, ...generated].slice(0, count);
 
-      const prompt = `请生成${generateCount.value}条${selectedStyle.value}风格的励志鸡汤文，要求：
-1. 每条鸡汤文要简洁有力，字数控制在30-50字之间
-2. 内容要积极向上，富有哲理和启发性
-3. 风格要符合"${selectedStyle.value}"主题
-4. 每条鸡汤文单独一行，不要编号，不要标点符号结尾
-5. 只输出鸡汤文内容，不要其他解释文字`;
-
-      const text = await generateAIText(
-        [{ role: 'user', content: `${prompt}\n\n随机种子：${seed}` }],
-        { timeout: 60000 }
-      );
-
-      // 处理返回的文本，分割成多条鸡汤文
-      const lines = text
-        .split("\n")
-        .map((line) => line.trim())
-        .filter((line) => line.length > 0 && line.length <= 100)
-        .slice(0, generateCount.value);
-
-      // 验证生成的内容是否有效
-      if (lines.length === 0 || lines.some((line) => line.length < 10)) {
-        throw new Error("生成的内容无效或过短");
+      if (displayed.length < count) {
+        throw new Error("返回的鸡汤文数量不足");
       }
 
-      // 生成新的鸡汤文列表
-      const newMotivations = lines.map((content, index) => ({
-        id: Date.now() + index,
-        content,
-        style: selectedStyle.value,
-        timestamp: new Date(),
-      }));
+      const nextSeenIds = getNextSeenIds({
+        previousSeenIds,
+        displayedIds: displayed.map((record) => record.id),
+        generatedIds: generated.map((record) => record.id),
+      }) as Set<string>;
+      saveSeenIds(style, nextSeenIds);
 
-      // 只有在成功生成后才替换原有内容
-      motivationList.value = newMotivations;
+      motivationList.value = displayed.map((record) => ({
+        id: record.id,
+        content: record.content,
+        style: record.style,
+        timestamp: new Date(record.createdAt),
+      }));
       lastRefreshTime.value = new Date();
 
       // 如果开启了自动刷新，设置定时器
@@ -116,16 +152,15 @@ const generateMotivations = async (isAutoRefresh: boolean = false) => {
         setupAutoRefresh();
       }
 
-      // 成功生成，跳出重试循环
       break;
     } catch (error) {
-      retryCount++;
-      console.error(`第${retryCount}次生成鸡汤文失败:`, error);
+      retryCount.value++;
+      console.error(`第${retryCount.value}次加载鸡汤文失败:`, error);
 
       // 如果还有重试机会，等待2秒后重试
-      if (retryCount < maxRetries) {
+      if (retryCount.value < maxRetries) {
         // 显示重试状态，但不清空现有内容
-        console.log(`生成失败，2秒后进行第${retryCount + 1}次重试...`);
+        console.log(`加载失败，2秒后进行第${retryCount.value + 1}次重试...`);
         await new Promise((resolve) => setTimeout(resolve, 2000)); // 等待2秒
         continue;
       }
@@ -135,7 +170,7 @@ const generateMotivations = async (isAutoRefresh: boolean = false) => {
       
       // 只有在手动刷新时才显示弹窗提示，自动刷新时不显示
       if (!isAutoRefresh) {
-        alert(`AI生成失败，已重试${maxRetries}次。请检查网络连接或稍后重试。当前显示的是上次成功生成的内容。`);
+        alert(`内容加载失败，已重试${maxRetries}次。请检查网络连接或稍后重试。当前显示的是上次成功加载的内容。`);
       }
     }
   }
@@ -222,15 +257,15 @@ const formatDate = (date: Date) => {
 
 // 新增：封面生成相关状态
 // 修改：每条鸡汤文独立的封面生成状态
-const generatingCovers = ref<{ [key: number]: boolean }>({});
+const generatingCovers = ref<Record<string, boolean>>({});
 const showCoverModal = ref(false);
 const generatedCoverUrl = ref("");
 const currentMotivation = ref("");
-const currentMotivationId = ref<number | null>(null);
+const currentMotivationId = ref<string | null>(null);
 const abortController = ref<AbortController | null>(null);
 
 // 生成封面
-const generateCover = async (motivation: string, motivationId: number) => {
+const generateCover = async (motivation: string, motivationId: string) => {
   if (generatingCovers.value[motivationId]) return;
 
   // 设置当前鸡汤文的生成状态
