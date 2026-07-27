@@ -17,9 +17,12 @@ export const resolveActiveCategory = (
     return categories[categories.length - 1].id
   }
 
-  const activationOffset = distanceToBottom < viewportHeight
-    ? Math.max(TOP_ACTIVATION_OFFSET, viewportHeight / 2)
-    : TOP_ACTIVATION_OFFSET
+  const centerActivationOffset = Math.max(TOP_ACTIVATION_OFFSET, viewportHeight / 2)
+  const bottomProgress = viewportHeight > 0
+    ? Math.min(1, Math.max(0, 1 - distanceToBottom / viewportHeight))
+    : 0
+  const activationOffset = TOP_ACTIVATION_OFFSET
+    + (centerActivationOffset - TOP_ACTIVATION_OFFSET) * bottomProgress
   let activeCategory = ''
 
   for (const category of categories) {

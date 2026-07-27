@@ -13,6 +13,16 @@ test('selects the section near the viewport center when approaching the page bot
   assert.equal(resolveActiveCategory(trailingCategories, 1017, 150), 'cate_12')
 })
 
+test('does not skip a compact section when the bottom threshold starts moving', () => {
+  const categories = [
+    { id: 'cate_11', top: -607 },
+    { id: 'cate_9', top: 91 },
+    { id: 'cate_7', top: 319 },
+  ]
+
+  assert.equal(resolveActiveCategory(categories, 1017, 992), 'cate_9')
+})
+
 test('selects the final section at the page bottom', () => {
   const categoriesAtBottom = [
     { id: 'cate_10', top: -288 },
