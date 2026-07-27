@@ -7,6 +7,7 @@ import { useComponentStore } from '@/store/modules/component'
 import { useRoute, useRouter } from "vue-router"
 import { Top } from '@element-plus/icons-vue'
 import { useSpriteLogo } from '@/components/Tools/useSpriteLogo'
+import { resolveActiveCategory, type CategoryPosition } from './scrollSpy'
 //store
 const toolsStore = useToolsStore()
 const componentStore = useComponentStore()
@@ -132,25 +133,32 @@ const handleScroll = () => {
 
   // 获取当前滚动位置
   const scrollTop = window.pageYOffset || document.documentElement.scrollTop
+  const viewportHeight = window.innerHeight || document.documentElement.clientHeight
+  const scrollHeight = Math.max(
+    document.documentElement.scrollHeight,
+    document.body.scrollHeight,
+  )
+  const distanceToBottom = Math.max(0, scrollHeight - scrollTop - viewportHeight)
 
   // 查找当前可视区域内的分类
-  let activeCategory = ''
-  
+  const categoryPositions: CategoryPosition[] = []
+
   for (const cate of categories) {
     const element = document.getElementById(`cate_${cate.id}`)
     if (element) {
-      const rect = element.getBoundingClientRect()
-      const elementTop = scrollTop + rect.top
-      
-      // 如果分类标题在视窗顶部以下100px范围内，则认为是当前活跃分类
-      if (elementTop <= scrollTop + 100) {
-        activeCategory = `cate_${cate.id}`
-      } else {
-        break
-      }
+      categoryPositions.push({
+        id: `cate_${cate.id}`,
+        top: element.getBoundingClientRect().top,
+      })
     }
   }
-  
+
+  const activeCategory = resolveActiveCategory(
+    categoryPositions,
+    viewportHeight,
+    distanceToBottom,
+  )
+
   // 更新活跃分类和URL（添加防抖，避免频繁更新路由）
   if (activeCategory && activeCategory !== componentStore.activeCategory) {
     componentStore.setActiveCategory(activeCategory)
