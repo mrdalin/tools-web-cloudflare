@@ -4,7 +4,7 @@ Youngbar 工具箱是部署在 Cloudflare Pages 上的一站式在线工具站�
 
 - 站点地址：https://youngbar.com
 - GitHub 仓库：https://github.com/ideajoker/tools-web-cloudflare
-- Cloudflare Pages 项目：`tools-web`
+- Cloudflare Pages 项目：`tools-web-cloudflare`
 - D1 数据库：`tools-web-db`
 
 本项目基于以下开源项目继续维护和改造：
@@ -21,7 +21,7 @@ Youngbar 工具箱是部署在 Cloudflare Pages 上的一站式在线工具站�
 - 后端：Cloudflare Pages Functions
 - 数据库：Cloudflare D1，绑定名为 `DB`
 - 域名：`youngbar.com`
-- 主要 AI 服务：Agnes API，备用/历史兼容包含 Pollinations
+- 文本 AI：Agnes API 为主，Pollinations 自动回退
 - 邮件验证码：Resend
 - 登录：邮箱验证码、邮箱密码、Google 登录
 - 统计：Google Analytics 4
@@ -43,6 +43,30 @@ Youngbar 工具箱是部署在 Cloudflare Pages 上的一站式在线工具站�
 - 未登录：尽量允许直接使用，数据保存在当前浏览器本地。
 - 登录后：支持保存到云端，便于长期保存和多设备同步。
 - 必须登录的功能：页面需要明确提示用户先登录。
+
+## AI 文本调用与每日鸡汤内容池
+
+文本类 AI 工具统一请求同源接口 `/api/ai-chat`：
+
+- 配置 `AGNES_API_KEY` 时，默认先调用 Agnes `agnes-2.0-flash`。
+- Agnes 超时、报错、返回空正文或因长度截断时，自动回退到 Pollinations `openai-fast`。
+- 未配置 `AGNES_API_KEY` 时，直接使用 Pollinations。
+- Provider Key 只存在于 Cloudflare Pages 加密变量中，前端不能直接持有或调用这些 Key。
+
+`/ai-daily-motivation` 使用 D1 共享内容池减少 AI 调用：
+
+1. 页面先通过 `GET /api/daily-motivations?style=...` 读取该风格的历史文案。
+2. 浏览器用 `youngbar:ai-daily-motivation-seen:v1` 记录当前展示周期看过的文案 ID，并随机选择未展示内容。
+3. 只有未展示库存不足时，前端才通过 `POST /api/daily-motivations` 请求缺少的数量。
+4. 服务端确认该浏览器提交的当前库存已全部消费后，才调用现有的 Agnes → Pollinations 回退链路。
+5. AI 本次返回的全部有效文案都会写入 D1；页面只展示当前所需数量，剩余内容留给后续刷新。
+
+相关 D1 表：
+
+- `ai_daily_motivations`：按风格保存文案，`UNIQUE(style, content)` 防止重复。
+- `ai_daily_motivation_generation_locks`：按风格防止并发重复生成；正常请求结束后锁会释放，异常锁最多保留 60 秒。
+
+清除浏览器本地数据只会重置该浏览器的展示周期，不会删除 D1 共享内容池。不要为了让单个浏览器重新开始而清空生产数据库。
 
 ## 本地开发
 
@@ -100,6 +124,18 @@ pnpm dev
 
 本地 Wrangler 默认使用本地状态；不要在日常开发命令中添加 `--remote`。
 
+## 测试与交付前检查
+
+至少执行：
+
+```bash
+node --test tests/**/*.test.js
+pnpm build:pro
+git diff --check
+```
+
+`pnpm build:pro` 已包含 `vue-tsc --noEmit`。涉及 Pages Functions 或 D1 时，还应使用本地 Wrangler 和本地 D1 状态验证接口；不要让本地测试连接生产 D1。
+
 ## Cloudflare 部署
 
 Cloudflare Pages 构建配置：
@@ -111,6 +147,8 @@ Cloudflare Pages 构建配置：
 根目录：/
 Node.js 版本：22
 ```
+
+Cloudflare Pages 后台中的实际项目名是 `tools-web-cloudflare`；`wrangler.toml` 里的 `name = "tools-web"` 是 Wrangler 配置名，不要用它替代部署查询中的 Pages 项目名。
 
 `wrangler.toml` 中维护普通变量和 D1 绑定：
 
@@ -144,13 +182,13 @@ JWT_SECRET=替换成足够长的随机字符串
 RESEND_API_KEY=re_xxx
 RESEND_FROM_EMAIL=Youngbar <noreply@youngbar.com>
 AGNES_API_KEY=你的 Agnes API Key
+POLLINATIONS_API_KEY=你的 Pollinations API Key
 IMGBB_API_KEY=你的 ImgBB API Key
 ```
 
 可选变量：
 
 ```env
-POLLINATIONS_API_KEY=
 AITOOLS_API_KEY=
 
 GOOGLE_CLIENT_ID=
@@ -178,6 +216,8 @@ QQ_REDIRECT_URI=https://youngbar.com/qq-auth
 - 不要把真实密钥写入 `wrangler.toml`。
 - 不要提交 `.dev.vars`、`.env.production`、`.env.development`。
 - 示例变量放在 `.dev.vars.example`。
+- 正式站使用的 Key 至少要更新到 Production 环境；只有需要验证分支预览站时，才同时更新 Preview 环境。
+- 修改加密变量后必须重新部署对应环境，已经运行的旧部署不会自动读取新值。
 
 ## D1 数据库初始化
 
@@ -201,12 +241,23 @@ npx wrangler d1 execute tools-web-db --remote --file=functions/db/014_add_cynefi
 npx wrangler d1 execute tools-web-db --remote --file=functions/db/015_add_x_viral_content.sql
 npx wrangler d1 execute tools-web-db --remote --file=functions/db/016_create_favorite_apps.sql
 npx wrangler d1 execute tools-web-db --remote --file=functions/db/017_create_verification_codes.sql
+npx wrangler d1 execute tools-web-db --remote --file=functions/db/018_create_ai_daily_motivations.sql
 ```
 
 说明：
 
 - 新库一般跳过 `004_alter_user_table.sql`，因为 `000_init_core_tables.sql` 已包含核心用户字段。
 - 已执行过的 SQL 不要重复盲目执行；执行前先确认当前数据库状态。
+- 新代码依赖新表时，生产环境应先执行对应迁移，再推送或合并会触发部署的代码。
+
+每日鸡汤内容池的常用只读检查：
+
+```bash
+npx wrangler d1 execute tools-web-db --remote --command "SELECT style, COUNT(*) AS count FROM ai_daily_motivations GROUP BY style ORDER BY style;"
+npx wrangler d1 execute tools-web-db --remote --command "SELECT style, locked_until FROM ai_daily_motivation_generation_locks;"
+```
+
+锁表通常应为空。仅在确认请求已结束且锁记录长期异常残留后再人工处理；正常异常锁会在 60 秒后失效。
 
 ## 发布流程
 
@@ -232,6 +283,12 @@ git push
 
 推送到 GitHub 后，Cloudflare Pages 会自动重新部署。
 
+查看生产部署是否已经切到目标提交：
+
+```bash
+npx wrangler pages deployment list --project-name tools-web-cloudflare
+```
+
 部署后重点检查：
 
 ```text
@@ -241,6 +298,8 @@ https://youngbar.com/json
 https://youngbar.com/api/mock-samples
 https://youngbar.com/ai-chat
 https://youngbar.com/ai-text-to-image
+https://youngbar.com/ai-daily-motivation
+https://youngbar.com/api/daily-motivations?style=%E5%8A%B1%E5%BF%97
 ```
 
 ## 已完成的重要改造
@@ -274,6 +333,8 @@ Cloudflare 部署：
 AI：
 
 - 文本 AI 主要切到 Agnes `agnes-2.0-flash`。
+- Agnes 返回空正文、长度截断、超时或错误时，文本 AI 自动回退到 Pollinations `openai-fast`。
+- AI 每日励志鸡汤文已使用 D1 共享内容池和浏览器展示周期，库存耗尽后才生成并保存新内容。
 - 文生图/图生图支持 Agnes `agnes-image-2.1-flash` 方向。
 - 文生视频/图生视频支持 Agnes `agnes-video-v2.0` 方向。
 - 图床上传使用 ImgBB API Key。
@@ -303,6 +364,7 @@ SEO 与统计：
 - 新增外部 API 代理时，必须做 URL origin 白名单校验。
 - 新增密钥时，只放 Cloudflare 加密变量，并同步更新 `.dev.vars.example`。
 - 新增数据库表时，把 SQL 放到 `functions/db/`，使用递增编号。
+- 修改 `/api/daily-motivations` 时同时检查池耗尽校验、去重写入、风格锁和浏览器展示周期测试。
 - 修改 Cloudflare 变量后需要重新部署 Pages。
 - 改动 UI 后建议检查桌面和移动端，尤其是按钮文字、浮动顶部栏、底部页脚。
 
@@ -337,9 +399,11 @@ set ALL_PROXY=http://127.0.0.1:10808
 AI 接口本身可能偶发超时或限流。优先检查：
 
 - `AGNES_API_KEY` 是否存在。
+- `POLLINATIONS_API_KEY` 是否存在，且 Production 环境已经重新部署。
 - Cloudflare Pages 是否已重新部署。
-- 浏览器 Network 中 `/api/...` 是否返回错误。
-- Agnes 后台 Key 额度和调用状态。
+- 浏览器 Network 中 `/api/ai-chat` 或 `/api/daily-motivations` 是否返回错误。
+- Agnes 和 Pollinations 后台 Key 额度、限流和调用状态。
+- 每日鸡汤失败时，确认 `018_create_ai_daily_motivations.sql` 已应用，并使用上面的只读 SQL 检查内容池和锁表。
 
 ## 后续优化方向
 
