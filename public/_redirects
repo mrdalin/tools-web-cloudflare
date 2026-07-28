@@ -4,5 +4,11 @@
 /userinfo/todos/ /todos 301
 /ai/text-to-image /ai-text-to-image 301
 /ai/text-to-image/ /ai-text-to-image 301
+/404 / 200
+/letter/:slug/ /letter/:slug 301
+/qa-view/:id/ /qa-view/:id 301
+/backend-docs/:techId/ /backend-docs/:techId 301
 /:tool/ /:tool 301
-/* /index.html 200
+/letter/:slug / 200
+/qa-view/:id / 200
+/backend-docs/:techId / 200

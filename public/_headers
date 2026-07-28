@@ -6,23 +6,6 @@
   Permissions-Policy: camera=(), microphone=(), geolocation=()
   Content-Security-Policy: default-src 'self'; script-src 'self' 'unsafe-inline' https://accounts.google.com https://www.googletagmanager.com; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https:; font-src 'self' data:; connect-src 'self' https: wss:; frame-src https://accounts.google.com; frame-ancestors 'none'; base-uri 'self'; form-action 'self'
 
-/js/*
-  Cache-Control: public, max-age=31536000, immutable
-
-/css/*
-  Cache-Control: public, max-age=31536000, immutable
-
-/assets/*
-  Cache-Control: public, max-age=31536000, immutable
-
-/*.js
-  Cache-Control: public, max-age=31536000, immutable
-  Content-Type: application/javascript; charset=utf-8
-
-/*.css
-  Cache-Control: public, max-age=31536000, immutable
-  Content-Type: text/css; charset=utf-8
-
 /index.html
   Cache-Control: public, max-age=0, must-revalidate
 
@@ -33,31 +16,3 @@
 /robots.txt
   Content-Type: text/plain; charset=utf-8
   Cache-Control: public, max-age=3600
-
-/*.woff2
-  Cache-Control: public, max-age=31536000, immutable
-  Content-Type: font/woff2
-
-/*.woff
-  Cache-Control: public, max-age=31536000, immutable
-  Content-Type: font/woff
-
-/*.ttf
-  Cache-Control: public, max-age=31536000, immutable
-  Content-Type: font/ttf
-
-/*.webp
-  Cache-Control: public, max-age=31536000, immutable
-  Content-Type: image/webp
-
-/*.png
-  Cache-Control: public, max-age=31536000, immutable
-  Content-Type: image/png
-
-/*.jpg
-  Cache-Control: public, max-age=31536000, immutable
-  Content-Type: image/jpeg
-
-/*.svg
-  Cache-Control: public, max-age=31536000, immutable
-  Content-Type: image/svg+xml

@@ -15,6 +15,7 @@
     "prebuild:pro": "pnpm sprite:build",
     "build": "vue-tsc --noEmit && vite build --mode development",
     "build:pro": "vue-tsc --noEmit && vite build --mode production",
+    "postbuild:pro": "node scripts/build-pages-route-shells.mjs",
     "preview": "vite preview",
     "generate:sitemap": "node scripts/generate-sitemap.js"
   },

@@ -326,7 +326,7 @@ Cloudflare 部署：
 - `wrangler.toml` 维护 D1 绑定和普通变量。
 - `VITE_FUNCTIONS_BASE_URL` 支持前端和 Functions 分离，但当前 youngbar.com 使用同源 `/api/...`。
 - `dist/` 已从 Git 跟踪中移除，并加入 `.gitignore`。
-- `public/_redirects` 支持 SPA fallback 和旧路径重定向。
+- `postbuild:pro` 为单层 SPA 路由生成 HTML 壳；`public/_redirects` 只处理动态详情页和旧路径重定向。
 
 产品体验：
 
