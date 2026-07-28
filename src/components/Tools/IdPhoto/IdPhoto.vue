@@ -666,12 +666,17 @@ onMounted(() => {
         :http-request="updateDataFile"
         :on-exceed="handleExceed"
         :limit="1"
+        :show-file-list="false"
         drag
+        :class="{ 'upload-compact': uploadedImageSrc }"
       >
-        <div class="el-upload__text">
+        <div v-if="!uploadedImageSrc" class="el-upload__text">
           拖拽图片到此处或<em>点击上传</em>
         </div>
-        <template #tip>
+        <div v-else class="el-upload__text">
+          已选择图片，<em>点击或拖拽重新选择</em>
+        </div>
+        <template v-if="!uploadedImageSrc" #tip>
           <div class="el-upload__tip">
             支持 JPG、PNG 等常见图片格式
           </div>
@@ -919,5 +924,9 @@ onMounted(() => {
   height: auto !important;
   min-height: 120px;
   padding: 20px;
+}
+.upload-compact :deep(.el-upload-dragger) {
+  min-height: 48px;
+  padding: 10px 16px;
 }
 </style>

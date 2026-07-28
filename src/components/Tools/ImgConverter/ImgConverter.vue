@@ -118,13 +118,18 @@ const download = () => {
         :http-request="handleUpload"
         :on-exceed="handleExceed"
         :limit="1"
+        :show-file-list="false"
         class="mb-4"
+        :class="{ 'upload-compact': originalSrc }"
         drag
       >
-        <el-button type="primary" size="large">
+        <el-button v-if="!originalSrc" type="primary" size="large">
           上传 PNG 或 JPG 图片
         </el-button>
-        <template #tip>
+        <div v-else class="el-upload__text">
+          已选择图片，<em>点击或拖拽重新选择</em>
+        </div>
+        <template v-if="!originalSrc" #tip>
           <div class="el-upload__tip text-gray-400 mt-1">
             支持 PNG、JPG 格式，自动检测并转换
           </div>
@@ -219,5 +224,9 @@ const download = () => {
 }
 :deep(.el-upload-dragger) {
   width: 100%;
+}
+.upload-compact :deep(.el-upload-dragger) {
+  min-height: 48px;
+  padding: 10px 16px;
 }
 </style>

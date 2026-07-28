@@ -4,6 +4,7 @@ import { UploadProps, UploadRawFile, genFileId, ElMessage } from 'element-plus'
 import { Download as DownloadIcon } from '@element-plus/icons-vue'
 import DetailHeader from '@/components/Layout/DetailHeader/DetailHeader.vue'
 import ToolDetail from '@/components/Layout/ToolDetail/ToolDetail.vue'
+import { downloadCanvasAsPng } from './download.js'
 
 const info = reactive({ title: '老照片加字' })
 
@@ -16,13 +17,13 @@ const originalImageSrc = ref('')
 // === 文字 ===
 const year = ref('2026')
 const season = ref('春')
-const person = ref('同志')
+const person = ref('张三')
 const place = ref('北京')
 const useUppercaseYear = ref(true)
 
 const yearBottom = ref('2026')
 const seasonBottom = ref('春')
-const personBottom = ref('同志')
+const personBottom = ref('张三')
 const placeBottom = ref('北京')
 const useUppercaseYearBottom = ref(true)
 
@@ -86,6 +87,7 @@ const bandHeightScale = ref(100) // 百分比，100 = 自动值
 
 // === 预览 ===
 const previewSrc = ref('')
+const previewCanvas = ref<HTMLCanvasElement | null>(null)
 
 // === 上传处理 ===
 const updateDataFile = async (params: any) => {
@@ -164,6 +166,7 @@ const renderCanvas = () => {
     drawCaption(ctx, captionBottom.value, 0, y, totalW, botH, img, bandH)
   }
 
+  previewCanvas.value = canvas
   previewSrc.value = canvas.toDataURL('image/png')
 }
 
@@ -214,19 +217,8 @@ watch(
 
 // === 下载 ===
 const downloadImage = () => {
-  if (!previewSrc.value) return
-  // previewSrc 是 dataURL; 从同一个 canvas 重新走 toBlob 拿原尺寸 PNG
-  // 但 dataURL 已包含数据，直接转 blob 即可
-  fetch(previewSrc.value)
-    .then((r) => r.blob())
-    .then((blob) => {
-      const url = URL.createObjectURL(blob)
-      const a = document.createElement('a')
-      a.href = url
-      a.download = `old-photo-${Date.now()}.png`
-      a.click()
-      URL.revokeObjectURL(url)
-    })
+  if (!previewCanvas.value) return
+  downloadCanvasAsPng(previewCanvas.value, `old-photo-${Date.now()}.png`)
 }
 </script>
 
@@ -243,13 +235,18 @@ const downloadImage = () => {
         :http-request="updateDataFile"
         :on-exceed="handleExceed"
         :limit="1"
+        :show-file-list="false"
         drag
         class="w-full"
+        :class="{ 'upload-compact': originalImageSrc }"
       >
-        <div class="el-upload__text">
+        <div v-if="!originalImageSrc" class="el-upload__text">
           拖拽图片到此处或<em>点击上传</em>
         </div>
-        <template #tip>
+        <div v-else class="el-upload__text">
+          已选择图片，<em>点击或拖拽重新选择</em>
+        </div>
+        <template v-if="!originalImageSrc" #tip>
           <div class="el-upload__tip">支持 JPG、PNG 等常见图片格式，大小不超过 10MB</div>
         </template>
       </el-upload>
@@ -437,5 +434,9 @@ const downloadImage = () => {
 }
 :deep(.el-upload-list__item) {
   width: 100%;
+}
+.upload-compact :deep(.el-upload-dragger) {
+  min-height: 48px;
+  padding: 10px 16px;
 }
 </style>
