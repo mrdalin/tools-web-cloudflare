@@ -3,15 +3,20 @@ import { getCORSHeaders, handleCORSPreflight } from '../utils/cors.js'
 
 const ALLOWED_STYLES = new Set(['励志', '情感', '成长', '职场', '学习', '生活', '友情', '爱情'])
 const MAX_COUNT = 10
-const MAX_SEEN_IDS = 100000
+const MAX_SEEN_IDS = 10000
+const MAX_SEEN_ID_LENGTH = 64
 const LOCK_TTL_MS = 60_000
+const RATE_LIMIT_WINDOW_MS = 10 * 60_000
+const RATE_LIMIT_MAX_GENERATIONS = 3
+const RATE_LIMIT_RETENTION_MS = 24 * 60 * 60_000
 
-function jsonResponse(data, status, origin) {
+function jsonResponse(data, status, origin, extraHeaders = {}) {
   return new Response(JSON.stringify(data), {
     status,
     headers: {
       'Content-Type': 'application/json',
-      ...getCORSHeaders(origin)
+      ...getCORSHeaders(origin),
+      ...extraHeaders
     }
   })
 }
@@ -50,6 +55,9 @@ function validateGenerationBody(body) {
   }
   if (body.seenIds.some(id => typeof id !== 'string' || !id)) {
     return 'seenIds must contain non-empty strings'
+  }
+  if (body.seenIds.some(id => id.length > MAX_SEEN_ID_LENGTH)) {
+    return `seenIds entries must be at most ${MAX_SEEN_ID_LENGTH} characters`
   }
   return null
 }
@@ -104,7 +112,60 @@ async function releaseLock(db, style, lockedUntil) {
   `).bind(style, lockedUntil).run()
 }
 
-async function generateRecords({ db, env, request, origin, style, count, existingContents }) {
+function getClientIp(request) {
+  return (
+    request.headers.get('CF-Connecting-IP')
+    || request.headers.get('x-forwarded-for')?.split(',')[0]?.trim()
+    || 'unknown'
+  ).slice(0, 128)
+}
+
+async function getDailyClientKey(request, now) {
+  const date = new Date(now).toISOString().slice(0, 10)
+  const input = new TextEncoder().encode(`${date}:${getClientIp(request)}`)
+  const digest = new Uint8Array(await crypto.subtle.digest('SHA-256', input))
+  return Array.from(digest, byte => byte.toString(16).padStart(2, '0')).join('')
+}
+
+async function consumeGenerationQuota(db, request, now) {
+  const clientKey = await getDailyClientKey(request, now)
+  const windowStartedAt = Math.floor(now / RATE_LIMIT_WINDOW_MS) * RATE_LIMIT_WINDOW_MS
+  const result = await db.prepare(`
+    INSERT INTO ai_daily_motivation_generation_rate_limits (
+      client_key,
+      window_started_at,
+      generation_count,
+      updated_at
+    ) VALUES (?, ?, 1, ?)
+    ON CONFLICT(client_key) DO UPDATE SET
+      window_started_at = excluded.window_started_at,
+      generation_count = CASE
+        WHEN ai_daily_motivation_generation_rate_limits.window_started_at = excluded.window_started_at
+          THEN ai_daily_motivation_generation_rate_limits.generation_count + 1
+        ELSE 1
+      END,
+      updated_at = excluded.updated_at
+    WHERE ai_daily_motivation_generation_rate_limits.window_started_at != excluded.window_started_at
+      OR ai_daily_motivation_generation_rate_limits.generation_count < ?
+  `).bind(
+    clientKey,
+    windowStartedAt,
+    now,
+    RATE_LIMIT_MAX_GENERATIONS
+  ).run()
+
+  await db.prepare(`
+    DELETE FROM ai_daily_motivation_generation_rate_limits
+    WHERE updated_at < ?
+  `).bind(now - RATE_LIMIT_RETENTION_MS).run()
+
+  return {
+    allowed: (result.meta?.changes ?? result.changes ?? 0) > 0,
+    retryAfter: Math.max(1, Math.ceil((windowStartedAt + RATE_LIMIT_WINDOW_MS - now) / 1000))
+  }
+}
+
+async function generateRecords({ db, env, request, origin, style, count, seenIds }) {
   const now = Date.now()
   const lockedUntil = now + LOCK_TTL_MS
   const acquired = await acquireLock(db, style, lockedUntil, now)
@@ -114,6 +175,20 @@ async function generateRecords({ db, env, request, origin, style, count, existin
   }
 
   try {
+    const pool = await getPool(db, style)
+    if (pool.some(record => !seenIds.has(record.id))) {
+      return { error: 'pool_not_exhausted', status: 409 }
+    }
+
+    const quota = await consumeGenerationQuota(db, request, now)
+    if (!quota.allowed) {
+      return {
+        error: 'generation_rate_limited',
+        status: 429,
+        retryAfter: quota.retryAfter
+      }
+    }
+
     const providerResponse = await callWithFallback({
       messages: [{ role: 'user', content: createPrompt(style, count) }],
       max_tokens: 2000,
@@ -130,7 +205,7 @@ async function generateRecords({ db, env, request, origin, style, count, existin
     const content = providerData?.choices?.[0]?.message?.content
     if (typeof content !== 'string') throw new Error('AI returned an invalid response')
 
-    const lines = parseGeneratedLines(content, existingContents)
+    const lines = parseGeneratedLines(content, pool.map(record => record.content))
     if (lines.length === 0) throw new Error('AI returned no usable content')
 
     const records = []
@@ -193,10 +268,17 @@ export async function onRequest(context) {
       origin,
       style: body.style,
       count: body.count,
-      existingContents: pool.map(record => record.content)
+      seenIds
     })
 
-    if (result.error) return jsonResponse({ error: result.error }, result.status, origin)
+    if (result.error) {
+      return jsonResponse(
+        { error: result.error },
+        result.status,
+        origin,
+        result.retryAfter ? { 'Retry-After': String(result.retryAfter) } : {}
+      )
+    }
     return jsonResponse({
       records: result.records,
       storedCount: result.storedCount,

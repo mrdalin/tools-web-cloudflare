@@ -1,3 +1,5 @@
+import { hasValidCronSecret } from '../utils/cron-auth.js'
+
 /**
  * 清理临时聊天室一个月之前的消息
  * 定时任务接口，由 GitHub Actions 每天调用一次
@@ -7,8 +9,50 @@
  * - SUPABASE_SERVICE_KEY: Supabase service_role key (有删除权限)
  */
 export async function onRequest(context) {
+  const { request, env } = context
+
+  if (request.method !== 'POST') {
+    return new Response(JSON.stringify({
+      success: false,
+      error: 'Method not allowed'
+    }), {
+      status: 405,
+      headers: {
+        Allow: 'POST',
+        'Cache-Control': 'no-store',
+        'Content-Type': 'application/json'
+      }
+    })
+  }
+
+  if (!env.CRON_SECRET) {
+    return new Response(JSON.stringify({
+      success: false,
+      error: 'Cron authentication is not configured'
+    }), {
+      status: 503,
+      headers: {
+        'Cache-Control': 'no-store',
+        'Content-Type': 'application/json'
+      }
+    })
+  }
+
+  if (!(await hasValidCronSecret(request, env.CRON_SECRET))) {
+    return new Response(JSON.stringify({
+      success: false,
+      error: 'Unauthorized'
+    }), {
+      status: 401,
+      headers: {
+        'Cache-Control': 'no-store',
+        'Content-Type': 'application/json',
+        'WWW-Authenticate': 'Bearer'
+      }
+    })
+  }
+
   try {
-    const { env } = context;
     const supabaseUrl = env.SUPABASE_URL || '';
     const supabaseServiceKey = env.SUPABASE_SERVICE_KEY || '';
 
@@ -18,7 +62,10 @@ export async function onRequest(context) {
         error: '缺少 Supabase 环境变量配置',
       }), {
         status: 500,
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Cache-Control': 'no-store',
+          'Content-Type': 'application/json'
+        },
       });
     }
 
@@ -74,9 +121,10 @@ export async function onRequest(context) {
       message,
       deletedCount,
       cutoffTime,
-    }), {
-      status: 200,
-      headers: {
+      }), {
+        status: 200,
+        headers: {
+        'Cache-Control': 'no-store',
         'Content-Type': 'application/json',
       },
     });
@@ -85,10 +133,11 @@ export async function onRequest(context) {
     console.error('清理聊天消息失败:', error);
     return new Response(JSON.stringify({
       success: false,
-      error: error.message,
+      error: 'Cron cleanup failed',
     }), {
       status: 500,
       headers: {
+        'Cache-Control': 'no-store',
         'Content-Type': 'application/json',
       },
     });

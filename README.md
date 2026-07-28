@@ -65,6 +65,9 @@ Youngbar 工具箱是部署在 Cloudflare Pages 上的一站式在线工具站�
 
 - `ai_daily_motivations`：按风格保存文案，`UNIQUE(style, content)` 防止重复。
 - `ai_daily_motivation_generation_locks`：按风格防止并发重复生成；正常请求结束后锁会释放，异常锁最多保留 60 秒。
+- `ai_daily_motivation_generation_rate_limits`：按每日哈希客户端和十分钟窗口限制生成次数，默认每个客户端最多生成 3 批。
+
+每日鸡汤的 GET 读取不受该限制；只有库存耗尽后真正调用 AI 的 POST 才消耗额度。达到限制时接口返回 `429` 和 `Retry-After`，防止恶意请求持续消耗 AI 配额。
 
 清除浏览器本地数据只会重置该浏览器的展示周期，不会删除 D1 共享内容池。不要为了让单个浏览器重新开始而清空生产数据库。
 
@@ -181,6 +184,7 @@ Cloudflare Pages 后台只需要维护加密变量，也就是“变量和密钥
 JWT_SECRET=替换成足够长的随机字符串
 RESEND_API_KEY=re_xxx
 RESEND_FROM_EMAIL=Youngbar <noreply@youngbar.com>
+CRON_SECRET=用于 GitHub Actions 定时清理接口的随机密钥
 AGNES_API_KEY=你的 Agnes API Key
 POLLINATIONS_API_KEY=你的 Pollinations API Key
 IMGBB_API_KEY=你的 ImgBB API Key
@@ -218,6 +222,7 @@ QQ_REDIRECT_URI=https://youngbar.com/qq-auth
 - 示例变量放在 `.dev.vars.example`。
 - 正式站使用的 Key 至少要更新到 Production 环境；只有需要验证分支预览站时，才同时更新 Preview 环境。
 - 修改加密变量后必须重新部署对应环境，已经运行的旧部署不会自动读取新值。
+- `/cron/clean-chat` 只接受带 `CRON_SECRET` 的 POST 请求；GitHub Actions 使用仓库 Secrets 中同名变量调用，不要把密钥写入工作流或代码。
 
 ## D1 数据库初始化
 
@@ -242,6 +247,7 @@ npx wrangler d1 execute tools-web-db --remote --file=functions/db/015_add_x_vira
 npx wrangler d1 execute tools-web-db --remote --file=functions/db/016_create_favorite_apps.sql
 npx wrangler d1 execute tools-web-db --remote --file=functions/db/017_create_verification_codes.sql
 npx wrangler d1 execute tools-web-db --remote --file=functions/db/018_create_ai_daily_motivations.sql
+npx wrangler d1 execute tools-web-db --remote --file=functions/db/019_create_ai_daily_motivation_rate_limits.sql
 ```
 
 说明：
@@ -255,9 +261,10 @@ npx wrangler d1 execute tools-web-db --remote --file=functions/db/018_create_ai_
 ```bash
 npx wrangler d1 execute tools-web-db --remote --command "SELECT style, COUNT(*) AS count FROM ai_daily_motivations GROUP BY style ORDER BY style;"
 npx wrangler d1 execute tools-web-db --remote --command "SELECT style, locked_until FROM ai_daily_motivation_generation_locks;"
+npx wrangler d1 execute tools-web-db --remote --command "SELECT COUNT(*) AS active_rate_limit_rows FROM ai_daily_motivation_generation_rate_limits;"
 ```
 
-锁表通常应为空。仅在确认请求已结束且锁记录长期异常残留后再人工处理；正常异常锁会在 60 秒后失效。
+锁表通常应为空。限流表会保留短期窗口记录，过期记录由请求顺带清理。仅在确认请求已结束且锁记录长期异常残留后再人工处理；正常异常锁会在 60 秒后失效。
 
 ## 发布流程
 
@@ -403,7 +410,7 @@ AI 接口本身可能偶发超时或限流。优先检查：
 - Cloudflare Pages 是否已重新部署。
 - 浏览器 Network 中 `/api/ai-chat` 或 `/api/daily-motivations` 是否返回错误。
 - Agnes 和 Pollinations 后台 Key 额度、限流和调用状态。
-- 每日鸡汤失败时，确认 `018_create_ai_daily_motivations.sql` 已应用，并使用上面的只读 SQL 检查内容池和锁表。
+- 每日鸡汤失败时，确认 `018_create_ai_daily_motivations.sql` 和 `019_create_ai_daily_motivation_rate_limits.sql` 已应用，并使用上面的只读 SQL 检查内容池、锁表和限流表。
 
 ## 后续优化方向
 
