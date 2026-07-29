@@ -51,4 +51,11 @@ test('keeps missing static assets out of the SPA fallback', () => {
 test('does not give fallback responses broad immutable asset headers', () => {
   assert.doesNotMatch(headers, /immutable/)
   assert.doesNotMatch(headers, /Content-Type:\s*application\/javascript/i)
+  for (const path of ['/js/*', '/css/*', '/assets/*']) {
+    assert.match(
+      headers,
+      new RegExp(`${path.replace('*', '\\*')}\\r?\\n[ \\t]+Cache-Control: public, max-age=0, must-revalidate`),
+      `missing revalidation policy for ${path}`,
+    )
+  }
 })

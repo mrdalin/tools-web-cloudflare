@@ -327,6 +327,7 @@ Cloudflare 部署：
 - `VITE_FUNCTIONS_BASE_URL` 支持前端和 Functions 分离，但当前 youngbar.com 使用同源 `/api/...`。
 - `dist/` 已从 Git 跟踪中移除，并加入 `.gitignore`。
 - `postbuild:pro` 为单层 SPA 路由生成 HTML 壳；`public/_redirects` 只处理动态详情页和旧路径重定向。
+- 生产构建会把当前提交短 SHA 加入 JS、CSS 和其他 Vite 资产名，避免发布切换时复用旧边缘缓存对象。
 
 产品体验：
 

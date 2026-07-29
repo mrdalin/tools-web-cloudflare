@@ -8,6 +8,17 @@ import ElementPlus from 'unplugin-element-plus/vite'
 import AutoImport from 'unplugin-auto-import/vite'
 import viteCompression from 'vite-plugin-compression'
 
+function getBuildVersion() {
+  const commit = process.env.CF_PAGES_COMMIT_SHA || process.env.GITHUB_SHA
+  if (commit) return commit.slice(0, 12)
+
+  try {
+    return execSync('git rev-parse --short=12 HEAD', { encoding: 'utf8' }).trim()
+  } catch {
+    return 'dev'
+  }
+}
+
 /**
  * 把 Vite 自动注入的同步 <link rel="stylesheet"> 改成非阻塞的 preload 模式，
  * 让主 CSS 与首屏 HTML 并行下载，不阻塞渲染。
@@ -91,6 +102,8 @@ function spriteWatcher(): Plugin {
 export default defineConfig(({command, mode}) => {
   let env = loadEnv(mode, process.cwd())
   const isProd = mode === 'production'
+  const buildVersion = isProd ? getBuildVersion() : ''
+  const buildVersionSuffix = buildVersion ? `-${buildVersion}` : ''
 
   return {
     define: {
@@ -164,11 +177,13 @@ export default defineConfig(({command, mode}) => {
             'vue-vendor': ['vue', 'vue-router', 'pinia'],
             'editor': ['@wangeditor/editor', '@wangeditor/editor-for-vue'],
           },
-          chunkFileNames: 'js/[name]-[hash].js',
-          entryFileNames: 'js/[name]-[hash].js',
+          chunkFileNames: `js/[name]${buildVersionSuffix}-[hash].js`,
+          entryFileNames: `js/[name]${buildVersionSuffix}-[hash].js`,
           assetFileNames: (assetInfo) => {
-            if (assetInfo.name.endsWith('.css')) return 'css/[name]-[hash][extname]'
-            return 'assets/[name]-[hash][extname]'
+            if (assetInfo.name.endsWith('.css')) {
+              return `css/[name]${buildVersionSuffix}-[hash][extname]`
+            }
+            return `assets/[name]${buildVersionSuffix}-[hash][extname]`
           },
         }
       },
