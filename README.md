@@ -27,6 +27,26 @@ Youngbar 工具箱是部署在 Cloudflare Pages 上的一站式在线工具站�
 - 统计：Google Analytics 4
 - SEO：已配置 `robots.txt`、`sitemap.xml`、canonical、基础 Open Graph、核心工具页 SEO 内容模块
 
+## 项目进度快照（2026-07-29）
+
+当前交付状态：
+
+- `main` 是唯一生产分支，推送后由 GitHub Actions 和 Cloudflare Pages 自动构建、部署。
+- 最近一轮路由与缓存故障已经闭环：缺失静态资源不再回退到 SPA HTML，单层工具路由会生成独立 HTML 壳，动态详情页继续由 `_redirects` 处理。
+- 生产 JS、CSS 和 Vite 资源名都包含当前提交的 12 位短 SHA，不同部署不会复用同一个资源 URL。
+- HTML 壳使用 `max-age=0, must-revalidate`；版本化的 `/js/*`、`/css/*`、`/assets/*` 使用一年 `immutable` 缓存；不存在的静态资源仍返回 `404` 和 `no-store`。
+- 当前自动化测试包含 7 个测试文件、26 个用例，覆盖 Pages 路由、缓存配置、AI 回退、每日文案内容池、定时清理鉴权和部分核心组件逻辑。
+
+最近一次交付验证：
+
+- `pnpm build:pro` 完成 3,660 个模块转换，并生成 129 个单层工具路由壳。
+- 构建产物中的 JS、CSS、assets 均带提交版本段，`dist` 不包含递归输出目录。
+- Cloudflare Preview、GitHub Actions CI 和 Production 部署均验证通过。
+- 使用全新 Edge 会话检查 `https://youngbar.com/old-photo-caption`：页面返回 `200`、无残留骨架屏、无业务脚本错误；抽检的 54 个 JS 均为当前提交版本，Brotli 可正常解码，未再出现 JS URL 返回 HTML 的情况。
+- 缺失 JS 路径返回 `404 + no-store`，不会被浏览器或边缘节点长期缓存为有效脚本。
+
+后续交付应至少保持上述测试、构建、Preview 和生产深链检查全部通过；涉及路由、缓存或构建文件名时，必须重新执行生产浏览器验证。
+
 ## 常用功能
 
 工具箱覆盖以下类型：
@@ -327,7 +347,7 @@ Cloudflare 部署：
 - `VITE_FUNCTIONS_BASE_URL` 支持前端和 Functions 分离，但当前 youngbar.com 使用同源 `/api/...`。
 - `dist/` 已从 Git 跟踪中移除，并加入 `.gitignore`。
 - `postbuild:pro` 为单层 SPA 路由生成 HTML 壳；`public/_redirects` 只处理动态详情页和旧路径重定向。
-- 生产构建会把当前提交短 SHA 加入 JS、CSS 和其他 Vite 资产名，避免发布切换时复用旧边缘缓存对象。
+- 生产构建会把当前提交短 SHA 加入 JS、CSS 和其他 Vite 资产名；这些版本化资源使用一年 `immutable` 缓存，HTML 壳仍要求重新验证。
 
 产品体验：
 
@@ -413,15 +433,27 @@ AI 接口本身可能偶发超时或限流。优先检查：
 - Agnes 和 Pollinations 后台 Key 额度、限流和调用状态。
 - 每日鸡汤失败时，确认 `018_create_ai_daily_motivations.sql` 和 `019_create_ai_daily_motivation_rate_limits.sql` 已应用，并使用上面的只读 SQL 检查内容池、锁表和限流表。
 
+## 已知遗留问题
+
+| 优先级 | 问题或观察项 | 当前影响 | 建议处理方式 |
+| --- | --- | --- | --- |
+| P1 | 缺少正式的浏览器端冒烟测试 | 当前依赖人工 Playwright 复验深链、骨架屏和资源响应，路由或缓存回归可能到 Preview 阶段才被发现 | 在 CI 中增加至少一个 Chromium 冒烟测试，覆盖首页、普通工具深链、动态详情页、缺失 JS 404 和 JS `Content-Type` |
+| P2 | Cloudflare Zone 级规则没有纳入仓库 | Pages `_headers` 可追踪，但 Zone 的 Browser Cache TTL、Cache Rules 等仍可能在控制台漂移；当前 Wrangler OAuth 只有 `zone:read`，不能读取 Zone Settings 或 Rulesets | 使用单独的最小权限 API Token 获取 `Zone Settings Read`、`Cache Rules Read`，先导出只读快照，再决定是否采用 Terraform 或受控脚本管理 |
+| P2 | Cloudflare Insights beacon 被现有 CSP 拦截 | 不影响站点业务和 GA4，但 Cloudflare Web Analytics beacon 当前不会上报 | 明确是否需要 Cloudflare Web Analytics；需要则只放行 `static.cloudflareinsights.com`，不需要则关闭对应注入，避免无意义的控制台错误 |
+| P2 | 部分大型 chunk 仍超过 800 kB | PDF、富文本、签名图片等页面首次加载成本较高，弱网下更明显 | 用 bundle 分析定位后继续拆分 PDF、编辑器和图片处理依赖，逐页验证，避免为了消除警告进行全局重构 |
+| P3 | 构建存在第三方依赖警告 | `@vueuse/core` 的 PURE 注释位置和 `tui-image-editor` 的 `backbround-color` 拼写警告来自依赖，当前不影响构建 | 依赖升级时复查；除非出现实际样式或压缩错误，不在本仓库内复制或改写第三方源码 |
+| P3 | GTM 在部分本地网络下连接失败 | 生产业务不受影响，但本地或受限网络中的统计请求会报 `ERR_CONNECTION_CLOSED` | 用不同网络验证 GA4；不要把第三方网络失败当作 Vue 路由或资源加载失败 |
+
 ## 后续优化方向
 
-当前项目已经达到可稳定维护和推广的状态。后续如果继续优化，建议按优先级推进：
+当前项目已经达到可稳定维护和推广的状态。后续建议按以下顺序推进：
 
-1. 用 PageSpeed Insights 检查首页、JSON、Markdown、AI 生图等核心页。
-2. 针对大型工具页继续做依赖按需加载，例如 PDF、签名图片、富文本编辑器。
-3. 根据 Google Search Console 的未收录原因，继续优化薄内容页、重复标题和 404。
-4. 为注册、登录、验证码、AI 生成等关键 API 补充更系统的异常日志。
-5. 给核心功能补自动化测试，至少覆盖账号注册、登录、D1 读写和主要 AI 代理。
+1. 先补浏览器端冒烟测试，把本轮路由与缓存故障的生产验证固化到 CI。
+2. 建立 Cloudflare Zone 设置的只读快照和变更记录，减少控制台配置漂移。
+3. 明确 Cloudflare Insights 的使用取舍并消除对应 CSP 控制台错误。
+4. 用 PageSpeed Insights 和 bundle 分析检查首页、JSON、Markdown、PDF、签名图片、富文本编辑器和 AI 生图等核心页，按页面拆分大型依赖。
+5. 为注册、登录、验证码、D1 读写和主要 AI 代理补充端到端测试与结构化异常日志。
+6. 根据 Google Search Console 的未收录原因，继续处理薄内容页、重复标题和无效链接。
 
 ## License
 

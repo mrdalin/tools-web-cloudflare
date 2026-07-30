@@ -48,14 +48,22 @@ test('keeps missing static assets out of the SPA fallback', () => {
   assert.ok(dynamicRules.length <= 100)
 })
 
-test('does not give fallback responses broad immutable asset headers', () => {
-  assert.doesNotMatch(headers, /immutable/)
+test('caches versioned build assets without caching the HTML shell', () => {
   assert.doesNotMatch(headers, /Content-Type:\s*application\/javascript/i)
+  assert.match(
+    headers,
+    /\/index\.html\r?\n[ \t]+Cache-Control: public, max-age=0, must-revalidate/,
+  )
   for (const path of ['/js/*', '/css/*', '/assets/*']) {
+    assert.equal(
+      existsSync(new URL(`../../public/${path.slice(1, -2)}`, import.meta.url)),
+      false,
+      `${path} must remain reserved for versioned build output`,
+    )
     assert.match(
       headers,
-      new RegExp(`${path.replace('*', '\\*')}\\r?\\n[ \\t]+Cache-Control: public, max-age=0, must-revalidate`),
-      `missing revalidation policy for ${path}`,
+      new RegExp(`${path.replace('*', '\\*')}\\r?\\n[ \\t]+Cache-Control: public, max-age=31536000, immutable`),
+      `missing immutable cache policy for ${path}`,
     )
   }
 })
