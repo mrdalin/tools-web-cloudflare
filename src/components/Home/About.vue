@@ -77,11 +77,6 @@ onMounted(async () => {
               <li>部分语音或兜底能力仍可能通过 Cloudflare Functions 调用第三方备用服务</li>
             </ul>
         </div>
-      <h1 class="text-2xl font-bold mt-6 mb-6">发现了 Bug？</h1>
-      <p>
-        <el-text>如果您发现了 Bug，或者某些功能未能按预期工作，请在 GitHub 仓库的 <el-link type="primary" target="_blank" :href="gitUrl + '/issues/new'" class="">issues</el-link> 中提交错误报告。</el-text>
-      </p>
-
       <h1 class="text-2xl font-bold mt-6 mb-6">隐私政策</h1>
       <p>
         <el-text>账号、Google 登录、AI 请求和第三方服务的数据处理说明，请查看 <router-link to="/privacy" class="privacy-link">隐私政策</router-link>。</el-text>

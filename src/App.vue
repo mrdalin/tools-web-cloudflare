@@ -3,7 +3,7 @@ import { computed, ref, onMounted, onUnmounted, defineAsyncComponent, defineComp
 import LayoutSkeleton from "@/components/Layout/LayoutSkeleton.vue";
 // import Right from '@/components/Layout/Right/Right.vue'
 import { useComponentStore } from "@/store/modules/component";
-// 异步加载：SimilarRecommend + Comments 合并到同一 chunk，省一次 HTTP 请求
+// 异步加载 Discuss 组件（内含 SimilarRecommend 推荐区），省一次 HTTP 请求
 const Discuss = defineAsyncComponent({
   loader: () => import('@/components/Layout/Discuss.vue'),
   delay: 100,

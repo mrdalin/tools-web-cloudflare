@@ -3,7 +3,6 @@ import { Tools } from '@element-plus/icons-vue'
 import { reactive, onMounted } from 'vue';
 import { useToolsStore } from '@/store/modules/tools'
 const info = reactive({
-  feedbackUrl: import.meta.env.VITE_FEEDBACK_URL || 'javascript:void(0)',
   advShow: import.meta.env.VITE_ADV_SHOW || 'false',
   advList: [
     {

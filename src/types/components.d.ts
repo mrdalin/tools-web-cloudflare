@@ -45,7 +45,6 @@ declare module 'vue' {
     ChineseName: typeof import('./../components/Tools/ChineseName/ChineseName.vue')['default']
     Coin: typeof import('./../components/Tools/Coin/Coin.vue')['default']
     ColorPicker: typeof import('./../components/Tools/ColorPicker/ColorPicker.vue')['default']
-    Comments: typeof import('./../components/Layout/Comments/Comments.vue')['default']
     CompanyCompare: typeof import('./../components/Tools/CompanyCompare/CompanyCompare.vue')['default']
     Cookie: typeof import('./../components/Tools/Cookie/Cookie.vue')['default']
     CountdownTimer: typeof import('./../components/Tools/CountdownTimer/CountdownTimer.vue')['default']

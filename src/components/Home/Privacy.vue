@@ -1,7 +1,4 @@
 <script setup lang="ts">
-const gitUrl = (import.meta.env.VITE_GIT_URL || 'https://github.com/mrdalin/tools-web-cloudflare').replace(/\/$/, '')
-const feedbackUrl = `${gitUrl}/issues/new`
-
 const dataItems = [
   '账号信息：邮箱、用户名、登录方式、注册与登录时间等基础信息。',
   'Google 登录信息：当你选择 Google 登录时，本站只接收 Google 返回的唯一用户 ID、邮箱、邮箱验证状态和基础资料，用于创建或登录 Youngbar 账号。',
@@ -88,15 +85,6 @@ const providerItems = [
         <p>
           账号密码会以加盐哈希方式保存，验证码会设置有效期和失败次数限制。本站也会通过 HTTPS、Cloudflare 安全能力、
           输入过滤和访问限制来降低滥用和数据泄露风险。
-        </p>
-      </article>
-
-      <article class="privacy-section">
-        <h2>联系我们</h2>
-        <p>
-          如果你对隐私政策、账号数据或 Google 登录有疑问，请通过
-          <a :href="feedbackUrl" target="_blank" rel="noopener noreferrer">GitHub Issues</a>
-          提交反馈。
         </p>
       </article>
     </section>
