@@ -51,8 +51,6 @@
     "/github-auth",
     "/qq-auth",
 
-    "/cron/test",
-
     "/api/links",
     "/api/links/*",
     "/s/*",
