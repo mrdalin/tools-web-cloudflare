@@ -204,7 +204,6 @@ Cloudflare Pages 后台只需要维护加密变量，也就是“变量和密钥
 JWT_SECRET=替换成足够长的随机字符串
 RESEND_API_KEY=re_xxx
 RESEND_FROM_EMAIL=Youngbar <noreply@youngbar.com>
-CRON_SECRET=用于 GitHub Actions 定时清理接口的随机密钥
 AGNES_API_KEY=你的 Agnes API Key
 POLLINATIONS_API_KEY=你的 Pollinations API Key
 IMGBB_API_KEY=你的 ImgBB API Key
@@ -242,7 +241,6 @@ QQ_REDIRECT_URI=https://youngbar.com/qq-auth
 - 示例变量放在 `.dev.vars.example`。
 - 正式站使用的 Key 至少要更新到 Production 环境；只有需要验证分支预览站时，才同时更新 Preview 环境。
 - 修改加密变量后必须重新部署对应环境，已经运行的旧部署不会自动读取新值。
-- `/cron/clean-chat` 只接受带 `CRON_SECRET` 的 POST 请求；GitHub Actions 使用仓库 Secrets 中同名变量调用，不要把密钥写入工作流或代码。
 
 ## D1 数据库初始化
 

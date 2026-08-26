@@ -1,5 +1,4 @@
 JWT_SECRET="replace-with-a-random-32-byte-secret"
-CRON_SECRET="replace-with-a-random-cron-secret"
 RESEND_API_KEY="re_xxx"
 RESEND_FROM_EMAIL="Tools Web <noreply@example.com>"
 

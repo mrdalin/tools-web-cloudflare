@@ -52,7 +52,6 @@
     "/qq-auth",
 
     "/cron/test",
-    "/cron/clean-chat",
 
     "/api/links",
     "/api/links/*",
