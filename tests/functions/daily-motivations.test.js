@@ -164,7 +164,7 @@ test('generates and persists only after the current style pool is exhausted', as
   try {
     const response = await onRequest({
       request: request('POST', { style: '励志', count: 2, seenIds: ['old'] }),
-      env: { DB: db, AGNES_API_KEY: 'agnes-key', POLLINATIONS_API_KEY: 'pollinations-key' }
+      env: { DB: db, AGNES_API_KEY: 'agnes-key' }
     })
     const data = await response.json()
 

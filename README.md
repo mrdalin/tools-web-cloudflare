@@ -205,7 +205,6 @@ JWT_SECRET=替换成足够长的随机字符串
 RESEND_API_KEY=re_xxx
 RESEND_FROM_EMAIL=Youngbar <noreply@youngbar.com>
 AGNES_API_KEY=你的 Agnes API Key
-POLLINATIONS_API_KEY=你的 Pollinations API Key
 IMGBB_API_KEY=你的 ImgBB API Key
 ```
 
@@ -425,10 +424,9 @@ set ALL_PROXY=http://127.0.0.1:10808
 AI 接口本身可能偶发超时或限流。优先检查：
 
 - `AGNES_API_KEY` 是否存在。
-- `POLLINATIONS_API_KEY` 是否存在，且 Production 环境已经重新部署。
 - Cloudflare Pages 是否已重新部署。
 - 浏览器 Network 中 `/api/ai-chat` 或 `/api/daily-motivations` 是否返回错误。
-- Agnes 和 Pollinations 后台 Key 额度、限流和调用状态。
+- Agnes 后台 Key 额度、限流和调用状态（Pollinations 兜底走免费匿名档，无需 Key）。
 - 每日鸡汤失败时，确认 `018_create_ai_daily_motivations.sql` 和 `019_create_ai_daily_motivation_rate_limits.sql` 已应用，并使用上面的只读 SQL 检查内容池、锁表和限流表。
 
 ## 已知遗留问题

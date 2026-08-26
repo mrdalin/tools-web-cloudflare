@@ -48,8 +48,7 @@ async function requestWithProviderResponses(responses, ip, bodyOverrides = {}) {
     const response = await onRequest({
       request,
       env: {
-        AGNES_API_KEY: 'agnes-key',
-        POLLINATIONS_API_KEY: 'pollinations-key'
+        AGNES_API_KEY: 'agnes-key'
       }
     })
 
