@@ -37,7 +37,7 @@ export async function onRequest(context) {
     } catch {}
 
     const response = await fetchWithRetry(
-      'https://api.agnes-ai.cn/v1/chat/completions',
+      'https://apihub.agnes-ai.com/v1/chat/completions',
       {
         method: 'POST',
         headers: {

@@ -60,7 +60,7 @@ export const presetImages = [
 export const durationOptions = [
   { label: '5秒', value: 5, frames: 121 },
   { label: '10秒', value: 10, frames: 241 },
-  { label: '15秒', value: 15, frames: 361 }
+  { label: '12秒', value: 12, frames: 289 }
 ]
 
 // 宽高比选项

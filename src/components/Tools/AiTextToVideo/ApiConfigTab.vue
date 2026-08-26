@@ -3,7 +3,7 @@
     <div class="mb-6 p-4 bg-blue-50 rounded-lg">
       <h3 class="text-sm font-semibold mb-2">API配置</h3>
       <p class="text-xs text-gray-600 mb-3">
-        在 <a href="https://www.agnes-ai.cn" target="_blank" class="text-blue-500">agnes-ai.cn</a> 注册并获取 API Key
+        在 <a href="https://agnes-ai.com" target="_blank" class="text-blue-500">agnes-ai.com</a> 注册并获取 API Key
       </p>
       <div class="flex gap-2">
         <input
@@ -28,7 +28,7 @@
       <section>
         <h3 class="font-semibold mb-2">功能概览</h3>
         <ul class="list-disc list-inside space-y-1">
-          <li><strong>文生视频：</strong>输入主题自动生成视频，支持5-15秒，多种比例</li>
+          <li><strong>文生视频：</strong>输入主题自动生成视频，支持5-12秒，多种比例</li>
           <li><strong>图生视频：</strong>上传图片生成动态视频，支持单图/双图模式</li>
           <li><strong>文生图：</strong>文字描述生成图片，支持多种比例和数量</li>
           <li><strong>图生图：</strong>基于参考图修改生成新图，可调整生成强度</li>
@@ -39,7 +39,7 @@
       <section>
         <h3 class="font-semibold mb-2">使用流程</h3>
         <ol class="list-decimal list-inside space-y-1">
-          <li>在 <a href="https://www.agnes-ai.cn" target="_blank" class="text-blue-500">agnes-ai.cn</a> 注册账号</li>
+          <li>在 <a href="https://agnes-ai.com" target="_blank" class="text-blue-500">agnes-ai.com</a> 注册账号</li>
           <li>获取 API Key 并在此页面保存</li>
           <li>选择功能Tab，填写参数后点击生成</li>
           <li>等待生成完成，可在线预览或下载</li>
@@ -49,7 +49,7 @@
       <section>
         <h3 class="font-semibold mb-2">技术参数</h3>
         <ul class="list-disc list-inside space-y-1">
-          <li><strong>视频模型：</strong>agnes-video-v2.0，24fps，最高15秒</li>
+          <li><strong>视频模型：</strong>agnes-video-2.5-flash，720P，最高12秒</li>
           <li><strong>图像模型：</strong>agnes-image-2.1-flash / agnes-image-2.0-flash</li>
           <li><strong>对话模型：</strong>agnes-2.5-flash / agnes-2.0-flash</li>
           <li><strong>支持比例：</strong>9:16 / 16:9 / 1:1 / 4:3 / 3:4</li>

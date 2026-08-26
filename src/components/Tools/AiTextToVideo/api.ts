@@ -115,22 +115,24 @@ export async function generateOptimizedPrompt(apiKey: string, topic: string): Pr
 export async function submitVideoTask(
   apiKey: string,
   prompt: string,
-  frames: number,
-  width: number,
-  height: number,
+  seconds: number,
+  aspectRatio: string,
   images?: string[]
 ): Promise<string> {
   const body: any = {
-    model: 'agnes-video-v2.0',
+    model: 'agnes-video-2.5-flash',
     prompt,
-    num_frames: frames,
-    frame_rate: 24,
-    width,
-    height
+    mode: images && images.length > 0 ? 'keyframe' : 'text',
+    seconds: String(seconds),
+    size: '720P',
+    aspect_ratio: aspectRatio
   }
 
   if (images && images.length > 0) {
-    body.extra_body = { image: images }
+    body.first_frame = images[0]
+    if (images.length > 1) {
+      body.last_frame = images[1]
+    }
   }
 
   const response = await fetch('/api/agnes-video', {
@@ -182,7 +184,7 @@ export async function pollVideoStatus(
       }
 
       if (status === 'completed') {
-        const videoUrl = statusData.remixed_from_video_id || statusData.video_url
+        const videoUrl = statusData.metadata?.url || ''
         if (!videoUrl) {
           throw permanentError('视频生成完成，但没有返回视频地址，请稍后重试')
         }

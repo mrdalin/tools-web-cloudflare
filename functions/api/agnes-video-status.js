@@ -35,7 +35,7 @@ export async function onRequest(context) {
     }
 
     const response = await fetchWithRetry(
-      `https://api.agnes-ai.cn/agnesapi?video_id=${encodeURIComponent(videoId)}`,
+      `https://apihub.agnes-ai.com/agnesapi?video_id=${encodeURIComponent(videoId)}&model_name=agnes-video-2.5-flash`,
       {
         method: 'GET',
         headers: {

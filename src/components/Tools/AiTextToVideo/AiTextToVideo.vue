@@ -2362,9 +2362,8 @@ const generateVideo = async () => {
     const videoId = await agnesApi.submitVideoTask(
       apiKey.value.trim(),
       script,
-      selectedDuration.frames,
-      selectedAspectRatio.width,
-      selectedAspectRatio.height
+      selectedDuration.value,
+      selectedAspectRatio.value
     )
 
     // 轮询状态（不更新currentStep，让计时器继续显示）
@@ -2503,9 +2502,8 @@ const generateImageToVideo = async () => {
     const videoId = await agnesApi.submitVideoTask(
       apiKey.value.trim(),
       finalPrompt,
-      selectedDuration.frames,
-      selectedAspectRatio.width,
-      selectedAspectRatio.height,
+      selectedDuration.value,
+      selectedAspectRatio.value,
       uploadedImages.value
     )
 
@@ -2952,7 +2950,7 @@ const generateImageToVideo = async () => {
           <h3 class="font-semibold mb-2">使用说明</h3>
           <ol class="list-decimal list-inside space-y-1">
             <li>输入视频主题，建议描述主体、动作、场景、镜头运动、光照和视觉风格</li>
-            <li>选择视频时长（5秒/10秒/15秒）和宽高比（9:16竖屏/16:9横屏/1:1方形等）</li>
+            <li>选择视频时长（5秒/10秒/12秒）和宽高比（9:16竖屏/16:9横屏/1:1方形等）</li>
             <li>点击生成，系统会先生成英文 Prompt，再提交视频任务并轮询查询进度</li>
             <li>生成完成后可在线预览或下载视频</li>
           </ol>
@@ -2967,10 +2965,10 @@ const generateImageToVideo = async () => {
         <section>
           <h3 class="font-semibold mb-2">技术参数</h3>
           <ul class="list-disc list-inside space-y-1">
-            <li>模型：agnes-video-v2.0</li>
-            <li>帧率：固定 24fps</li>
-            <li>时长：5秒(121帧) / 10秒(241帧) / 15秒(361帧)</li>
-            <li>宽高比：9:16 (720x1280) / 16:9 (1280x720) / 1:1 (1024x1024) / 4:3 (1024x768) / 3:4 (768x1024)</li>
+            <li>模型：agnes-video-2.5-flash</li>
+            <li>画质：固定 720P</li>
+            <li>时长：5秒 / 10秒 / 12秒</li>
+            <li>宽高比：16:9 (1280x720) / 9:16 (720x1280) / 1:1 (720x720) / 4:3 (960x720) / 3:4 (720x960)</li>
           </ul>
         </section>
       </div>

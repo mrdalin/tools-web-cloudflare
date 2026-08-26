@@ -31,7 +31,7 @@ export async function onRequest(context) {
       })
     }
 
-    const agnesUrl = `https://api.agnes-ai.cn/v1/${endpoint}`
+    const agnesUrl = `https://agnes-ai.com/api/v1/${endpoint}`
     const authHeader = request.headers.get('Authorization')
 
     const response = await fetch(agnesUrl, {
