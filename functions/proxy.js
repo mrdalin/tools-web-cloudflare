@@ -89,10 +89,7 @@ export async function onRequest(context) {
                     }
                 }
             });
-            if (targetUrl.origin.includes('pollinations') && env.POLLINATIONS_API_KEY) {
-                safeHeaders.set('Authorization', `Bearer ${env.POLLINATIONS_API_KEY}`);
-            }
-
+            // Pollinations 已改用免费匿名档（认证档 legacy 接口返回 402），不再发送 key
             if (targetUrl.origin === 'https://platform.aitools.cfd' && env.AITOOLS_API_KEY) {
                 safeHeaders.set('Authorization', `Bearer ${env.AITOOLS_API_KEY}`);
             }

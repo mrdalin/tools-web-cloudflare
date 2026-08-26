@@ -172,10 +172,10 @@ export async function callWithFallback(body, env, request, origin) {
     })
   }
 
+  // Pollinations 兜底：走免费匿名档（认证档的 legacy 文本接口已弃用，返回 402）
   providers.push({
     name: 'pollinations',
     url: POLLINATIONS_CHAT_URL,
-    apiKey: env.POLLINATIONS_API_KEY,
     model: POLLINATIONS_MODEL
   })
 
