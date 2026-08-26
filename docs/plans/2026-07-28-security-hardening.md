@@ -61,7 +61,7 @@
 
 1. Generate at least 32 random bytes in memory.
 2. Pipe the same value to `wrangler pages secret put CRON_SECRET --project-name tools-web-cloudflare`.
-3. Pipe it to `gh secret set CRON_SECRET --repo ideajoker/tools-web-cloudflare`.
+3. Pipe it to `gh secret set CRON_SECRET --repo mrdalin/tools-web-cloudflare`.
 4. List secret names only and confirm `CRON_SECRET` exists in both systems.
 
 ### Task 5: Add failing D1 rate-limit and race tests

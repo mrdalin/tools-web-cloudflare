@@ -3,7 +3,7 @@
 Youngbar 工具箱是部署在 Cloudflare Pages 上的一站式在线工具站，当前生产站点为：
 
 - 站点地址：https://youngbar.com
-- GitHub 仓库：https://github.com/ideajoker/tools-web-cloudflare
+- GitHub 仓库：https://github.com/mrdalin/tools-web-cloudflare
 - Cloudflare Pages 项目：`tools-web-cloudflare`
 - D1 数据库：`tools-web-db`
 

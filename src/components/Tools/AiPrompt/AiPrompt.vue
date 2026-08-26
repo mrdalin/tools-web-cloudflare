@@ -6,7 +6,7 @@ import { copy } from '@/utils/string'
 import 'viewerjs/dist/viewer.css'
 import { directive as vViewer } from 'v-viewer'
 import { ArrowDown, ArrowRight, Menu, Close } from '@element-plus/icons-vue'
-const gitUrl = ref((import.meta.env.VITE_GIT_URL || 'https://github.com/ideajoker/tools-web-cloudflare').replace(/\/$/, ''))
+const gitUrl = ref((import.meta.env.VITE_GIT_URL || 'https://github.com/mrdalin/tools-web-cloudflare').replace(/\/$/, ''))
 
 const info = reactive({
   title: "AI提示词仓库",

@@ -542,7 +542,7 @@ const getStatusText = () => {
           <p class="text-gray-700 text-sm">
             <strong>源码地址：</strong>
             <a 
-              href="https://github.com/ideajoker/tools-web-cloudflare/blob/main/src/components/Tools/AiGomoku/AiGomoku.vue"
+              href="https://github.com/mrdalin/tools-web-cloudflare/blob/main/src/components/Tools/AiGomoku/AiGomoku.vue"
               target="_blank" 
               rel="noopener noreferrer"
               class="text-primary hover:text-primary/80 underline"

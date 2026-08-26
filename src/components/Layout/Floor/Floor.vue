@@ -1,8 +1,3 @@
-<script setup lang="ts">
-const gitUrl = (import.meta.env.VITE_GIT_URL || 'https://github.com/ideajoker/tools-web-cloudflare').replace(/\/$/, '')
-const feedbackUrl = `${gitUrl}/issues/new`
-</script>
-
 <template>
   <footer class="site-footer">
     <div class="site-footer__copyright">© 2006-2026 Youngbar</div>
@@ -15,7 +10,6 @@ const feedbackUrl = `${gitUrl}/issues/new`
     </router-link>
     <nav class="site-footer__links" aria-label="页脚链接">
       <router-link to="/privacy">隐私政策</router-link>
-      <a :href="feedbackUrl" target="_blank" rel="noopener noreferrer">反馈建议</a>
     </nav>
   </footer>
 </template>

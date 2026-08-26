@@ -1,5 +1,5 @@
 <script setup lang="ts">
-const gitUrl = (import.meta.env.VITE_GIT_URL || 'https://github.com/ideajoker/tools-web-cloudflare').replace(/\/$/, '')
+const gitUrl = (import.meta.env.VITE_GIT_URL || 'https://github.com/mrdalin/tools-web-cloudflare').replace(/\/$/, '')
 const feedbackUrl = `${gitUrl}/issues/new`
 
 const dataItems = [

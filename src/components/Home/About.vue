@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue';
 import { useToolsStore } from '@/store/modules/tools';
-const gitUrl = ref(import.meta.env.VITE_GIT_URL || 'https://github.com/ideajoker/tools-web-cloudflare')
+const gitUrl = ref(import.meta.env.VITE_GIT_URL || 'https://github.com/mrdalin/tools-web-cloudflare')
 const sourceLinks = [
   {
     name: 'naroat/tools-web',
@@ -66,7 +66,7 @@ onMounted(async () => {
 
       <h1 class="text-2xl font-bold mt-6 mb-6">技术</h1>
       <p>
-        <el-text>主要基于Vite + Vue + ElementPlus + Typescript + TailwindCss + Cloudflare Functions开发，某些工具使用了第三方开源库，您可以在仓库的 <el-link :href="gitUrl + '/blob/master/package.json'" target="_blank" type="primary">package.json</el-link> 文件中找到完整的列表。</el-text>
+        <el-text>主要基于Vite + Vue + ElementPlus + Typescript + TailwindCss + Cloudflare Functions开发，某些工具使用了第三方开源库，您可以在仓库的 <el-link :href="gitUrl + '/blob/main/package.json'" target="_blank" type="primary">package.json</el-link> 文件中找到完整的列表。</el-text>
       </p>
         <div>
           本站 AI 工具默认使用：
