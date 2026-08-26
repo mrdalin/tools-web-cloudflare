@@ -1,4 +1,4 @@
-﻿<script setup lang="ts">
+<script setup lang="ts">
 import { ref, computed, onMounted } from 'vue';
 import { useToolsStore } from '@/store/modules/tools';
 const gitUrl = ref(import.meta.env.VITE_GIT_URL || 'https://github.com/ideajoker/tools-web-cloudflare')
@@ -72,7 +72,7 @@ onMounted(async () => {
           本站 AI 工具默认使用：
             <ul class="list-disc list-inside ml-4">
               <li>
-                <el-link href="https://agnes-ai.com" target="_blank" type="primary">Agnes AI</el-link>
+                <el-link href="https://www.agnes-ai.cn" target="_blank" type="primary">Agnes AI</el-link>
               </li>
               <li>部分语音或兜底能力仍可能通过 Cloudflare Functions 调用第三方备用服务</li>
             </ul>

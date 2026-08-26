@@ -1,9 +1,9 @@
 import { getCORSHeaders, handleCORSPreflight } from '../utils/cors.js'
 import { fetchWithRetry } from '../utils/agnes.js'
 
-const AGNES_CHAT_URL = 'https://apihub.agnes-ai.com/v1/chat/completions'
+const AGNES_CHAT_URL = 'https://api.agnes-ai.cn/v1/chat/completions'
 const POLLINATIONS_CHAT_URL = 'https://text.pollinations.ai/v1/chat/completions'
-const AGNES_MODEL = 'agnes-2.0-flash'
+const AGNES_MODEL = 'agnes-2.5-flash'
 const POLLINATIONS_MODEL = 'openai-fast'
 const MAX_MESSAGES = 30
 const MAX_CONTENT_LENGTH = 12000

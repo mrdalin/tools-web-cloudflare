@@ -84,7 +84,7 @@ export async function generateOptimizedPrompt(apiKey: string, topic: string): Pr
       'Authorization': `Bearer ${apiKey}`
     },
     body: JSON.stringify({
-      model: 'agnes-2.0-flash',
+      model: 'agnes-2.5-flash',
       messages: [
         {
           role: 'user',
@@ -374,7 +374,7 @@ export async function generateImageToImage(
 export async function sendChatMessageStream(
   apiKey: string,
   message: string,
-  model: string = 'agnes-2.0-flash',
+  model: string = 'agnes-2.5-flash',
   onChunk: (content: string) => void
 ): Promise<string> {
   const response = await fetch('/api/agnes-chat', {
@@ -439,7 +439,7 @@ export async function sendChatMessageWithImageStream(
   apiKey: string,
   textMessage: string,
   imageBase64: string,
-  model: string = 'agnes-2.0-flash',
+  model: string = 'agnes-2.5-flash',
   onChunk: (content: string) => void
 ): Promise<string> {
   const response = await fetch('/api/agnes-chat', {

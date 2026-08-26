@@ -48,8 +48,8 @@
         class="w-full px-2 py-1.5 border rounded text-sm"
         :disabled="isChatting"
       >
-        <option value="agnes-2.0-flash">Flash (快)</option>
-        <option value="agnes-2.0">Standard</option>
+        <option value="agnes-2.5-flash">Flash (快)</option>
+        <option value="agnes-2.0-flash">2.0 Flash (旧版)</option>
       </select>
     </div>
   </div>

@@ -68,7 +68,7 @@ Youngbar 工具箱是部署在 Cloudflare Pages 上的一站式在线工具站�
 
 文本类 AI 工具统一请求同源接口 `/api/ai-chat`：
 
-- 配置 `AGNES_API_KEY` 时，默认先调用 Agnes `agnes-2.0-flash`。
+- 配置 `AGNES_API_KEY` 时，默认先调用 Agnes `agnes-2.5-flash`。
 - Agnes 超时、报错、返回空正文或因长度截断时，自动回退到 Pollinations `openai-fast`。
 - 未配置 `AGNES_API_KEY` 时，直接使用 Pollinations。
 - Provider Key 只存在于 Cloudflare Pages 加密变量中，前端不能直接持有或调用这些 Key。

@@ -73,7 +73,7 @@ test('falls back to Pollinations when Agnes returns empty content', async () => 
   assert.equal(result.data.provider, 'pollinations')
   assert.equal(result.data.choices[0].message.content, 'fallback result')
   assert.deepEqual(result.calls.map(call => call.body.model), [
-    'agnes-2.0-flash',
+    'agnes-2.5-flash',
     'openai-fast'
   ])
 })

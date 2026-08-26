@@ -173,7 +173,7 @@ test('generates and persists only after the current style pool is exhausted', as
     assert.equal(data.storedCount, 4)
     assert.equal(db.rows.length, 5)
     assert.equal(calls.length, 1)
-    assert.equal(calls[0].body.model, 'agnes-2.0-flash')
+    assert.equal(calls[0].body.model, 'agnes-2.5-flash')
   } finally {
     globalThis.fetch = originalFetch
   }

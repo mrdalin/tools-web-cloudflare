@@ -32,7 +32,7 @@ export async function onRequest(context) {
     }
 
     const response = await fetchWithRetry(
-      'https://apihub.agnes-ai.com/v1/videos',
+      'https://api.agnes-ai.cn/v1/videos',
       {
         method: 'POST',
         headers: {

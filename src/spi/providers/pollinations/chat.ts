@@ -7,7 +7,7 @@ export async function chat(
 ): Promise<ChatResponse> {
   // 构建 OpenAI 兼容的请求体
   const requestBody = {
-    model: 'agnes-2.0-flash',
+    model: 'agnes-2.5-flash',
     messages: messages.map(msg => ({
       role: msg.role,
       content: msg.content

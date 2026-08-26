@@ -44,7 +44,7 @@
         :disabled="disabled"
       >
         <option value="agnes-image-2.1-flash">Agnes Image 2.1 Flash (快速)</option>
-        <option value="agnes-image-2.0">Agnes Image 2.0</option>
+        <option value="agnes-image-2.0-flash">Agnes Image 2.0 Flash</option>
       </select>
     </div>
 

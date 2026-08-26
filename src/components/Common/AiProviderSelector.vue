@@ -114,7 +114,7 @@ const availableProviders = ref([
   {
     name: 'pollinations',
     displayName: 'Agnes AI',
-    description: '站内默认 AI 服务，使用 Agnes 2.0 Flash，失败时由服务端自动兜底'
+    description: '站内默认 AI 服务，使用 Agnes 2.5 Flash，失败时由服务端自动兜底'
   }
 ])
 
@@ -137,8 +137,8 @@ const fetchPollinationsModels = async () => {
 
     pollinationsModels.value = [
       {
-        name: 'agnes-2.0-flash',
-        description: 'Agnes 2.0 Flash，站内默认文本模型',
+        name: 'agnes-2.5-flash',
+        description: 'Agnes 2.5 Flash，站内默认文本模型',
         provider: 'agnes'
       }
     ]

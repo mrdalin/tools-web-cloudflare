@@ -26,7 +26,7 @@ export async function onRequest(context: any) {
     }
 
     const response = await fetchWithRetry(
-      'https://apihub.agnes-ai.com/v1/images/generations',
+      'https://api.agnes-ai.cn/v1/images/generations',
       {
         method: 'POST',
         headers: {

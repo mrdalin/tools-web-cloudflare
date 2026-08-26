@@ -240,7 +240,7 @@ const isUploading = ref(false)
 const autoGenerateImagePrompt = ref(false) // 图生视频是否自动生成提示词
 
 // 文生图相关
-const imageModel = ref<'agnes-image-2.1-flash' | 'agnes-image-2.0'>('agnes-image-2.1-flash')
+const imageModel = ref<'agnes-image-2.1-flash' | 'agnes-image-2.0-flash'>('agnes-image-2.1-flash')
 const imagePrompt = ref('')
 const imageCount = ref(1)
 const imageAspectRatio = ref('9:16')
@@ -249,12 +249,12 @@ const imageAspectRatio = ref('9:16')
 const imageToImageSourceImage = ref('')
 const imageToImagePrompt = ref('')
 const imageToImageStrength = ref(0.8) // 生成强度，0-1
-const imageToImageModel = ref<'agnes-image-2.1-flash' | 'agnes-image-2.0'>('agnes-image-2.1-flash')
+const imageToImageModel = ref<'agnes-image-2.1-flash' | 'agnes-image-2.0-flash'>('agnes-image-2.1-flash')
 const imageToImageCount = ref(1)
 const imageToImageAspectRatio = ref('9:16')
 
 // AI对话相关
-const chatModel = ref<'agnes-2.0-flash' | 'agnes-2.0'>('agnes-2.0-flash')
+const chatModel = ref<'agnes-2.5-flash' | 'agnes-2.0-flash'>('agnes-2.5-flash')
 const chatInput = ref('')
 const chatSessions = ref<Array<{id: string, title: string, messages: Array<{role: 'user' | 'assistant', content: string}>}>>([])
 const currentSessionId = ref<string | null>(null)
@@ -460,7 +460,7 @@ const analyzeDream = async () => {
       result = await agnesApi.chatStream(
         {
           apiKey: apiKey.value.trim(),
-          model: 'agnes-2.0-flash',
+          model: 'agnes-2.5-flash',
           messages
         },
         (content) => {
@@ -501,7 +501,7 @@ const analyzeDream = async () => {
       result = await agnesApi.sendChatMessageStream(
         apiKey.value.trim(),
         prompt,
-        'agnes-2.0-flash',
+        'agnes-2.5-flash',
         (content) => {
           dreamStreamingContent.value = content
         }
@@ -572,7 +572,7 @@ const generateCityGuide = async () => {
       result = await agnesApi.chatStream(
         {
           apiKey: apiKey.value.trim(),
-          model: 'agnes-2.0-flash',
+          model: 'agnes-2.5-flash',
           messages
         },
         (content) => {
@@ -629,7 +629,7 @@ const generateCityGuide = async () => {
       result = await agnesApi.sendChatMessageStream(
         apiKey.value.trim(),
         prompt,
-        'agnes-2.0-flash',
+        'agnes-2.5-flash',
         (content) => {
           cityStreamingContent.value = content
         }
@@ -750,7 +750,7 @@ const generateBlessings = async () => {
       result = await agnesApi.chatStream(
         {
           apiKey: apiKey.value.trim(),
-          model: 'agnes-2.0-flash',
+          model: 'agnes-2.5-flash',
           messages
         },
         (content) => {
@@ -805,7 +805,7 @@ const generateBlessings = async () => {
       result = await agnesApi.sendChatMessageStream(
         apiKey.value.trim(),
         prompt,
-        'agnes-2.0-flash',
+        'agnes-2.5-flash',
         (content) => {
           blessingsStreamingContent.value = content
         }
@@ -879,7 +879,7 @@ const generateCopywriting = async () => {
       result = await agnesApi.chatStream(
         {
           apiKey: apiKey.value.trim(),
-          model: 'agnes-2.0-flash',
+          model: 'agnes-2.5-flash',
           messages
         },
         (content) => {
@@ -926,7 +926,7 @@ ${copyPlatform.value === 'douyin' ? '注意：抖音文案要口语化，适合�
       result = await agnesApi.sendChatMessageStream(
         apiKey.value.trim(),
         prompt,
-        'agnes-2.0-flash',
+        'agnes-2.5-flash',
         (content) => {
           copyStreamingContent.value = content
         }
@@ -1053,7 +1053,7 @@ const queryAdditiveHazard = async () => {
       result = await agnesApi.chatStream(
         {
           apiKey: apiKey.value.trim(),
-          model: 'agnes-2.0-flash',
+          model: 'agnes-2.5-flash',
           messages
         },
         (content) => {
@@ -1130,7 +1130,7 @@ const queryAdditiveHazard = async () => {
       result = await agnesApi.sendChatMessageStream(
         apiKey.value.trim(),
         prompt,
-        'agnes-2.0-flash',
+        'agnes-2.5-flash',
         (content) => {
           additiveStreamingContent.value = content
         }
@@ -1206,7 +1206,7 @@ const queryMedicineGuide = async () => {
       result = await agnesApi.chatStream(
         {
           apiKey: apiKey.value.trim(),
-          model: 'agnes-2.0-flash',
+          model: 'agnes-2.5-flash',
           messages
         },
         (content) => {
@@ -1292,7 +1292,7 @@ const queryMedicineGuide = async () => {
           apiKey.value.trim(),
           prompt,
           medicineUploadedImage.value,
-          'agnes-2.0-flash',
+          'agnes-2.5-flash',
           (content) => {
             medicineStreamingContent.value = content
           }
@@ -1371,7 +1371,7 @@ const queryMedicineGuide = async () => {
         result = await agnesApi.sendChatMessageStream(
           apiKey.value.trim(),
           prompt,
-          'agnes-2.0-flash',
+          'agnes-2.5-flash',
           (content) => {
             medicineStreamingContent.value = content
           }
@@ -1450,7 +1450,7 @@ const analyzeContractRisk = async () => {
       result = await agnesApi.chatStream(
         {
           apiKey: apiKey.value.trim(),
-          model: 'agnes-2.0-flash',
+          model: 'agnes-2.5-flash',
           messages
         },
         (content) => {
@@ -1540,7 +1540,7 @@ ${contractInput.value ? `\n补充说明：${contractInput.value}` : ''}
           apiKey.value.trim(),
           prompt,
           contractUploadedImage.value,
-          'agnes-2.0-flash',
+          'agnes-2.5-flash',
           (content) => {
             contractStreamingContent.value = content
           }
@@ -1615,7 +1615,7 @@ ${contractInput.value}
         result = await agnesApi.sendChatMessageStream(
           apiKey.value.trim(),
           prompt,
-          'agnes-2.0-flash',
+          'agnes-2.5-flash',
           (content) => {
             contractStreamingContent.value = content
           }
@@ -1692,7 +1692,7 @@ const queryFoodCalorie = async () => {
       result = await agnesApi.chatStream(
         {
           apiKey: apiKey.value.trim(),
-          model: 'agnes-2.0-flash',
+          model: 'agnes-2.5-flash',
           messages
         },
         (content) => {
@@ -1792,7 +1792,7 @@ ${foodInput.value ? `\n补充说明：${foodInput.value}` : ''}
           apiKey.value.trim(),
           prompt,
           foodUploadedImage.value,
-          'agnes-2.0-flash',
+          'agnes-2.5-flash',
           (content) => {
             foodStreamingContent.value = content
           }
@@ -1887,7 +1887,7 @@ ${foodInput.value ? `\n补充说明：${foodInput.value}` : ''}
         result = await agnesApi.sendChatMessageStream(
           apiKey.value.trim(),
           prompt,
-          'agnes-2.0-flash',
+          'agnes-2.5-flash',
           (content) => {
             foodStreamingContent.value = content
           }

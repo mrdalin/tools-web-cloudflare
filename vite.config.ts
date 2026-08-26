@@ -213,21 +213,21 @@ export default defineConfig(({command, mode}) => {
           changeOrigin: true,
         },
         '/api/agnes/chat': {
-          target: 'https://agnes-ai.com/api/v1',
+          target: 'https://api.agnes-ai.cn/v1',
           changeOrigin: true,
           rewrite: (path) => path.replace(/^\/api\/agnes\/chat/, '/chat'),
           secure: false
         },
         '/api/agnes/videos': {
-          target: 'https://agnes-ai.com/api/v1',
+          target: 'https://api.agnes-ai.cn/v1',
           changeOrigin: true,
           rewrite: (path) => path.replace(/^\/api\/agnes\/videos/, '/videos'),
           secure: false
         },
         '/api/agnes': {
-          target: 'https://agnes-ai.com',
+          target: 'https://api.agnes-ai.cn',
           changeOrigin: true,
-          rewrite: (path) => path.replace(/^\/api\/agnes/, '/api/v1'),
+          rewrite: (path) => path.replace(/^\/api\/agnes/, '/v1'),
           secure: false
         },
         [env.VITE_APP_BASE_API] : {
