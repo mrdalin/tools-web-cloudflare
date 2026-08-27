@@ -1,13 +1,11 @@
 import { defineConfig, loadEnv, type Plugin } from 'vite'
 import vue from '@vitejs/plugin-vue'
 import path from 'path'
-import zlib from 'node:zlib'
 import { execSync } from 'node:child_process'
 import Components from 'unplugin-vue-components/vite'
 import { ElementPlusResolver } from 'unplugin-vue-components/resolvers'
 import ElementPlus from 'unplugin-element-plus/vite'
 import AutoImport from 'unplugin-auto-import/vite'
-import viteCompression from 'vite-plugin-compression'
 
 function getBuildVersion() {
   const commit = process.env.CF_PAGES_COMMIT_SHA || process.env.GITHUB_SHA
@@ -138,27 +136,6 @@ export default defineConfig(({command, mode}) => {
         resolvers: [ElementPlusResolver()],
         dts: false, // 生产环境禁用 dts 生成
       }),
-      // 仅生产环境压缩
-      ...(isProd ? [
-        viteCompression({
-          algorithm: 'brotliCompress',
-          threshold: 5120, // 5KB 以上才压缩
-          ext: '.br',
-          deleteOriginFile: false,
-          compressionOptions: {
-            params: {
-              [zlib.constants.BROTLI_PARAM_QUALITY]: 6, // 默认 11 极耗内存/时间，降到 6
-              [zlib.constants.BROTLI_PARAM_MODE]: zlib.constants.BROTLI_MODE_TEXT,
-            },
-          },
-        }),
-        viteCompression({
-          algorithm: 'gzip',
-          threshold: 5120,
-          ext: '.gz',
-          deleteOriginFile: false,
-        }),
-      ] : []),
     ],
     resolve: {
       alias: {
