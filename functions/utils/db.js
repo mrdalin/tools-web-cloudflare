@@ -1009,3 +1009,164 @@ export class OssCredentialModel extends Model {
     }
   }
 }
+
+// 工资记录成员模型（SalaryTracker 工具使用）
+export class SalaryMemberModel extends Model {
+  constructor(db) {
+    super(db)
+    this.config = {
+      tableName: 'salary_members',
+      fields: {
+        id: { type: 'string', primaryKey: true },
+        uid: { type: 'string' },
+        name: { type: 'string' },
+        avatarColor: { type: 'string', dbField: 'avatar_color' },
+        avatarEmoji: { type: 'string', dbField: 'avatar_emoji' },
+        isDefault: { type: 'integer', dbField: 'is_default' },
+        createTime: { type: 'datetime', dbField: 'create_time' },
+        updateTime: { type: 'datetime', dbField: 'update_time' }
+      }
+    }
+  }
+}
+
+// 工资记录模型（SalaryTracker 工具使用）
+export class SalaryRecordModel extends Model {
+  constructor(db) {
+    super(db)
+    this.config = {
+      tableName: 'salary_records',
+      fields: {
+        id: { type: 'string', primaryKey: true },
+        uid: { type: 'string' },
+        monthlyIncome: { type: 'real', dbField: 'monthly_income' },
+        effectiveDate: { type: 'string', dbField: 'effective_date' },
+        source: { type: 'string' },
+        note: { type: 'text' },
+        memberId: { type: 'string', dbField: 'member_id' },
+        createTime: { type: 'datetime', dbField: 'create_time' },
+        updateTime: { type: 'datetime', dbField: 'update_time' }
+      }
+    }
+  }
+}
+
+// 身高记录成员模型（HeightTracker 工具使用）
+export class HeightMemberModel extends Model {
+  constructor(db) {
+    super(db)
+    this.config = {
+      tableName: 'height_members',
+      fields: {
+        id: { type: 'string', primaryKey: true },
+        uid: { type: 'string' },
+        name: { type: 'string' },
+        birthDate: { type: 'string', dbField: 'birth_date' },
+        sex: { type: 'string' },
+        goalHeight: { type: 'real', dbField: 'goal_height' },
+        avatarColor: { type: 'string', dbField: 'avatar_color' },
+        avatarEmoji: { type: 'string', dbField: 'avatar_emoji' },
+        isDefault: { type: 'integer', dbField: 'is_default' },
+        createTime: { type: 'datetime', dbField: 'create_time' },
+        updateTime: { type: 'datetime', dbField: 'update_time' }
+      }
+    }
+  }
+}
+
+// 身高记录模型（HeightTracker 工具使用）
+export class HeightRecordModel extends Model {
+  constructor(db) {
+    super(db)
+    this.config = {
+      tableName: 'height_records',
+      fields: {
+        id: { type: 'string', primaryKey: true },
+        uid: { type: 'string' },
+        memberId: { type: 'string', dbField: 'member_id' },
+        height: { type: 'real' },
+        note: { type: 'text' },
+        recordDate: { type: 'string', dbField: 'record_date' },
+        recordTime: { type: 'string', dbField: 'record_time' },
+        createTime: { type: 'datetime', dbField: 'create_time' },
+        updateTime: { type: 'datetime', dbField: 'update_time' }
+      }
+    }
+  }
+}
+
+// 每月固定开销模型（FixedExpenses 工具使用）
+export class FixedExpenseModel extends Model {
+  constructor(db) {
+    super(db)
+    this.config = {
+      tableName: 'fixed_expenses',
+      fields: {
+        id: { type: 'string', primaryKey: true },
+        uid: { type: 'string' },
+        name: { type: 'string' },
+        amount: { type: 'real' },
+        category: { type: 'string' },
+        billingDay: { type: 'integer', dbField: 'billing_day' },
+        startDate: { type: 'string', dbField: 'start_date' },
+        endDate: { type: 'string', dbField: 'end_date' },
+        note: { type: 'text' },
+        isActive: { type: 'integer', dbField: 'is_active' },
+        createTime: { type: 'datetime', dbField: 'create_time' },
+        updateTime: { type: 'datetime', dbField: 'update_time' }
+      }
+    }
+  }
+}
+
+// 物品比价主表模型（PriceComparison 工具使用）
+export class PriceComparisonItemModel extends Model {
+  constructor(db) {
+    super(db)
+    this.config = {
+      tableName: 'price_comparison_items',
+      fields: {
+        id: { type: 'string', primaryKey: true },
+        uid: { type: 'string' },
+        name: { type: 'string' },
+        category: { type: 'string' },
+        spec: { type: 'string' },
+        note: { type: 'text' },
+        status: { type: 'integer' },
+        chosenEntryId: { type: 'string', dbField: 'chosen_entry_id' },
+        createTime: { type: 'datetime', dbField: 'create_time' },
+        updateTime: { type: 'datetime', dbField: 'update_time' }
+      }
+    }
+  }
+}
+
+// 物品比价价格条目模型（PriceComparison 工具使用）
+export class PriceComparisonEntryModel extends Model {
+  constructor(db) {
+    super(db)
+    this.config = {
+      tableName: 'price_comparison_entries',
+      fields: {
+        id: { type: 'string', primaryKey: true },
+        uid: { type: 'string' },
+        itemId: { type: 'string', dbField: 'item_id' },
+        platform: { type: 'string' },
+        unitPrice: { type: 'real', dbField: 'unit_price' },
+        shippingFee: { type: 'real', dbField: 'shipping_fee' },
+        discount: { type: 'real' },
+        finalPrice: { type: 'real', dbField: 'final_price' },
+        quantity: { type: 'integer' },
+        currency: { type: 'string' },
+        status: { type: 'integer' },
+        purchaseDate: { type: 'string', dbField: 'purchase_date' },
+        link: { type: 'text' },
+        seller: { type: 'string' },
+        note: { type: 'text' },
+        isChosen: { type: 'integer', dbField: 'is_chosen' },
+        createTime: { type: 'datetime', dbField: 'create_time' },
+        updateTime: { type: 'datetime', dbField: 'update_time' }
+      }
+    }
+  }
+}
