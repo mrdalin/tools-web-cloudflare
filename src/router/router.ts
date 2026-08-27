@@ -730,6 +730,116 @@ export const constantRoute = [
     }
   },
   {
+    path: '/calculator',
+    component: () => import('@/components/Tools/Calculator/Calculator.vue'),
+    name: 'calculator',
+    meta: {
+      title: "在线计算器",
+      keywords: "在线计算器,科学计算器,科学计算,三角函数,对数,阶乘,进制转换,二进制,八进制,十进制,十六进制,DEG,RAD,角度",
+      description: "在线计算器：支持科学计算（sin/cos/tan/ln/log/sqrt/n!/^ 幂等）与 2/8/10/16 进制互转，含度/弧度切换、历史记录与记忆功能，纯前端运算保护隐私。",
+    }
+  },
+  {
+    path: '/code-image/',
+    component: () => import('@/components/Tools/CodeImage/CodeImage.vue'),
+    name: 'codeImage',
+    meta: {
+      title: "高亮代码生成图片",
+      keywords: "代码高亮,代码截图,代码转图片,语法高亮,highlight.js,代码分享,代码海报,代码长图,代码图片,代码主题,代码字体,代码png",
+      description: "在线代码高亮生成图片工具，支持 JS/TS/Python/Go/Java/Rust/C++ 等 190+ 语言，可选 GitHub/Night/Monokai/Atom One Dark 等 8 套主题，自定义字体、字号、内边距、圆角与水印，纯前端 html2canvas 截图，保护隐私。",
+    }
+  },
+  {
+    path: '/doodle-pad/',
+    component: () => import('@/components/Tools/DoodlePad/DoodlePad.vue'),
+    name: 'doodlePad',
+    meta: {
+      title: "在线涂鸦画板",
+      keywords: "在线涂鸦画板,在线画板,网页画板,涂鸦,画图,白板,画笔,橡皮,撤销,重做,下载PNG,透明背景",
+      description: "在线涂鸦画板工具，支持画笔/橡皮切换、10 种预设颜色+拾色器、可调画笔与橡皮粗细、撤销/重做最多 30 步、画布尺寸与背景色可设置（含透明背景）、一键下载 PNG 或复制到剪贴板，纯前端 HTML5 Canvas 实现，鼠标 / 触摸均可，隐私安全。",
+    }
+  },
+  {
+    path: '/world-records/',
+    component: () => import('@/components/Tools/WorldRecords/WorldRecords.vue'),
+    name: 'worldRecords',
+    meta: {
+      title: '世界之最 - 自然、地理、科技、文化世界纪录大全',
+      keywords: '世界之最,世界纪录,吉尼斯,世界之最大全,地理之最,动物之最,科技之最,文化之最,自然之最',
+      description: '在线世界之最大全工具，收录自然地理、国家、建筑、动物、植物、人体、科技、文化八大类的世界纪录数据，每条记录包含具体数值、所在地与背景介绍，支持关键词搜索与分类筛选。'
+    }
+  },
+  {
+    path: '/img-puzzle',
+    component: () => import('@/components/Tools/ImgPuzzle/ImgPuzzle.vue'),
+    name: 'img-puzzle',
+    meta: {
+      title: "图片拼图",
+      keywords: '图片拼图,拼图模板,九宫格拼图,长图海报,电影海报,心形拼图,圆形拼图,阶梯拼图',
+      description: '在线图片拼图工具，支持宫格、长条、阶梯、电影海报、大图居中、心形/圆形等多种模板，一键合成多图排版',
+    }
+  },
+  {
+    path: '/lights-out/',
+    component: () => import('@/components/Tools/LightsOut/LightsOut.vue'),
+    name: 'lightsOut',
+    meta: {
+      title: '点灯小游戏',
+      keywords: '点灯游戏,Lights Out,点亮小游戏,灯泡游戏,益智游戏,逻辑推理,关灯游戏',
+      description: '经典 Lights Out 点灯小游戏，在 5×5 灯泡棋盘上，点击任意一盏灯会切换自身和上下左右四盏邻居灯的状态，目标是熄灭所有灯泡。支持多种难度、撤销、提示和最佳纪录挑战。'
+    }
+  },
+  {
+    path: '/line-art',
+    component: () => import('@/components/Tools/LineArt/LineArt.vue'),
+    name: 'lineArt',
+    meta: {
+      title: "图片转线稿图",
+      keywords: '图片转线稿,照片转线稿图,一键生成线稿,铅笔素描,线描图生成,批量转线稿',
+      description: '在线图片转线稿图工具，采用铅笔素描算法一键把照片、插画转为黑白线稿，支持批量上传、拖拽、剪贴板粘贴，可调节线条强度与粗细，纯前端本地处理保护隐私',
+    }
+  },
+  {
+    path: '/generation-calculator/',
+    component: () => import('@/components/Tools/GenerationCalculator/GenerationCalculator.vue'),
+    name: 'generationCalculator',
+    meta: {
+      title: '辈分称谓计算',
+      keywords: '辈分计算,亲戚称呼,称谓计算器,家谱树,亲属关系,堂表兄弟,家族辈分,叫法',
+      description: '在线辈分称谓计算工具，以「我」为根的交互式家谱树，点击节点长出父母、兄弟姐妹、配偶、子女等分支，自动推导中国式亲戚称谓、辈分高低（长N辈/平辈/晚N辈）、直系/旁系/姻亲及父系母系，并给出对方对我的反向称呼，附辈分速查表。'
+    }
+  },
+  {
+    path: '/image-color-count/',
+    component: () => import('@/components/Tools/ImageColorCount/ImageColorCount.vue'),
+    name: 'imageColorCount',
+    meta: {
+      title: '图片颜色数统计',
+      keywords: '图片颜色统计,颜色数量,取色器,调色板,图片分析,palette,color count',
+      description: '在线统计一张图片中出现了多少种不同的颜色，支持采样步长与颜色量化（每通道 bit），按出现次数展示 Top N 调色板，可导出 JSON / CSV，全部在浏览器本地完成。'
+    }
+  },
+  {
+    path: '/retirement-countdown/',
+    component: () => import('@/components/Tools/RetirementCountdown/RetirementCountdown.vue'),
+    name: 'retirementCountdown',
+    meta: {
+      title: '退休倒计时',
+      keywords: '退休倒计时,退休年龄,法定退休,延迟退休,社保,工龄',
+      description: '在线退休倒计时工具，根据出生年月、性别与目标退休年龄，实时计算距离退休还有多少天、多少小时、多少分钟，自动拆解为剩余年/月/日，并支持本地保存与法定退休年龄提示。'
+    }
+  },
+  {
+    path: '/make24/',
+    component: () => import('@/components/Tools/Make24/Make24.vue'),
+    name: 'make24',
+    meta: {
+      title: '24 点（算 24）',
+      keywords: '24点,算24,24点游戏,24 point,数学游戏,口算,益智游戏,加减乘除,四则运算,算术,儿童数学',
+      description: '经典 24 点（算 24）数学游戏：系统随机发 4 张牌，玩家用 +、-、×、÷ 和括号将结果算成 24。提供三档难度、连击记录、参考解法提示与本局历史，规则简单但挑战思维。'
+    }
+  },
+  {
     //重定向
     path: '/:pathMatch(.*)*',
     redirect: '/404',
