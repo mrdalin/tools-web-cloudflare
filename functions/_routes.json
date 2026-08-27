@@ -102,7 +102,21 @@
     "/api/life-trajectories",
     "/api/life-trajectories/*",
     "/api/ai-image-edit",
-    "/api/ai-outfit"
+    "/api/ai-outfit",
+    "/api/music-playlist",
+    "/api/music-playlist/*",
+    "/api/ai-media-works",
+    "/api/ai-media-works/*",
+    "/api/oss-configs",
+    "/api/oss-configs/*",
+    "/api/oss-sts",
+    "/api/oss-sts/*",
+    "/api/confession/groups",
+    "/api/confession/groups/*",
+    "/api/confession/messages",
+    "/api/confession/messages/*",
+    "/api/confession/reactions",
+    "/api/confession/reactions/*"
   ],
   "exclude": []
 }

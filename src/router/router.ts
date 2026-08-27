@@ -970,6 +970,66 @@ export const constantRoute = [
     }
   },
   {
+    path: '/confession-wall/',
+    component: () => import('@/components/Tools/ConfessionWall/ConfessionWall.vue'),
+    name: 'ConfessionWall',
+    meta: {
+      title: '匿名告白墙',
+      keywords: '匿名,告白墙,留言墙,树洞,心情,实时互动',
+      description: '在线匿名告白墙，无需登录即可发布短消息，对他人的告白点赞或送抱抱，实时飘字互动',
+    }
+  },
+  {
+    path: '/music-playlist/',
+    component: () => import('@/components/Tools/Music/MusicPlaylist.vue'),
+    name: 'musicPlaylist',
+    meta: {
+      title: "音乐播放列表",
+      keywords: '音乐,播放列表,歌单,mp3,m4a,wav,音频上传,R2存储,歌曲分享',
+      description: '登录后上传 MP3 / M4A / WAV 音频到 Cloudflare R2，可把任意歌曲加入一个或多个歌单；每首歌与每个歌单都有独立的公开分享链接，无需登录即可收听',
+    }
+  },
+  {
+    path: '/music-playlist/song/:slug',
+    component: () => import('@/components/Tools/Music/MusicPlaylistSongShare.vue'),
+    name: 'musicPlaylistSong',
+    meta: {
+      title: "收听分享的歌曲",
+      keywords: '歌曲分享,在线听歌,音频播放,mp3分享,m4a分享',
+      description: '通过分享链接在线收听歌曲，无需登录，每次播放都会计入播放次数',
+    }
+  },
+  {
+    path: '/music-playlist/playlist/:slug',
+    component: () => import('@/components/Tools/Music/MusicPlaylistPlaylistShare.vue'),
+    name: 'musicPlaylistPlaylist',
+    meta: {
+      title: "收听分享的歌单",
+      keywords: '歌单分享,在线听歌,音频播放,歌单浏览',
+      description: '通过分享链接浏览与播放歌单内全部公开歌曲，无需登录',
+    }
+  },
+  {
+    path: '/ai-media-works/',
+    component: () => import('@/components/Tools/AiMediaWorks/AiMediaWorks.vue'),
+    name: 'AiMediaWorks',
+    meta: {
+      title: 'AI 媒体作品',
+      keywords: 'AI媒体作品,AI图片,AI视频,AI生成作品,agnes,作品画廊',
+      description: '汇集免费 AI 模型（Agnes 等）自动生成的图片与视频，每天定时更新，可按分类与类型筛选浏览。',
+    },
+  },
+  {
+    path: '/oss-manager/',
+    component: () => import('@/components/Tools/AliyunOssManager/AliyunOssManager.vue'),
+    name: 'ossManager',
+    meta: {
+      title: "阿里云 OSS 在线管理器 - STS 临时凭证 + 在线编辑 + HTML 预览",
+      keywords: '阿里云OSS,OSS管理,OSS在线编辑,STS临时凭证,AccessKey,RAM角色,Bucket,对象存储,在线编辑器,HTML预览,多Tab编辑器',
+      description: '在线管理阿里云 OSS 对象存储，支持多 Bucket 配置、AccessKey AES-GCM 加密存储、阿里云 STS 临时凭证签发、文件浏览/上传/下载/删除、多 Tab 在线编辑器（HTML/Markdown/JSON/CSS/JS 实时预览）。登录后才能保存 AccessKey 等敏感凭证。'
+    }
+  },
+  {
     //重定向
     path: '/:pathMatch(.*)*',
     redirect: '/404',

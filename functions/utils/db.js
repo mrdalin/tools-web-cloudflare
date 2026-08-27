@@ -983,3 +983,29 @@ export class MockSchemaModel extends Model {
     return this.findOne(new QueryBuilder().where('id', '=', id))
   }
 }
+
+// 阿里云 OSS 凭据模型（AliyunOssManager 工具使用）
+export class OssCredentialModel extends Model {
+  constructor(db) {
+    super(db)
+    this.config = {
+      tableName: 'oss_credentials',
+      fields: {
+        id: { type: 'string', primaryKey: true },
+        uid: { type: 'string' },
+        name: { type: 'string' },
+        region: { type: 'string' },
+        bucket: { type: 'string' },
+        endpoint: { type: 'string' },
+        accessKeyIdEnc: { type: 'text', dbField: 'access_key_id_enc' },
+        accessKeySecretEnc: { type: 'text', dbField: 'access_key_secret_enc' },
+        roleArn: { type: 'text', dbField: 'role_arn' },
+        policy: { type: 'text' },
+        durationSeconds: { type: 'integer', dbField: 'duration_seconds' },
+        isDefault: { type: 'integer', dbField: 'is_default' },
+        createTime: { type: 'datetime', dbField: 'create_time' },
+        updateTime: { type: 'datetime', dbField: 'update_time' }
+      }
+    }
+  }
+}
