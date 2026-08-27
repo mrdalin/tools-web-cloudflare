@@ -400,7 +400,7 @@ const loadCurrentUser = () => {
 
 const goToLogin = () => {
   // 跳转到项目现有的登录页，登录后回到当前页面
-  router.push(`/login?redirect=${encodeURIComponent('/confession-wall/')}`)
+  router.push(`/login?redirect=${encodeURIComponent('/confession-wall')}`)
 }
 
 const toggleReaction = async (msg: ConfessionMessage, type: ReactionType) => {

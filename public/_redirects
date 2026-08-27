@@ -12,3 +12,7 @@
 /letter/:slug / 200
 /qa-view/:id / 200
 /backend-docs/:techId / 200
+/music-playlist/song/:slug/ /music-playlist/song/:slug 301
+/music-playlist/playlist/:slug/ /music-playlist/playlist/:slug 301
+/music-playlist/song/:slug / 200
+/music-playlist/playlist/:slug / 200

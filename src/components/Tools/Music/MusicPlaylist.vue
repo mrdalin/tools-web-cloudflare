@@ -47,7 +47,7 @@ const userStore = useUserStore()
 userStore.initUserState()
 
 const goToLogin = () => {
-  window.location.href = `/login?redirect=${encodeURIComponent('/music-playlist/')}`
+  window.location.href = `/login?redirect=${encodeURIComponent('/music-playlist')}`
 }
 
 /** el-table 默认槽 row 为 DefaultRow，统一收窄为 SongMeta 再传给处理函数 */

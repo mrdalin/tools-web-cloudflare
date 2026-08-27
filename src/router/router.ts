@@ -970,7 +970,7 @@ export const constantRoute = [
     }
   },
   {
-    path: '/confession-wall/',
+    path: '/confession-wall',
     component: () => import('@/components/Tools/ConfessionWall/ConfessionWall.vue'),
     name: 'ConfessionWall',
     meta: {
@@ -980,7 +980,7 @@ export const constantRoute = [
     }
   },
   {
-    path: '/music-playlist/',
+    path: '/music-playlist',
     component: () => import('@/components/Tools/Music/MusicPlaylist.vue'),
     name: 'musicPlaylist',
     meta: {
@@ -1010,7 +1010,7 @@ export const constantRoute = [
     }
   },
   {
-    path: '/ai-media-works/',
+    path: '/ai-media-works',
     component: () => import('@/components/Tools/AiMediaWorks/AiMediaWorks.vue'),
     name: 'AiMediaWorks',
     meta: {
@@ -1020,7 +1020,7 @@ export const constantRoute = [
     },
   },
   {
-    path: '/oss-manager/',
+    path: '/oss-manager',
     component: () => import('@/components/Tools/AliyunOssManager/AliyunOssManager.vue'),
     name: 'ossManager',
     meta: {

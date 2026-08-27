@@ -30,7 +30,7 @@ const currentConfig = computed(() =>
 )
 
 const goToLogin = () => {
-  window.location.href = `/login?redirect=${encodeURIComponent('/oss-manager/')}`
+  window.location.href = `/login?redirect=${encodeURIComponent('/oss-manager')}`
 }
 
 // 加载配置列表

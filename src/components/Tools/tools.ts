@@ -343,7 +343,7 @@ export function getToolsCate() {
           title: '阿里云 OSS 管理',
           logo: '',
           desc: '在线管理阿里云 OSS，AccessKey 加密存入 D1，STS 临时凭证直连 Bucket，支持在线编辑与 HTML 预览',
-          url: '/oss-manager/',
+          url: '/oss-manager',
           cateId: 2,
           cate: '开发运维'
         },
@@ -1115,7 +1115,7 @@ export function getToolsCate() {
           title: '匿名告白墙',
           logo: '',
           desc: '无需登录的匿名留言墙，发布短消息并对他人的告白点赞或送抱抱，飘字互动',
-          url: '/confession-wall/',
+          url: '/confession-wall',
           cateId: 11,
           cate: '趣味互动'
         },
@@ -1289,7 +1289,7 @@ export function getToolsCate() {
           title: '音乐播放列表',
           logo: '',
           desc: '登录后上传 MP3 / M4A / WAV 音频到 R2，可把任意歌曲加入一个或多个歌单；每首歌与每个歌单都有独立的公开分享链接，无需登录即可收听。不会压缩音质，完全原版上传',
-          url: '/music-playlist/',
+          url: '/music-playlist',
           cateId: 7,
           cate: '其他工具'
         },
@@ -1440,7 +1440,7 @@ export function getToolsCate() {
           title: 'AI 媒体作品',
           logo: '',
           desc: '汇集免费 AI 模型（Agnes 等）自动生成的图片与视频画廊，每天定时更新，可按分类与类型筛选浏览',
-          url: '/ai-media-works/',
+          url: '/ai-media-works',
           cateId: 10,
           cate: 'AI工具'
         },
