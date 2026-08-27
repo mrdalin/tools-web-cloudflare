@@ -1,6 +1,7 @@
 import { defineConfig, loadEnv, type Plugin } from 'vite'
 import vue from '@vitejs/plugin-vue'
 import path from 'path'
+import zlib from 'node:zlib'
 import { execSync } from 'node:child_process'
 import Components from 'unplugin-vue-components/vite'
 import { ElementPlusResolver } from 'unplugin-vue-components/resolvers'
@@ -144,6 +145,12 @@ export default defineConfig(({command, mode}) => {
           threshold: 5120, // 5KB 以上才压缩
           ext: '.br',
           deleteOriginFile: false,
+          compressionOptions: {
+            params: {
+              [zlib.constants.BROTLI_PARAM_QUALITY]: 6, // 默认 11 极耗内存/时间，降到 6
+              [zlib.constants.BROTLI_PARAM_MODE]: zlib.constants.BROTLI_MODE_TEXT,
+            },
+          },
         }),
         viteCompression({
           algorithm: 'gzip',
@@ -163,13 +170,7 @@ export default defineConfig(({command, mode}) => {
       target: 'es2015',
       cssCodeSplit: true,
       sourcemap: false,
-      minify: 'terser',
-      terserOptions: {
-        compress: {
-          drop_console: true,
-          drop_debugger: true,
-        },
-      },
+      minify: 'esbuild',
       reportCompressedSize: false,
       rollupOptions: {
         output: {
