@@ -332,7 +332,7 @@ export function getToolsCate() {
         {
           id: 'code-image-2026',
           title: '高亮代码生成图片',
-          logo: '',
+          logo: '/images/logo/code-image.png',
           desc: '输入代码、选择语言与主题，一键生成带语法高亮的代码截图，支持 190+ 语言与 8 套主题，可调字体、字号、内边距、圆角与水印，纯前端 html2canvas 截图保护隐私',
           url: '/code-image/',
           cateId: 2,
@@ -341,7 +341,7 @@ export function getToolsCate() {
         {
           id: 'aliyun-oss-manager',
           title: '阿里云 OSS 管理',
-          logo: '',
+          logo: '/images/logo/oss.png',
           desc: '在线管理阿里云 OSS，AccessKey 加密存入 D1，STS 临时凭证直连 Bucket，支持在线编辑与 HTML 预览',
           url: '/oss-manager',
           cateId: 2,
@@ -697,7 +697,7 @@ export function getToolsCate() {
         {
           id: 'calculator-2026',
           title: '在线计算器',
-          logo: '',
+          logo: '/images/logo/calculator.png',
           desc: '集成科学计算（三角函数、对数、指数、阶乘、幂、常量、度弧度切换、历史记录、记忆）与 2/8/10/16 进制互转，纯前端运算',
           url: '/calculator',
           cateId: 4,
@@ -839,7 +839,7 @@ export function getToolsCate() {
         {
           id: 'img-puzzle-2026',
           title: '图片拼图',
-          logo: '',
+          logo: '/images/logo/img-puzzle.png',
           desc: '支持宫格、长条、阶梯、电影海报、大图居中、心形/圆形等多种模板，一键合成多图排版',
           url: '/img-puzzle',
           cateId: 5,
@@ -848,7 +848,7 @@ export function getToolsCate() {
         {
           id: 'line-art-2026',
           title: '图片转线稿图',
-          logo: '',
+          logo: '/images/logo/line_art.png',
           desc: '一键把照片、插画转换为黑白线稿图，支持批量上传、拖拽、Ctrl+V粘贴，可调线条强度与粗细，纯前端处理保护隐私',
           url: '/line-art',
           cateId: 5,
@@ -857,7 +857,7 @@ export function getToolsCate() {
         {
           id: 'image-color-count-2026',
           title: '图片颜色数统计',
-          logo: '',
+          logo: '/images/logo/image-color-count.png',
           desc: '统计一张图片中出现了多少种不同的颜色，支持采样步长与颜色量化，按出现次数展示 Top N 调色板，可导出 JSON / CSV',
           url: '/image-color-count/',
           cateId: 5,
@@ -866,7 +866,7 @@ export function getToolsCate() {
         {
           id: 'doodle-pad-2026',
           title: '在线涂鸦画板',
-          logo: '',
+          logo: '/images/logo/doodle-pad.png',
           desc: '在线网页涂鸦画板，支持画笔/橡皮切换、10 种预设颜色+拾色器、可调画笔粗细与橡皮大小、撤销/重做、画布尺寸与背景色可设置、一键下载 PNG 或复制到剪贴板',
           url: '/doodle-pad/',
           cateId: 5,
@@ -1068,7 +1068,7 @@ export function getToolsCate() {
         {
           id: 'retirement-countdown-2026',
           title: '退休倒计时',
-          logo: '',
+          logo: '/images/logo/retirement-countdown.png',
           desc: '根据出生年月、工作开始时间、性别与目标退休年龄，实时倒计时距离退休还有多少天，含工龄格子图',
           url: '/retirement-countdown/',
           cateId: 11,
@@ -1077,7 +1077,7 @@ export function getToolsCate() {
         {
           id: 'generation-calculator-2026',
           title: '辈分称谓计算',
-          logo: '',
+          logo: '/images/logo/generation-calculator.png',
           desc: '以「我」为根的交互式家谱树，点击节点长出父母/兄弟/子女等分支，自动推导亲戚称谓、辈分高低与反向称呼，支持堂表、父系母系与姻亲',
           url: '/generation-calculator/',
           cateId: 11,
@@ -1086,7 +1086,7 @@ export function getToolsCate() {
         {
           id: 'lights-out-2026',
           title: '点灯小游戏',
-          logo: '',
+          logo: '/images/logo/lights-out.png',
           desc: '经典 Lights Out 点灯游戏，支持 5×5 / 6×6 / 7×7 / 8×8 多种棋盘尺寸，点击一盏灯会切换其上下左右四盏邻居的状态，挑战把所有灯都熄灭',
           url: '/lights-out/',
           cateId: 11,
@@ -1095,7 +1095,7 @@ export function getToolsCate() {
         {
           id: 'make24-2026',
           title: '24 点（算 24）',
-          logo: '',
+          logo: '/images/logo/make24.png',
           desc: '经典 24 点数学游戏，随机发 4 张牌，用 +、-、×、÷ 和括号算出 24，多档难度、连击与提示',
           url: '/make24/',
           cateId: 11,
@@ -1104,7 +1104,7 @@ export function getToolsCate() {
         {
           id: 132,
           title: '人生轨迹',
-          logo: '',
+          logo: '/images/logo/life-trajectory.png',
           desc: '轻量生活记录工具：登录后用一句文字 + 一个 emoji 记录此刻，公开可见最新优先',
           url: '/life-trajectory/',
           cateId: 11,
@@ -1113,7 +1113,7 @@ export function getToolsCate() {
         {
           id: 131,
           title: '匿名告白墙',
-          logo: '',
+          logo: '/images/logo/confession-wall.png',
           desc: '无需登录的匿名留言墙，发布短消息并对他人的告白点赞或送抱抱，飘字互动',
           url: '/confession-wall',
           cateId: 11,
@@ -1278,7 +1278,7 @@ export function getToolsCate() {
         {
           id: 'travel-map-2026-08-08',
           title: '旅游地图',
-          logo: '',
+          logo: '/images/logo/travel-map.png',
           desc: '基于天地图规划路线、标注露营地/商店超市/观景点并记录海拔，可创建多张地图并分享到地图广场',
           url: '/travel-map/',
           cateId: 7,
@@ -1287,7 +1287,7 @@ export function getToolsCate() {
         {
           id: 'music-playlist-2026-08-25',
           title: '音乐播放列表',
-          logo: '',
+          logo: '/images/logo/music-playlist.png',
           desc: '登录后上传 MP3 / M4A / WAV 音频到 R2，可把任意歌曲加入一个或多个歌单；每首歌与每个歌单都有独立的公开分享链接，无需登录即可收听。不会压缩音质，完全原版上传',
           url: '/music-playlist',
           cateId: 7,
@@ -1411,7 +1411,7 @@ export function getToolsCate() {
         {
           id: 'flashcards-2026-08-15',
           title: '闪卡复习',
-          logo: '',
+          logo: '/images/logo/flashcards.png',
           desc: 'Anki 风格间隔重复闪卡复习系统，自录入卡片、按 SM-2 调度到期复习，提升长期记忆效率',
           url: '/flashcards/',
           cateId: 10,
@@ -1420,7 +1420,7 @@ export function getToolsCate() {
         {
           id: 'ai-image-edit',
           title: 'AI图片编辑',
-          logo: '',
+          logo: '/images/logo/ai_image_edit.png',
           desc: 'AI智能图片编辑，支持文生图和图生图，上传图片+文字描述即可一键生成或修改图片',
           url: '/ai-image-edit/',
           cateId: 10,
@@ -1429,7 +1429,7 @@ export function getToolsCate() {
         {
           id: 'ai-outfit',
           title: 'AI 穿搭建议',
-          logo: '',
+          logo: '/images/logo/ai_outfit.png',
           desc: '上传人物照片，可选上传衣物照片，AI 自动设计穿搭或按衣物照替换：未传衣物时自动设计穿搭，传了衣物时替换为指定衣物',
           url: '/ai-outfit/',
           cateId: 10,
@@ -1438,7 +1438,7 @@ export function getToolsCate() {
         {
           id: 'ai-media-works-2026-07-29',
           title: 'AI 媒体作品',
-          logo: '',
+          logo: '/images/logo/ai-media-works.png',
           desc: '汇集免费 AI 模型（Agnes 等）自动生成的图片与视频画廊，每天定时更新，可按分类与类型筛选浏览',
           url: '/ai-media-works',
           cateId: 10,
@@ -1551,7 +1551,7 @@ export function getToolsCate() {
         {
           id: 136,
           title: '身高记录',
-          logo: '',
+          logo: '/images/logo/height-tracker.png',
           desc: '家庭成员身高追踪记录，支持趋势图表展示、增长速率分析、目标身高对比与里程碑成就',
           url: '/height-tracker/',
           cateId: 13,
@@ -1560,7 +1560,7 @@ export function getToolsCate() {
         {
           id: 137,
           title: '工资变化记录',
-          logo: '',
+          logo: '/images/logo/salary-tracker.png',
           desc: '追踪每次薪资变动，绘制薪资成长曲线，自动计算涨幅、年化增长与里程碑成就',
           url: '/salary-tracker/',
           cateId: 13,
@@ -1569,7 +1569,7 @@ export function getToolsCate() {
         {
           id: 138,
           title: '每月固定开销',
-          logo: '',
+          logo: '/images/logo/fixed-expenses.png',
           desc: '记录每月固定开销项目（房租、订阅、保险、贷款等），自动按月汇总、按分类可视化、按扣款日提醒，帮助你清晰掌控刚性支出',
           url: '/fixed-expenses/',
           cateId: 13,
