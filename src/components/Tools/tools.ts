@@ -1091,7 +1091,16 @@ export function getToolsCate() {
           url: '/make24/',
           cateId: 11,
           cate: '趣味互动',
-        }
+        },
+        {
+          id: 132,
+          title: '人生轨迹',
+          logo: '',
+          desc: '轻量生活记录工具：登录后用一句文字 + 一个 emoji 记录此刻，公开可见最新优先',
+          url: '/life-trajectory/',
+          cateId: 11,
+          cate: '趣味互动',
+        },
       ]
     },
     {
@@ -1248,6 +1257,15 @@ export function getToolsCate() {
           cateId: 7,
           cate: '其他工具',
         },
+        {
+          id: 'travel-map-2026-08-08',
+          title: '旅游地图',
+          logo: '',
+          desc: '基于天地图规划路线、标注露营地/商店超市/观景点并记录海拔，可创建多张地图并分享到地图广场',
+          url: '/travel-map/',
+          cateId: 7,
+          cate: '其他工具',
+        },
       ]
     },
     {
@@ -1363,6 +1381,33 @@ export function getToolsCate() {
         //   cateId: 10,
         //   cate: 'AI工具'
         // }
+        {
+          id: 'flashcards-2026-08-15',
+          title: '闪卡复习',
+          logo: '',
+          desc: 'Anki 风格间隔重复闪卡复习系统，自录入卡片、按 SM-2 调度到期复习，提升长期记忆效率',
+          url: '/flashcards/',
+          cateId: 10,
+          cate: 'AI工具'
+        },
+        {
+          id: 'ai-image-edit',
+          title: 'AI图片编辑',
+          logo: '',
+          desc: 'AI智能图片编辑，支持文生图和图生图，上传图片+文字描述即可一键生成或修改图片',
+          url: '/ai-image-edit/',
+          cateId: 10,
+          cate: 'AI工具'
+        },
+        {
+          id: 'ai-outfit',
+          title: 'AI 穿搭建议',
+          logo: '',
+          desc: '上传人物照片，可选上传衣物照片，AI 自动设计穿搭或按衣物照替换：未传衣物时自动设计穿搭，传了衣物时替换为指定衣物',
+          url: '/ai-outfit/',
+          cateId: 10,
+          cate: 'AI工具'
+        },
       ]
     },
     {
@@ -1464,6 +1509,42 @@ export function getToolsCate() {
           logo: '/images/logo/season-scenery.svg',
           desc: '展示不同地方一年四季的变化，欣赏祖国大好河山的美丽景色',
           url: '/season-scenery',
+          cateId: 13,
+          cate: '内容管理',
+        },
+        {
+          id: 136,
+          title: '身高记录',
+          logo: '',
+          desc: '家庭成员身高追踪记录，支持趋势图表展示、增长速率分析、目标身高对比与里程碑成就',
+          url: '/height-tracker/',
+          cateId: 13,
+          cate: '内容管理',
+        },
+        {
+          id: 137,
+          title: '工资变化记录',
+          logo: '',
+          desc: '追踪每次薪资变动，绘制薪资成长曲线，自动计算涨幅、年化增长与里程碑成就',
+          url: '/salary-tracker/',
+          cateId: 13,
+          cate: '内容管理',
+        },
+        {
+          id: 138,
+          title: '每月固定开销',
+          logo: '',
+          desc: '记录每月固定开销项目（房租、订阅、保险、贷款等），自动按月汇总、按分类可视化、按扣款日提醒，帮助你清晰掌控刚性支出',
+          url: '/fixed-expenses/',
+          cateId: 13,
+          cate: '内容管理',
+        },
+        {
+          id: 'price-comparison-2026-08-24',
+          title: '物品比价',
+          logo: '',
+          desc: '记录同一商品在淘宝、京东、拼多多、1688、官网、线下等不同平台的售价与最终实付价，自动找出最低价、标记最终购买平台与备注，支持统计节省金额与已购买商品',
+          url: '/price-comparison/',
           cateId: 13,
           cate: '内容管理',
         },

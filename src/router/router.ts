@@ -840,6 +840,136 @@ export const constantRoute = [
     }
   },
   {
+    path: '/height-tracker',
+    component: () => import('@/components/Tools/HeightTracker/HeightTracker.vue'),
+    name: 'height-tracker',
+    meta: {
+      title: "身高记录",
+      keywords: '身高记录,身高追踪,身高管理,身高曲线,儿童身高,生长曲线,家庭成员身高,身高预测',
+      description: '在线身高记录工具，支持家庭成员管理、身高趋势折线图展示、年增长速率分析、目标身高对比、里程碑成就解锁，帮助您科学追踪身高变化'
+    }
+  },
+  {
+    path: '/salary-tracker',
+    component: () => import('@/components/Tools/SalaryTracker/SalaryTracker.vue'),
+    name: 'salary-tracker',
+    meta: {
+      title: "工资变化记录",
+      keywords: '工资记录,薪资追踪,涨薪记录,薪资变化,跳槽薪资,工资曲线,薪资成长,年化增长',
+      description: '在线工资变化记录工具，支持生效日期记录、调薪幅度分析、年化增长率计算、薪资成长曲线展示、里程碑成就解锁，帮助您量化每一次职业进阶'
+    }
+  },
+  {
+    path: '/fixed-expenses',
+    component: () => import('@/components/Tools/FixedExpenses/FixedExpenses.vue'),
+    name: 'fixed-expenses',
+    meta: {
+      title: "每月固定开销",
+      keywords: '固定开销,每月开销,订阅管理,扣款日,房租,贷款,保险,预算管理,刚性支出',
+      description: '在线每月固定开销记录工具，支持房租/订阅/贷款/保险等周期性开销管理、扣款日提醒、分类汇总、月度与年度开销统计，帮助你清晰掌控每月刚性支出'
+    }
+  },
+  {
+    path: '/price-comparison/',
+    component: () => import('@/components/Tools/PriceComparison/PriceComparison.vue'),
+    name: 'priceComparison',
+    meta: {
+      title: "物品比价",
+      keywords: '物品比价,价格对比,购物比价,淘宝京东拼多多比价,1688,最低价,实付价,运费,优惠,最终价',
+      description: '在线物品比价工具，记录同一商品在淘宝、京东、拼多多、1688、官网、线下等不同平台的售价与最终实付价，自动找出最低价、标记最终购买平台与备注，支持统计节省金额、分类汇总与数据导出。'
+    }
+  },
+  {
+    path: '/life-trajectory/',
+    component: () => import('@/components/Tools/LifeTrajectory/LifeTrajectory.vue'),
+    name: 'lifeTrajectory',
+    meta: {
+      title: '人生轨迹 - 轻量生活记录工具',
+      keywords: '人生轨迹,生活记录,心情记录,日记,随笔,mood,生活轨迹',
+      description: '在线人生轨迹记录工具，登录后用一句文字 + 一个 emoji 记录当下的心情与想法，所有用户的轨迹按时间倒序展示，数据存储于 Cloudflare D1。'
+    }
+  },
+  {
+    path: '/flashcards',
+    component: () => import('@/components/Tools/Flashcards/Flashcards.vue'),
+    name: 'flashcards',
+    meta: {
+      title: '闪卡复习',
+      keywords: '闪卡,间隔重复,SRS,SM-2,记忆,认知,Anki,复习,卡片',
+      description: 'Anki 风格间隔重复闪卡复习系统，自录入卡片、按 SM-2 算法调度到期复习，提升长期记忆效率。',
+    }
+  },
+  {
+    path: '/flashcards/deck/:id',
+    component: () => import('@/components/Tools/Flashcards/DeckDetail.vue'),
+    name: 'flashcards-deck',
+    meta: {
+      title: '卡组详情',
+      keywords: '闪卡,卡组,卡片管理,学习统计',
+      description: '管理卡组下的闪卡，查看复习统计与最近 30 天活动。',
+    }
+  },
+  {
+    path: '/flashcards/deck/:id/study',
+    component: () => import('@/components/Tools/Flashcards/Study.vue'),
+    name: 'flashcards-study',
+    meta: {
+      title: '闪卡复习 - 学习模式',
+      keywords: '闪卡复习,间隔重复,SRS,记忆训练',
+      description: '进入学习模式复习到期卡片，支持空格翻转、1-4 评级快捷键。',
+    }
+  },
+  {
+    path: '/travel-map/',
+    component: () => import('@/components/Tools/TravelMap/TravelMap.vue'),
+    name: 'travelMap',
+    meta: {
+      title: "旅游地图",
+      keywords: '旅游地图,路线规划,徒步路线,露营地标注,自驾游地图,天地图,海拔标注,户外地图',
+      description: '在线旅游地图规划工具：自由绘制徒步与自驾路线并自动计算里程，标注露营地、商店超市、水源、观景点等点位并记录海拔，支持创建多张地图并分享到地图广场',
+    }
+  },
+  {
+    path: '/travel-map/plaza',
+    component: () => import('@/components/Tools/TravelMap/TravelMapPlaza.vue'),
+    name: 'travelMapPlaza',
+    meta: {
+      title: "地图广场",
+      keywords: '地图广场,旅游路线分享,徒步路线推荐,露营地分享,自驾路线',
+      description: '浏览大家公开分享的旅游地图，查看规划好的徒步、自驾路线以及露营地、补给点等实用点位',
+    }
+  },
+  {
+    path: '/travel-map/share/:slug',
+    component: () => import('@/components/Tools/TravelMap/TravelMapShare.vue'),
+    name: 'travelMapShare',
+    meta: {
+      title: "查看旅游地图",
+      keywords: '旅游地图分享,路线分享,露营地,户外路线',
+      description: '查看分享的旅游地图，包含规划路线与露营地、商店超市、观景点等标注点位',
+    }
+  },
+  {
+    path: '/ai-image-edit',
+    component: () => import('@/components/Tools/AiImageEdit/AiImageEdit.vue'),
+    name: 'AiImageEdit',
+    meta: {
+      title: "AI图片编辑",
+      keywords: 'AI图片编辑,AI修图,图片处理,AI超分辨率,图生图,AI图片生成,在线修图',
+      description: 'AI智能图片编辑工具，支持图片编辑、图片生成和超分辨率，上传图片加文字描述即可一键生成',
+    }
+  },
+  {
+    path: '/ai-outfit',
+    component: () => import('@/components/Tools/AiOutfit/AiOutfit.vue'),
+    name: 'AiOutfit',
+    meta: {
+      title: 'AI 穿搭建议',
+      keywords: 'AI穿搭,虚拟试衣,outfit,穿搭建议,搭配,换装,AI试衣,服装替换',
+      description: '上传人物照片，可选上传衣物照片，AI 给出穿搭建议：未传衣物时自动设计穿搭，传了衣物时替换为指定衣物。',
+    }
+  },
+  {
     //重定向
     path: '/:pathMatch(.*)*',
     redirect: '/404',
