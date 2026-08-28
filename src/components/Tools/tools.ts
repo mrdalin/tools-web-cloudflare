@@ -706,7 +706,7 @@ export function getToolsCate() {
         {
           id: 'world-records-2026',
           title: '世界之最',
-          logo: '',
+          logo: '/images/logo/world-records.png',
           desc: '收录自然地理、国家、建筑、动物、植物、人体、科技、文化八大类世界纪录数据，支持关键词搜索与分类筛选',
           url: '/world-records/',
           cateId: 4,
@@ -1578,7 +1578,7 @@ export function getToolsCate() {
         {
           id: 'price-comparison-2026-08-24',
           title: '物品比价',
-          logo: '',
+          logo: '/images/logo/price-comparison.png',
           desc: '记录同一商品在淘宝、京东、拼多多、1688、官网、线下等不同平台的售价与最终实付价，自动找出最低价、标记最终购买平台与备注，支持统计节省金额与已购买商品',
           url: '/price-comparison/',
           cateId: 13,
