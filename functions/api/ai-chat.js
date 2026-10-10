@@ -1,9 +1,8 @@
 import { getCORSHeaders, handleCORSPreflight } from '../utils/cors.js'
-import { fetchWithRetry } from '../utils/agnes.js'
+import { AGNES_BASE_URL, AGNES_CHAT_MODEL, fetchWithRetry } from '../utils/agnes.js'
 
-const AGNES_CHAT_URL = 'https://apihub.agnes-ai.com/v1/chat/completions'
+const AGNES_CHAT_URL = `${AGNES_BASE_URL}/v1/chat/completions`
 const POLLINATIONS_CHAT_URL = 'https://text.pollinations.ai/v1/chat/completions'
-const AGNES_MODEL = 'agnes-2.5-flash'
 const POLLINATIONS_MODEL = 'openai-fast'
 const MAX_MESSAGES = 30
 const MAX_CONTENT_LENGTH = 12000
@@ -168,7 +167,7 @@ export async function callWithFallback(body, env, request, origin) {
       name: 'agnes',
       url: AGNES_CHAT_URL,
       apiKey: env.AGNES_API_KEY,
-      model: AGNES_MODEL
+      model: AGNES_CHAT_MODEL
     })
   }
 

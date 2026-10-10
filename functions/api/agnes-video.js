@@ -1,5 +1,5 @@
 import { getCORSHeaders } from '../utils/cors.js'
-import { fetchWithRetry, friendlyAgnesError, getAgnesAuthorization, missingAgnesKeyResponse } from '../utils/agnes.js'
+import { AGNES_BASE_URL, AGNES_VIDEO_MODEL, fetchWithRetry, friendlyAgnesError, getAgnesAuthorization, missingAgnesKeyResponse } from '../utils/agnes.js'
 
 export async function onRequest(context) {
   const { request, env } = context
@@ -24,7 +24,7 @@ export async function onRequest(context) {
   }
 
   try {
-    const body = await request.text()
+    const body = await request.json()
     const authHeader = getAgnesAuthorization(request, env)
 
     if (!authHeader) {
@@ -32,14 +32,14 @@ export async function onRequest(context) {
     }
 
     const response = await fetchWithRetry(
-      'https://apihub.agnes-ai.com/v1/videos',
+      `${AGNES_BASE_URL}/v1/videos`,
       {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'Authorization': authHeader
         },
-        body
+        body: JSON.stringify({ ...body, model: AGNES_VIDEO_MODEL })
       },
       {
         attempts: 3,

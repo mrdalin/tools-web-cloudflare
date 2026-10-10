@@ -9,8 +9,7 @@
         class="px-3 py-2 border rounded-lg text-sm"
         :disabled="disabled"
       >
-        <option value="agnes-image-2.1-flash">Agnes Image 2.1 Flash (快速)</option>
-        <option value="agnes-image-2.0-flash">Agnes Image 2.0 Flash</option>
+        <option value="agnes-image-2.5-flash">Agnes Image 2.5 Flash (快速)</option>
       </select>
     </div>
 

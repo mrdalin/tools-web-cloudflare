@@ -7,12 +7,11 @@
 //   - style(string, 可选) 风格/场景提示词
 //   - size(string, 可选，默认 1024x1024)
 // 有衣物照 → 换装（outfit-replace）；无衣物照 → 自动设计穿搭（outfit-generate）。
-// 全部走 Agnes agnes-image-2.1-flash，多图按 person → clothing 顺序传入 extra_body.image。
+// 全部走 Agnes agnes-image-2.5-flash，多图按 person → clothing 顺序传入 extra_body.image。
 import { getCORSHeaders, handleCORSPreflight } from '../utils/cors.js'
-import { fetchWithRetry, friendlyAgnesError, getAgnesAuthorization, missingAgnesKeyResponse } from '../utils/agnes.js'
+import { AGNES_BASE_URL, AGNES_IMAGE_MODEL, fetchWithRetry, friendlyAgnesError, getAgnesAuthorization, missingAgnesKeyResponse } from '../utils/agnes.js'
 
-const AGNES_IMAGE_MODEL = 'agnes-image-2.1-flash'
-const AGNES_IMAGE_URL = 'https://apihub.agnes-ai.com/v1/images/generations'
+const AGNES_IMAGE_URL = `${AGNES_BASE_URL}/v1/images/generations`
 const MAX_INPUT_IMAGES = 16
 
 function json(data, status, corsHeaders) {

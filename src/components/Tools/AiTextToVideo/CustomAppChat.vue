@@ -149,7 +149,7 @@ const handleSubmit = async () => {
       result = await agnesApi.chatStream(
         {
           apiKey: props.apiKey.trim(),
-          model: 'agnes-2.5-flash',
+          model: 'agnes-3.0-flash',
           messages
         },
         (content) => {
@@ -173,7 +173,7 @@ const handleSubmit = async () => {
       result = await agnesApi.chatStream(
         {
           apiKey: props.apiKey.trim(),
-          model: 'agnes-2.5-flash',
+          model: 'agnes-3.0-flash',
           messages
         },
         (content) => {

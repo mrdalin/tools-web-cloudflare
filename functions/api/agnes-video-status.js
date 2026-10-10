@@ -1,5 +1,5 @@
 import { getCORSHeaders, handleCORSPreflight } from '../utils/cors.js'
-import { fetchWithRetry, friendlyAgnesError, getAgnesAuthorization, missingAgnesKeyResponse } from '../utils/agnes.js'
+import { AGNES_BASE_URL, AGNES_VIDEO_MODEL, fetchWithRetry, friendlyAgnesError, getAgnesAuthorization, missingAgnesKeyResponse } from '../utils/agnes.js'
 
 export async function onRequest(context) {
   const { request, env } = context
@@ -35,7 +35,7 @@ export async function onRequest(context) {
     }
 
     const response = await fetchWithRetry(
-      `https://apihub.agnes-ai.com/agnesapi?video_id=${encodeURIComponent(videoId)}&model_name=agnes-video-2.5-flash`,
+      `${AGNES_BASE_URL}/agnesapi?video_id=${encodeURIComponent(videoId)}&model_name=${AGNES_VIDEO_MODEL}`,
       {
         method: 'GET',
         headers: {

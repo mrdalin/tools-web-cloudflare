@@ -2,12 +2,11 @@
 // POST /api/ai-image-edit
 // Content-Type: multipart/form-data
 // Fields: prompt(必填), size(可选，默认 1024x1024), images(file[], 可选，最多 16 张), image(兼容旧单图字段)
-// 有图 → 图生图；无图 → 文生图。全部走 Agnes agnes-image-2.1-flash。
+// 有图 → 图生图；无图 → 文生图。全部走 Agnes agnes-image-2.5-flash。
 import { getCORSHeaders, handleCORSPreflight } from '../utils/cors.js'
-import { fetchWithRetry, friendlyAgnesError, getAgnesAuthorization, missingAgnesKeyResponse } from '../utils/agnes.js'
+import { AGNES_BASE_URL, AGNES_IMAGE_MODEL, fetchWithRetry, friendlyAgnesError, getAgnesAuthorization, missingAgnesKeyResponse } from '../utils/agnes.js'
 
-const AGNES_IMAGE_MODEL = 'agnes-image-2.1-flash'
-const AGNES_IMAGE_URL = 'https://apihub.agnes-ai.com/v1/images/generations'
+const AGNES_IMAGE_URL = `${AGNES_BASE_URL}/v1/images/generations`
 const MAX_INPUT_IMAGES = 16
 
 function json(data, status, corsHeaders) {

@@ -5,7 +5,7 @@ export async function generateImage(
   prompt: string, 
   options?: ImageOptions
 ): Promise<ImageResponse> {
-  const model = options?.model || 'agnes-image-2.1-flash'
+  const model = options?.model || 'agnes-image-2.5-flash'
   const width = options?.width || 1024
   const height = options?.height || 1024
 

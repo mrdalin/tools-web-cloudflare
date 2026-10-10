@@ -6,7 +6,7 @@ import { AuthMiddleware } from '../../middlewares/auth.js'
 /**
  * 从 D1 查询指定 model_key 的完整模型配置
  * @param {D1Database} db
- * @param {string} modelKey 业务唯一键，如 'agnes/agnes-2.0-flash'
+ * @param {string} modelKey 业务唯一键，如 'agnes/agnes-3.0-flash'
  * @param {string|null} uid 用户 UID（用于访问私有模型）
  * @returns {Promise<{provider: object, model: object, endpoints: object, inputTemplate: object, outputPaths: object, apiKey: string} | null>}
  */

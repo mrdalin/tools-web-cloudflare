@@ -57,7 +57,7 @@ async function getResponseError(response: Response, fallback: string) {
 
   try {
     const data = JSON.parse(text)
-    return data?.error?.message || data?.message || fallback
+    return data?.error?.message || data?.message || (typeof data?.detail === 'string' ? data.detail : '') || fallback
   } catch {
     return `${fallback}: ${text.slice(0, 160)}`
   }
@@ -84,7 +84,7 @@ export async function generateOptimizedPrompt(apiKey: string, topic: string): Pr
       'Authorization': `Bearer ${apiKey}`
     },
     body: JSON.stringify({
-      model: 'agnes-2.5-flash',
+      model: 'agnes-3.0-flash',
       messages: [
         {
           role: 'user',
@@ -184,7 +184,7 @@ export async function pollVideoStatus(
       }
 
       if (status === 'completed') {
-        const videoUrl = statusData.metadata?.url || ''
+        const videoUrl = statusData.url || statusData.metadata?.url || ''
         if (!videoUrl) {
           throw permanentError('视频生成完成，但没有返回视频地址，请稍后重试')
         }
@@ -349,7 +349,7 @@ export async function generateImageToImage(
       'Authorization': `Bearer ${apiKey}`
     },
     body: JSON.stringify({
-      model: 'agnes-image-2.1-flash',
+      model: 'agnes-image-2.5-flash',
       prompt: prompt,
       size: '1024x1024',
       extra_body: {
@@ -376,7 +376,7 @@ export async function generateImageToImage(
 export async function sendChatMessageStream(
   apiKey: string,
   message: string,
-  model: string = 'agnes-2.5-flash',
+  model: string = 'agnes-3.0-flash',
   onChunk: (content: string) => void
 ): Promise<string> {
   const response = await fetch('/api/agnes-chat', {
@@ -441,7 +441,7 @@ export async function sendChatMessageWithImageStream(
   apiKey: string,
   textMessage: string,
   imageBase64: string,
-  model: string = 'agnes-2.5-flash',
+  model: string = 'agnes-3.0-flash',
   onChunk: (content: string) => void
 ): Promise<string> {
   const response = await fetch('/api/agnes-chat', {

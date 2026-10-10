@@ -1,5 +1,5 @@
 import { getCORSHeaders, handleCORSPreflight } from '../utils/cors.js'
-import { fetchWithRetry, friendlyAgnesError, getAgnesAuthorization, missingAgnesKeyResponse } from '../utils/agnes.js'
+import { AGNES_BASE_URL, AGNES_IMAGE_MODEL, fetchWithRetry, friendlyAgnesError, getAgnesAuthorization, missingAgnesKeyResponse } from '../utils/agnes.js'
 
 export async function onRequest(context: any) {
   const { request, env } = context
@@ -26,14 +26,14 @@ export async function onRequest(context: any) {
     }
 
     const response = await fetchWithRetry(
-      'https://apihub.agnes-ai.com/v1/images/generations',
+      `${AGNES_BASE_URL}/v1/images/generations`,
       {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'Authorization': authHeader
         },
-        body: JSON.stringify(body)
+        body: JSON.stringify({ ...body, model: AGNES_IMAGE_MODEL })
       },
       {
         attempts: 3,

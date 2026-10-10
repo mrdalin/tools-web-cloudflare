@@ -50,8 +50,8 @@
         <h3 class="font-semibold mb-2">技术参数</h3>
         <ul class="list-disc list-inside space-y-1">
           <li><strong>视频模型：</strong>agnes-video-2.5-flash，720P，最高12秒</li>
-          <li><strong>图像模型：</strong>agnes-image-2.1-flash / agnes-image-2.0-flash</li>
-          <li><strong>对话模型：</strong>agnes-2.5-flash / agnes-2.0-flash</li>
+          <li><strong>图像模型：</strong>agnes-image-2.5-flash</li>
+          <li><strong>对话模型：</strong>agnes-3.0-flash</li>
           <li><strong>支持比例：</strong>9:16 / 16:9 / 1:1 / 4:3 / 3:4</li>
         </ul>
       </section>

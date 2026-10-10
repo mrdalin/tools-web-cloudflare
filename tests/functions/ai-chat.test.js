@@ -72,7 +72,7 @@ test('falls back to Pollinations when Agnes returns empty content', async () => 
   assert.equal(result.data.provider, 'pollinations')
   assert.equal(result.data.choices[0].message.content, 'fallback result')
   assert.deepEqual(result.calls.map(call => call.body.model), [
-    'agnes-2.5-flash',
+    'agnes-3.0-flash',
     'openai-fast'
   ])
 })
@@ -98,6 +98,8 @@ test('returns a usable Agnes response without calling Pollinations', async () =>
   assert.equal(result.data.provider, 'agnes')
   assert.equal(result.data.choices[0].message.content, 'agnes result')
   assert.equal(result.calls.length, 1)
+  assert.equal(result.calls[0].url, 'https://api.agnes-ai.cn/v1/chat/completions')
+  assert.equal(result.calls[0].body.model, 'agnes-3.0-flash')
 })
 
 test('falls back within the request budget when Agnes times out', async () => {

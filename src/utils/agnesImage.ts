@@ -27,7 +27,7 @@ export async function generateAgnesImages(options: GenerateAgnesImageOptions): P
     resp = await axios.post(
       '/api/agnes-image-generations',
       {
-        model: options.model || 'agnes-image-2.1-flash',
+        model: options.model || 'agnes-image-2.5-flash',
         prompt: options.prompt,
         size,
         ...(options.count ? { n: options.count } : {}),

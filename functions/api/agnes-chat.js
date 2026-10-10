@@ -1,5 +1,5 @@
 import { getCORSHeaders } from '../utils/cors.js'
-import { fetchWithRetry, friendlyAgnesError, getAgnesAuthorization, missingAgnesKeyResponse } from '../utils/agnes.js'
+import { AGNES_BASE_URL, AGNES_CHAT_MODEL, fetchWithRetry, friendlyAgnesError, getAgnesAuthorization, missingAgnesKeyResponse } from '../utils/agnes.js'
 
 export async function onRequest(context) {
   const { request, env } = context
@@ -24,31 +24,26 @@ export async function onRequest(context) {
   }
 
   try {
-    const body = await request.text()
+    const body = await request.json()
     const authHeader = getAgnesAuthorization(request, env)
 
     if (!authHeader) {
       return missingAgnesKeyResponse(corsHeaders)
     }
 
-    let parsedBody = {}
-    try {
-      parsedBody = JSON.parse(body)
-    } catch {}
-
     const response = await fetchWithRetry(
-      'https://apihub.agnes-ai.com/v1/chat/completions',
+      `${AGNES_BASE_URL}/v1/chat/completions`,
       {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'Authorization': authHeader
         },
-        body
+        body: JSON.stringify({ ...body, model: AGNES_CHAT_MODEL })
       },
       {
-        attempts: parsedBody?.stream === true ? 2 : 3,
-        timeoutMs: parsedBody?.stream === true ? 30_000 : 60_000
+        attempts: body?.stream === true ? 2 : 3,
+        timeoutMs: body?.stream === true ? 30_000 : 60_000
       }
     )
 

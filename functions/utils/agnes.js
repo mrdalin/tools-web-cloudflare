@@ -1,3 +1,8 @@
+export const AGNES_BASE_URL = 'https://api.agnes-ai.cn'
+export const AGNES_CHAT_MODEL = 'agnes-3.0-flash'
+export const AGNES_IMAGE_MODEL = 'agnes-image-2.5-flash'
+export const AGNES_VIDEO_MODEL = 'agnes-video-2.5-flash'
+
 export function getAgnesAuthorization(request, env) {
   if (env?.AGNES_API_KEY) return `Bearer ${env.AGNES_API_KEY}`
   const header = request.headers.get('Authorization') || ''

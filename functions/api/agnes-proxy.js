@@ -1,4 +1,5 @@
 import { getCORSHeaders } from '../utils/cors.js'
+import { AGNES_BASE_URL, AGNES_CHAT_MODEL, AGNES_IMAGE_MODEL, AGNES_VIDEO_MODEL } from '../utils/agnes.js'
 
 export async function onRequest(context) {
   const { request } = context
@@ -31,7 +32,16 @@ export async function onRequest(context) {
       })
     }
 
-    const agnesUrl = `https://agnes-ai.com/api/v1/${endpoint}`
+    const models = {
+      'chat/completions': AGNES_CHAT_MODEL,
+      responses: AGNES_CHAT_MODEL,
+      messages: AGNES_CHAT_MODEL,
+      'images/generations': AGNES_IMAGE_MODEL,
+      videos: AGNES_VIDEO_MODEL
+    }
+    if (Object.hasOwn(models, endpoint)) data.model = models[endpoint]
+
+    const agnesUrl = `${AGNES_BASE_URL}/v1/${endpoint}`
     const authHeader = request.headers.get('Authorization')
 
     const response = await fetch(agnesUrl, {

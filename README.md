@@ -66,9 +66,21 @@ Youngbar 工具箱是部署在 Cloudflare Pages 上的一站式在线工具站�
 
 ## AI 文本调用与每日鸡汤内容池
 
+Agnes 调用使用官方基址 `https://api.agnes-ai.cn`，模型统一为：
+
+| 用途 | 模型 | 接口 |
+| --- | --- | --- |
+| 文本和多模态识别 | `agnes-3.0-flash` | `/v1/chat/completions` |
+| 图像生成、编辑、穿搭 | `agnes-image-2.5-flash` | `/v1/images/generations` |
+| 文生视频和图生视频 | `agnes-video-2.5-flash` | `/v1/videos` |
+
+服务端模型常量在 `functions/utils/agnes.js` 中集中维护；专用代理会覆盖客户端传入的旧模型，避免浏览器旧页面继续调用旧版本。图像输入和输出格式放在 `extra_body.image`、`extra_body.response_format` 中；视频使用 `720P`，查询携带 `model_name=agnes-video-2.5-flash`，完成后优先读取顶层 `url`，兼容旧的 `metadata.url`。
+
+接口文档：[Agnes 3.0 Flash](https://www.agnes-ai.cn/zh-Hans/docs/agnes-30-flash)、[Agnes Image 2.5 Flash](https://www.agnes-ai.cn/zh-Hans/docs/agnes-image-25-flash)、[Agnes Video 2.5 Flash](https://www.agnes-ai.cn/zh-Hans/docs/agnes-video-25-flash)。
+
 文本类 AI 工具统一请求同源接口 `/api/ai-chat`：
 
-- 配置 `AGNES_API_KEY` 时，默认先调用 Agnes `agnes-2.5-flash`。
+- 配置 `AGNES_API_KEY` 时，默认先调用 Agnes `agnes-3.0-flash`。
 - Agnes 超时、报错、返回空正文或因长度截断时，自动回退到 Pollinations `openai-fast`。
 - 未配置 `AGNES_API_KEY` 时，直接使用 Pollinations。
 - Provider Key 只存在于 Cloudflare Pages 加密变量中，前端不能直接持有或调用这些 Key。
@@ -357,11 +369,11 @@ Cloudflare 部署：
 
 AI：
 
-- 文本 AI 主要切到 Agnes `agnes-2.0-flash`。
+- 文本 AI 主要切到 Agnes `agnes-3.0-flash`。
 - Agnes 返回空正文、长度截断、超时或错误时，文本 AI 自动回退到 Pollinations `openai-fast`。
 - AI 每日励志鸡汤文已使用 D1 共享内容池和浏览器展示周期，库存耗尽后才生成并保存新内容。
-- 文生图/图生图支持 Agnes `agnes-image-2.1-flash` 方向。
-- 文生视频/图生视频支持 Agnes `agnes-video-v2.0` 方向。
+- 文生图/图生图支持 Agnes `agnes-image-2.5-flash` 方向。
+- 文生视频/图生视频支持 Agnes `agnes-video-2.5-flash` 方向。
 - 图床上传使用 ImgBB API Key。
 
 SEO 与统计：

@@ -73,9 +73,9 @@ const isLoading = ref(false);
 
 // 模型列表
 const models = ref<{ value: string; label: string }[]>([
-  { value: 'agnes-image-2.1-flash', label: 'Agnes Image 2.1 Flash' }
+  { value: 'agnes-image-2.5-flash', label: 'Agnes Image 2.5 Flash' }
 ]);
-const selectedModel = ref("agnes-image-2.1-flash");
+const selectedModel = ref("agnes-image-2.5-flash");
 
 // 参数
 const width = ref(1024);
@@ -104,9 +104,9 @@ const fetchModels = async () => {
   
   try {
     models.value = [
-      { value: 'agnes-image-2.1-flash', label: 'Agnes Image 2.1 Flash' }
+      { value: 'agnes-image-2.5-flash', label: 'Agnes Image 2.5 Flash' }
     ];
-    selectedModel.value = 'agnes-image-2.1-flash';
+    selectedModel.value = 'agnes-image-2.5-flash';
   } catch (error) {
     console.error("获取模型失败:", error);
     modelsLoadError.value = true;
