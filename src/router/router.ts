@@ -740,7 +740,7 @@ export const constantRoute = [
     }
   },
   {
-    path: '/code-image/',
+    path: '/code-image',
     component: () => import('@/components/Tools/CodeImage/CodeImage.vue'),
     name: 'codeImage',
     meta: {
@@ -750,7 +750,7 @@ export const constantRoute = [
     }
   },
   {
-    path: '/doodle-pad/',
+    path: '/doodle-pad',
     component: () => import('@/components/Tools/DoodlePad/DoodlePad.vue'),
     name: 'doodlePad',
     meta: {
@@ -760,7 +760,7 @@ export const constantRoute = [
     }
   },
   {
-    path: '/world-records/',
+    path: '/world-records',
     component: () => import('@/components/Tools/WorldRecords/WorldRecords.vue'),
     name: 'worldRecords',
     meta: {
@@ -780,7 +780,7 @@ export const constantRoute = [
     }
   },
   {
-    path: '/lights-out/',
+    path: '/lights-out',
     component: () => import('@/components/Tools/LightsOut/LightsOut.vue'),
     name: 'lightsOut',
     meta: {
@@ -800,7 +800,7 @@ export const constantRoute = [
     }
   },
   {
-    path: '/generation-calculator/',
+    path: '/generation-calculator',
     component: () => import('@/components/Tools/GenerationCalculator/GenerationCalculator.vue'),
     name: 'generationCalculator',
     meta: {
@@ -810,7 +810,7 @@ export const constantRoute = [
     }
   },
   {
-    path: '/image-color-count/',
+    path: '/image-color-count',
     component: () => import('@/components/Tools/ImageColorCount/ImageColorCount.vue'),
     name: 'imageColorCount',
     meta: {
@@ -820,7 +820,7 @@ export const constantRoute = [
     }
   },
   {
-    path: '/retirement-countdown/',
+    path: '/retirement-countdown',
     component: () => import('@/components/Tools/RetirementCountdown/RetirementCountdown.vue'),
     name: 'retirementCountdown',
     meta: {
@@ -830,7 +830,7 @@ export const constantRoute = [
     }
   },
   {
-    path: '/make24/',
+    path: '/make24',
     component: () => import('@/components/Tools/Make24/Make24.vue'),
     name: 'make24',
     meta: {
@@ -870,7 +870,7 @@ export const constantRoute = [
     }
   },
   {
-    path: '/price-comparison/',
+    path: '/price-comparison',
     component: () => import('@/components/Tools/PriceComparison/PriceComparison.vue'),
     name: 'priceComparison',
     meta: {
@@ -880,7 +880,7 @@ export const constantRoute = [
     }
   },
   {
-    path: '/life-trajectory/',
+    path: '/life-trajectory',
     component: () => import('@/components/Tools/LifeTrajectory/LifeTrajectory.vue'),
     name: 'lifeTrajectory',
     meta: {
@@ -920,7 +920,7 @@ export const constantRoute = [
     }
   },
   {
-    path: '/travel-map/',
+    path: '/travel-map',
     component: () => import('@/components/Tools/TravelMap/TravelMap.vue'),
     name: 'travelMap',
     meta: {

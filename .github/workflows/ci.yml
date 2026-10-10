@@ -33,3 +33,6 @@ jobs:
 
       - name: Build production bundle
         run: pnpm build:pro
+
+      - name: Run tests
+        run: node --test tests/**/*.test.js

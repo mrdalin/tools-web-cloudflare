@@ -1,4 +1,4 @@
-import { readFile, writeFile } from 'node:fs/promises'
+import { mkdir, readFile, writeFile } from 'node:fs/promises'
 import path from 'node:path'
 import { pathToFileURL } from 'node:url'
 
@@ -10,7 +10,7 @@ const redirectOnlyRoutes = new Set(['/404', '/privacy-policy'])
 export function getStaticPageRoutes(routerSource) {
   const routes = [...routerSource.matchAll(/^\s*path:\s*['"]([^'"]+)['"]/gm)]
     .map((match) => match[1])
-    .filter((route) => /^\/[a-z0-9-]+$/i.test(route) && !redirectOnlyRoutes.has(route))
+    .filter((route) => /^\/[a-z0-9-]+(?:\/[a-z0-9-]+)*$/i.test(route) && !redirectOnlyRoutes.has(route))
 
   return [...new Set(routes)]
 }
@@ -32,6 +32,7 @@ export async function buildPagesRouteShells({
     if (!target.startsWith(`${resolvedOutputDir}${path.sep}`)) {
       throw new Error(`Route output escaped dist: ${route}`)
     }
+    await mkdir(path.dirname(target), { recursive: true })
     await writeFile(target, indexHtml)
   }))
 

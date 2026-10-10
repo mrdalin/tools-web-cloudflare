@@ -8,10 +8,17 @@
 /letter/:slug/ /letter/:slug 301
 /qa-view/:id/ /qa-view/:id 301
 /backend-docs/:techId/ /backend-docs/:techId 301
+/flashcards/deck/:id/ /flashcards/deck/:id 301
+/flashcards/deck/:id/study/ /flashcards/deck/:id/study 301
+/travel-map/share/:slug/ /travel-map/share/:slug 301
+/travel-map/plaza/ /travel-map/plaza 301
 /:tool/ /:tool 301
 /letter/:slug / 200
 /qa-view/:id / 200
 /backend-docs/:techId / 200
+/flashcards/deck/:id / 200
+/flashcards/deck/:id/study / 200
+/travel-map/share/:slug / 200
 /music-playlist/song/:slug/ /music-playlist/song/:slug 301
 /music-playlist/playlist/:slug/ /music-playlist/playlist/:slug 301
 /music-playlist/song/:slug / 200

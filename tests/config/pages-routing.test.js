@@ -1,7 +1,10 @@
 import assert from 'node:assert/strict'
 import { existsSync, readFileSync } from 'node:fs'
+import { mkdtemp, readFile, rm, writeFile } from 'node:fs/promises'
+import { tmpdir } from 'node:os'
+import path from 'node:path'
 import test from 'node:test'
-import { getStaticPageRoutes } from '../../scripts/build-pages-route-shells.mjs'
+import { buildPagesRouteShells, getStaticPageRoutes } from '../../scripts/build-pages-route-shells.mjs'
 
 const redirects = readFileSync(new URL('../../public/_redirects', import.meta.url), 'utf8')
 const headers = readFileSync(new URL('../../public/_headers', import.meta.url), 'utf8')
@@ -66,4 +69,26 @@ test('caches versioned build assets without caching the HTML shell', () => {
       `missing immutable cache policy for ${path}`,
     )
   }
+})
+
+test('writes nested static pages while leaving dynamic routes to redirects', async (t) => {
+  const outputDir = await mkdtemp(path.join(tmpdir(), 'tools-web-pages-'))
+  t.after(() => rm(outputDir, { recursive: true, force: true }))
+  const indexHtml = '<!doctype html><div id="app"></div>'
+  const routerPath = path.join(outputDir, 'routes.ts')
+  await writeFile(path.join(outputDir, 'index.html'), indexHtml)
+  await writeFile(routerPath, [
+    "path: '/travel-map',",
+    "path: '/travel-map/plaza',",
+    "path: '/travel-map/share/:slug',",
+    "path: '/flashcards/deck/:id/study',",
+    "path: '/../../outside',",
+  ].join('\n'))
+
+  await buildPagesRouteShells({ routerPath, outputDir })
+
+  assert.equal(await readFile(path.join(outputDir, 'travel-map.html'), 'utf8'), indexHtml)
+  assert.equal(await readFile(path.join(outputDir, 'travel-map/plaza.html'), 'utf8'), indexHtml)
+  assert.equal(existsSync(path.join(outputDir, 'travel-map/share')), false)
+  assert.equal(existsSync(path.join(outputDir, 'flashcards')), false)
 })
