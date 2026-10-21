@@ -50,6 +50,7 @@
       >
         <option value="agnes-3.0-flash">Agnes 3.0 Flash (快)</option>
       </select>
+      <p class="mt-2 text-xs text-gray-500 leading-relaxed">Agnes 免费账号文本额度为每分钟 10 次，限流时请按提示等待后重试。</p>
     </div>
   </div>
 </template>

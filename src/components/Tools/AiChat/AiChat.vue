@@ -71,6 +71,7 @@ onMounted(() => {
         智能AI对话助手，支持多轮对话，提供专业、准确的回答。
         <br>• <strong>多供应商支持</strong>：支持多个AI服务供应商，可自由选择
         <br>• <strong>模型选择</strong>：每个供应商提供多种模型选择，满足不同需求
+        <br>• <strong>Agnes 免费文本额度</strong>：每分钟最多 10 次请求，限流时请按提示等待后重试
         <br>• <strong>对话记忆</strong>：支持上下文对话，AI能记住之前的对话内容
         <br>• <strong>流式输出</strong>：支持实时流式输出，可随时停止生成
         <br>• <strong>重试机制</strong>：遇到问题时可以重试，确保对话的连续性
