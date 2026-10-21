@@ -117,6 +117,7 @@ async function callProvider({ provider, url, apiKey, payload, timeoutMs, attempt
     },
     {
       attempts: attempts ?? (payload.stream ? 2 : 3),
+      retryOnRateLimit: false,
       timeoutMs
     }
   )

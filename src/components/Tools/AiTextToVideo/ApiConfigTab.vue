@@ -52,6 +52,7 @@
           <li><strong>视频模型：</strong>agnes-video-2.5-flash，720P，最高12秒</li>
           <li><strong>图像模型：</strong>agnes-image-2.5-flash</li>
           <li><strong>对话模型：</strong>agnes-3.0-flash</li>
+          <li><strong>免费文本额度：</strong>每分钟最多 10 次请求，限流时请按提示等待后重试</li>
           <li><strong>支持比例：</strong>9:16 / 16:9 / 1:1 / 4:3 / 3:4</li>
         </ul>
       </section>

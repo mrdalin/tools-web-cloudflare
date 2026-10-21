@@ -1,5 +1,5 @@
 import { getCORSHeaders } from '../utils/cors.js'
-import { AGNES_BASE_URL, AGNES_CHAT_MODEL, fetchWithRetry, friendlyAgnesError, getAgnesAuthorization, missingAgnesKeyResponse } from '../utils/agnes.js'
+import { AGNES_BASE_URL, AGNES_CHAT_MODEL, agnesTextRateLimitResponse, fetchWithRetry, friendlyAgnesError, getAgnesAuthorization, missingAgnesKeyResponse } from '../utils/agnes.js'
 
 export async function onRequest(context) {
   const { request, env } = context
@@ -43,9 +43,14 @@ export async function onRequest(context) {
       },
       {
         attempts: body?.stream === true ? 2 : 3,
+        retryOnRateLimit: false,
         timeoutMs: body?.stream === true ? 30_000 : 60_000
       }
     )
+
+    if (response.status === 429) {
+      return await agnesTextRateLimitResponse(response, corsHeaders)
+    }
 
     // 流式透传：直接将上游 ReadableStream 转发给客户端，不缓存
     return new Response(response.body, {

@@ -1,5 +1,5 @@
 import { getCORSHeaders } from '../utils/cors.js'
-import { AGNES_BASE_URL, AGNES_CHAT_MODEL, AGNES_IMAGE_MODEL, AGNES_VIDEO_MODEL } from '../utils/agnes.js'
+import { AGNES_BASE_URL, AGNES_CHAT_MODEL, AGNES_IMAGE_MODEL, AGNES_VIDEO_MODEL, agnesTextRateLimitResponse } from '../utils/agnes.js'
 
 export async function onRequest(context) {
   const { request } = context
@@ -52,6 +52,10 @@ export async function onRequest(context) {
       },
       body: JSON.stringify(data)
     })
+
+    if (models[endpoint] === AGNES_CHAT_MODEL && response.status === 429) {
+      return await agnesTextRateLimitResponse(response, corsHeaders)
+    }
 
     const result = await response.json()
 

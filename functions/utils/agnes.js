@@ -45,6 +45,35 @@ export function friendlyAgnesError(error) {
   return { status: 502, message: 'AI 服务暂时不稳定，请稍后重试' }
 }
 
+export async function agnesTextRateLimitResponse(response, corsHeaders) {
+  const retryAfter = (response.headers.get('Retry-After') || '').trim()
+  const seconds = /^\d+$/.test(retryAfter) ? Number(retryAfter) : NaN
+  const retryAt = /^[A-Za-z]/.test(retryAfter) ? Date.parse(retryAfter) : NaN
+  const retryAfterSeconds = Number.isFinite(seconds)
+    ? Math.max(1, Math.ceil(seconds))
+    : Number.isFinite(retryAt)
+      ? Math.max(1, Math.ceil((retryAt - Date.now()) / 1000))
+      : 60
+
+  await response.body?.cancel().catch(() => {})
+
+  return new Response(JSON.stringify({
+    error: {
+      code: 'rate_limit_exceeded',
+      message: `文本服务请求过于频繁，请在 ${retryAfterSeconds} 秒后重试`,
+      retry_after: retryAfterSeconds
+    }
+  }), {
+    status: 429,
+    headers: {
+      'Content-Type': 'application/json',
+      'Cache-Control': 'no-store',
+      'Retry-After': String(retryAfterSeconds),
+      ...corsHeaders
+    }
+  })
+}
+
 export async function fetchWithRetry(url, options = {}, config = {}) {
   const attempts = Math.max(1, config.attempts || 3)
   const timeoutMs = Math.min(Math.max(config.timeoutMs || 45_000, 1_000), 120_000)
@@ -74,6 +103,7 @@ export async function fetchWithRetry(url, options = {}, config = {}) {
       if (
         !response.ok
         && RETRYABLE_STATUS.has(response.status)
+        && (response.status !== 429 || config.retryOnRateLimit !== false)
         && attempt < attempts - 1
       ) {
         await response.body?.cancel?.()

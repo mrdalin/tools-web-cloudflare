@@ -50,6 +50,53 @@ test('upgrades old chat selections and preserves multimodal messages and streame
   assert.deepEqual(calls[0].body, { model: 'agnes-3.0-flash', messages, stream: true })
 })
 
+for (const stream of [false, true]) {
+  test(`chat returns a readable rate limit without retrying when stream is ${stream}`, async (t) => {
+    const calls = mockUpstream(t, new Response('error code: 1015', { status: 429 }))
+    const response = await chat(postContext({ messages: [{ role: 'user', content: 'test' }], stream }))
+
+    assert.equal(calls.length, 1)
+    assert.equal(response.status, 429)
+    assert.equal(response.headers.get('Content-Type'), 'application/json')
+    assert.equal(response.headers.get('Cache-Control'), 'no-store')
+    assert.equal(response.headers.get('Access-Control-Allow-Origin'), 'https://youngbar.com')
+    assert.equal(response.headers.get('Retry-After'), '60')
+    assert.deepEqual(await response.json(), {
+      error: {
+        code: 'rate_limit_exceeded',
+        message: '文本服务请求过于频繁，请在 60 秒后重试',
+        retry_after: 60
+      }
+    })
+  })
+}
+
+for (const [retryAfter, expectedSeconds] of [
+  ['120', 120],
+  ['0', 1],
+  ['Wed, 21 Oct 2026 00:02:00 GMT', 120],
+  ['Wed, 21 Oct 2026 00:00:00 GMT', 1],
+  ['', 60],
+  ['-1', 60],
+  ['invalid', 60]
+]) {
+  test(`chat normalizes Retry-After ${JSON.stringify(retryAfter)} to ${expectedSeconds} seconds`, async (t) => {
+    t.mock.method(Date, 'now', () => Date.UTC(2026, 9, 21))
+    const calls = mockUpstream(t, Response.json({ error: 'quota exceeded' }, {
+      status: 429,
+      headers: { 'Retry-After': retryAfter }
+    }))
+    const response = await chat(postContext({ messages: [{ role: 'user', content: 'test' }] }))
+
+    assert.equal(calls.length, 1)
+    assert.equal(response.status, 429)
+    assert.equal(response.headers.get('Retry-After'), String(expectedSeconds))
+    const { error } = await response.json()
+    assert.equal(error.retry_after, expectedSeconds)
+    assert.equal(error.message, `文本服务请求过于频繁，请在 ${expectedSeconds} 秒后重试`)
+  })
+}
+
 test('image proxy upgrades cached models and preserves reference images and output format', async (t) => {
   const calls = mockUpstream(t)
   const payload = {
@@ -139,6 +186,24 @@ test('legacy proxy also selects the current model for each generation endpoint',
     assert.deepEqual(calls.at(-1).body, { model, prompt: 'test' })
   }
 })
+
+for (const endpoint of ['chat/completions', 'responses', 'messages']) {
+  test(`legacy ${endpoint} proxy preserves text rate limits from a non-JSON upstream response`, async (t) => {
+    const calls = mockUpstream(t, new Response('error code: 1015', {
+      status: 429,
+      headers: { 'Retry-After': '90' }
+    }))
+    const response = await proxy(postContext({ endpoint, messages: [{ role: 'user', content: 'test' }] }))
+
+    assert.equal(calls.length, 1)
+    assert.equal(response.status, 429)
+    assert.equal(response.headers.get('Retry-After'), '90')
+    const { error } = await response.json()
+    assert.equal(error.code, 'rate_limit_exceeded')
+    assert.equal(error.retry_after, 90)
+    assert.equal(error.message, '文本服务请求过于频繁，请在 90 秒后重试')
+  })
+}
 
 test('upstream validation errors retain their status and detail', async (t) => {
   const result = { detail: 'size must be 720P' }
