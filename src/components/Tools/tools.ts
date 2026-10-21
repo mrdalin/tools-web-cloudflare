@@ -1394,7 +1394,7 @@ export function getToolsCate() {
           id: 119,
           title: 'AI文生视频',
           logo: '/images/logo/ai_tools.png',
-          desc: '基于Agnes AI的文生视频工具，支持5-12秒视频生成，可自定义宽高比(9:16/16:9/1:1等)，自动生成专业Prompt',
+          desc: '基于Agnes AI的文生视频和图生视频工具，支持5-12秒、宽高比选择和提示词优化，服务限流时显示倒计时并保留任务以继续查询',
           url: '/ai-text-to-video',
           cateId: 10,
           cate: 'AI工具'

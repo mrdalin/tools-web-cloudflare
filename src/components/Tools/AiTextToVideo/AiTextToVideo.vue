@@ -1,6 +1,6 @@
 <script setup lang="ts">
 // @ts-nocheck
-import { ref, onMounted, computed } from 'vue'
+import { ref, onMounted, onUnmounted, computed } from 'vue'
 import { ElMessage } from 'element-plus'
 import { useRoute, useRouter } from 'vue-router'
 import DetailHeader from '@/components/Layout/DetailHeader/DetailHeader.vue'
@@ -176,6 +176,107 @@ const currentStep = computed(() => {
       return ''
   }
 })
+
+type VideoTab = 'text-to-video' | 'image-to-video'
+type PendingVideoTask = {
+  videoId: string
+  startedAt: number
+  input: string
+  duration: number
+  aspectRatio: string
+  autoOptimize: boolean
+  script?: string
+  images?: string[]
+}
+const videoSessionKey = 'agnes-video-session'
+const pendingVideoTasks = ref<Record<VideoTab, PendingVideoTask | null>>({
+  'text-to-video': null,
+  'image-to-video': null
+})
+const isVideoBusy = computed(() => isGeneratingTextToVideo.value || isGeneratingImageToVideo.value)
+const videoRetryAt = ref(0)
+const videoRetryAfterSeconds = ref(0)
+let videoRetryTimer: number | null = null
+let videoAbortController: AbortController | null = null
+let videoDisposed = false
+
+const videoStatusStep = computed(() => {
+  if (!videoRetryAt.value || isVideoBusy.value) return currentStep.value
+  const hasPendingTask = !!pendingVideoTasks.value[activeTab.value as VideoTab]
+  if (videoRetryAfterSeconds.value > 0) {
+    return `视频服务请求过于频繁，请在 ${videoRetryAfterSeconds.value} 秒后重试。${hasPendingTask ? '任务已保留，等待结束后可继续查询。' : '输入内容已保留，请等待结束后手动重试。'}`
+  }
+  return hasPendingTask ? '等待已结束，可继续查询已提交的视频任务。' : '等待已结束，可以重新尝试生成视频。'
+})
+
+const saveVideoSession = () => {
+  try {
+    sessionStorage.setItem(videoSessionKey, JSON.stringify({ tasks: pendingVideoTasks.value, retryAt: videoRetryAt.value }))
+  } catch {
+    // Storage may be unavailable; the current page still keeps its task IDs.
+  }
+}
+
+const updateVideoRetryCountdown = () => {
+  videoRetryAfterSeconds.value = Math.max(0, Math.ceil((videoRetryAt.value - Date.now()) / 1000))
+  if (!videoRetryAfterSeconds.value && videoRetryTimer !== null) {
+    window.clearInterval(videoRetryTimer)
+    videoRetryTimer = null
+  }
+}
+
+const startVideoCooldown = (seconds: number) => {
+  videoRetryAt.value = Math.max(videoRetryAt.value, Date.now() + seconds * 1000)
+  updateVideoRetryCountdown()
+  if (videoRetryTimer === null && videoRetryAfterSeconds.value > 0) {
+    videoRetryTimer = window.setInterval(updateVideoRetryCountdown, 1000)
+  }
+  saveVideoSession()
+}
+
+const restoreVideoSession = () => {
+  try {
+    const saved = JSON.parse(sessionStorage.getItem(videoSessionKey) || 'null')
+    for (const tab of ['text-to-video', 'image-to-video'] as const) {
+      const task = saved?.tasks?.[tab]
+      if (typeof task?.videoId === 'string' && task.videoId.trim() && Number.isFinite(task.startedAt) && task.startedAt > 0) {
+        const restored: PendingVideoTask = {
+          videoId: task.videoId,
+          startedAt: task.startedAt,
+          input: typeof task.input === 'string' ? task.input : '',
+          duration: durationOptions.some(option => option.value === task.duration) ? task.duration : 5,
+          aspectRatio: aspectRatioOptions.some(option => option.value === task.aspectRatio) ? task.aspectRatio : '9:16',
+          autoOptimize: task.autoOptimize === true
+        }
+        if (tab === 'text-to-video') {
+          topic.value = restored.input
+          autoGeneratePrompt.value = restored.autoOptimize
+          restored.script = typeof task.script === 'string' ? task.script : ''
+          textToVideoResult.value.script = restored.script
+        } else {
+          videoPrompt.value = restored.input
+          autoGenerateImagePrompt.value = restored.autoOptimize
+          restored.images = Array.isArray(task.images) ? task.images.filter(image => typeof image === 'string').slice(0, 2) : []
+          uploadedImages.value = restored.images
+          imageMode.value = restored.images.length > 1 ? 'double' : 'single'
+        }
+        pendingVideoTasks.value[tab] = restored
+        if (tab === activeTab.value) {
+          duration.value = restored.duration
+          aspectRatio.value = restored.aspectRatio
+        }
+        const step = tab === 'text-to-video' ? currentStepTextToVideo : currentStepImageToVideo
+        step.value = '上次的视频任务已保留，点击“继续查询视频”查看结果。'
+        currentStage.value = 2
+      }
+    }
+    if (Number.isFinite(saved?.retryAt) && saved.retryAt > Date.now()) {
+      startVideoCooldown((saved.retryAt - Date.now()) / 1000)
+    }
+  } catch {
+    // Ignore unavailable storage or an invalid saved session.
+  }
+}
 
 // 文生视频结果
 const textToVideoResult = ref({
@@ -1932,7 +2033,12 @@ const newFoodTopic = () => {
 const switchTab = (tab: ToolTab) => {
   activeTab.value = tab
   // 不清空结果，保持各Tab独立
-  currentStage.value = 0
+  const task = pendingVideoTasks.value[tab as VideoTab]
+  currentStage.value = task ? 2 : 0
+  if (task) {
+    duration.value = task.duration
+    aspectRatio.value = task.aspectRatio
+  }
   // currentStep现在是computed属性，由各Tab独立状态计算得出，不需要手动清空
 
   // 更新URL参数
@@ -2262,6 +2368,7 @@ onMounted(() => {
   if (tabFromUrl && visibleTabs.includes(tabFromUrl as ToolTab)) {
     activeTab.value = tabFromUrl as ToolTab
   }
+  restoreVideoSession()
 
   // 从URL恢复应用状态：?app=xxx
   const appFromUrl = route.query.app as string
@@ -2286,12 +2393,19 @@ onMounted(() => {
   }, 100)
 })
 
+onUnmounted(() => {
+  videoDisposed = true
+  videoAbortController?.abort()
+  stopElapsedTimer()
+  if (videoRetryTimer !== null) window.clearInterval(videoRetryTimer)
+})
+
 const startElapsedTimer = (stage: string, tab: 'text-to-video' | 'image-to-video' | 'text-to-image' | 'image-to-image') => {
   if (elapsedTimer.value) {
     clearInterval(elapsedTimer.value)
   }
   currentStageStartTime.value = Date.now()
-  elapsedTimer.value = window.setInterval(() => {
+  const updateStep = () => {
     const elapsed = Math.round((Date.now() - currentStageStartTime.value) / 1000)
     const stepText = `${stage} (已耗时 ${elapsed}秒)...`
 
@@ -2310,7 +2424,9 @@ const startElapsedTimer = (stage: string, tab: 'text-to-video' | 'image-to-video
         currentStepImageToImage.value = stepText
         break
     }
-  }, 1000)
+  }
+  updateStep()
+  elapsedTimer.value = window.setInterval(updateStep, 1000)
 }
 
 const stopElapsedTimer = () => {
@@ -2320,75 +2436,95 @@ const stopElapsedTimer = () => {
   }
 }
 
+const handleVideoTaskError = (error: any, tab: VideoTab) => {
+  stopElapsedTimer()
+  if (videoDisposed || error?.name === 'AbortError') return
+  if (error?.permanent) {
+    pendingVideoTasks.value[tab] = null
+    saveVideoSession()
+  }
+  const step = tab === 'text-to-video' ? currentStepTextToVideo : currentStepImageToVideo
+  const hasPendingTask = !!pendingVideoTasks.value[tab]
+  if (error instanceof agnesApi.AgnesVideoError && error.status === 429) {
+    startVideoCooldown(error.retryAfterSeconds || 60)
+    step.value = hasPendingTask ? '进度查询因限流暂停，任务已保留。' : '视频服务暂时限流，请稍后重试。'
+    return
+  }
+  const message = error?.message || '服务暂时不可用，请稍后重试'
+  step.value = hasPendingTask
+    ? `进度查询已暂停：${message}。任务已保留，可点击“继续查询视频”重试。`
+    : `生成失败：${message}`
+  ElMessage.error(message)
+}
+
 const generateVideo = async () => {
-  if (!topic.value.trim()) {
+  if (isVideoBusy.value || videoRetryAfterSeconds.value > 0) return
+  let task = pendingVideoTasks.value['text-to-video']
+  if (!task && !topic.value.trim()) {
     ElMessage.warning('请输入视频主题')
     return
   }
 
   isGeneratingTextToVideo.value = true
-  textToVideoResult.value.script = ''
-  textToVideoResult.value.videoUrl = ''
-  textToVideoResult.value.scriptTime = 0
-  textToVideoResult.value.videoTime = 0
-  currentStage.value = 0
+  videoRetryAt.value = 0
+  saveVideoSession()
+  const controller = new AbortController()
+  videoAbortController = controller
 
   try {
-    let script = topic.value.trim()
-
-    // 根据开关决定是否生成提示词
-    if (autoGeneratePrompt.value) {
-      currentStage.value = 1
-      startElapsedTimer('正在生成视频文案', 'text-to-video')
-
-      script = await agnesApi.generateOptimizedPrompt(apiKey.value.trim(), topic.value.trim())
-
-      stopElapsedTimer()
-      textToVideoResult.value.scriptTime = Math.round((Date.now() - currentStageStartTime.value) / 1000)
-      textToVideoResult.value.script = script
-    } else {
-      textToVideoResult.value.script = script
+    if (!task) {
+      textToVideoResult.value.script = ''
+      textToVideoResult.value.videoUrl = ''
       textToVideoResult.value.scriptTime = 0
+      textToVideoResult.value.videoTime = 0
+      currentStage.value = 0
+      let script = topic.value.trim()
+
+      if (autoGeneratePrompt.value) {
+        currentStage.value = 1
+        startElapsedTimer('正在生成视频文案', 'text-to-video')
+
+        script = await agnesApi.generateOptimizedPrompt(apiKey.value.trim(), topic.value.trim(), controller.signal)
+
+        stopElapsedTimer()
+        textToVideoResult.value.scriptTime = Math.round((Date.now() - currentStageStartTime.value) / 1000)
+      }
+      textToVideoResult.value.script = script
+
+      currentStage.value = 2
+      startElapsedTimer('正在提交视频任务', 'text-to-video')
+      const startedAt = Date.now()
+      const videoId = await agnesApi.submitVideoTask(
+        apiKey.value.trim(), script, duration.value, aspectRatio.value, undefined, controller.signal
+      )
+      task = {
+        videoId, startedAt, input: topic.value, script,
+        duration: duration.value, aspectRatio: aspectRatio.value, autoOptimize: autoGeneratePrompt.value
+      }
+      pendingVideoTasks.value['text-to-video'] = task
+      saveVideoSession()
     }
 
-    // 第二步：生成视频
     currentStage.value = 2
-    startElapsedTimer('正在生成视频', 'text-to-video')
-
-    const selectedDuration = durationOptions.find(d => d.value === duration.value)!
-    const selectedAspectRatio = aspectRatioOptions.find(r => r.value === aspectRatio.value)!
-
-    // 提交任务
-    const videoId = await agnesApi.submitVideoTask(
-      apiKey.value.trim(),
-      script,
-      selectedDuration.value,
-      selectedAspectRatio.value
-    )
-
-    // 轮询状态（不更新currentStep，让计时器继续显示）
+    startElapsedTimer('正在查询视频生成进度', 'text-to-video')
     const videoUrl = await agnesApi.pollVideoStatus(
-      apiKey.value.trim(),
-      videoId,
-      (status) => {
-        // 轮询时不更新currentStep，保持计时器显示
-        // currentStep由startElapsedTimer控制
-      }
+      apiKey.value.trim(), task.videoId, undefined, controller.signal
     )
 
     stopElapsedTimer()
-    textToVideoResult.value.videoTime = Math.round((Date.now() - currentStageStartTime.value) / 1000)
+    if (videoDisposed) return
+    textToVideoResult.value.videoTime = Math.round((Date.now() - task.startedAt) / 1000)
     textToVideoResult.value.videoUrl = videoUrl
+    pendingVideoTasks.value['text-to-video'] = null
+    saveVideoSession()
 
     currentStage.value = 3
     currentStepTextToVideo.value = `视频生成完成！`
     ElMessage.success('视频生成成功')
   } catch (error: any) {
-    stopElapsedTimer()
-    ElMessage.error(error.message || '生成失败')
-    currentStepTextToVideo.value = `生成失败: ${error.message || '未知错误'}`
-    console.error('文生视频错误:', error)
+    handleVideoTaskError(error, 'text-to-video')
   } finally {
+    if (videoAbortController === controller) videoAbortController = null
     isGeneratingTextToVideo.value = false
   }
 }
@@ -2458,78 +2594,79 @@ const handleVideoMouseLeave = (event: Event) => {
 }
 
 const generateImageToVideo = async () => {
-  if (uploadedImages.value.length === 0) {
+  if (isVideoBusy.value || videoRetryAfterSeconds.value > 0 || isUploading.value) return
+  let task = pendingVideoTasks.value['image-to-video']
+  if (!task && uploadedImages.value.length === 0) {
     ElMessage.warning('请先上传图片')
     return
   }
 
-  if (imageMode.value === 'double' && uploadedImages.value.length < 2) {
+  if (!task && imageMode.value === 'double' && uploadedImages.value.length < 2) {
     ElMessage.warning('双图模式需要上传2张图片')
     return
   }
 
-  if (!videoPrompt.value.trim()) {
+  if (!task && !videoPrompt.value.trim()) {
     ElMessage.warning('请输入视频描述')
     return
   }
 
   isGeneratingImageToVideo.value = true
-  imageToVideoResult.value.videoUrl = ''
-  imageToVideoResult.value.generateTime = 0
-  currentStage.value = 0
+  videoRetryAt.value = 0
+  saveVideoSession()
+  const controller = new AbortController()
+  videoAbortController = controller
 
   try {
-    let finalPrompt = videoPrompt.value.trim()
+    if (!task) {
+      imageToVideoResult.value.videoUrl = ''
+      imageToVideoResult.value.generateTime = 0
+      currentStage.value = 0
+      let finalPrompt = videoPrompt.value.trim()
 
-    // 如果开启优化，先生成提示词
-    if (autoGenerateImagePrompt.value) {
-      currentStage.value = 1
-      startElapsedTimer('正在优化视频描述', 'image-to-video')
+      if (autoGenerateImagePrompt.value) {
+        currentStage.value = 1
+        startElapsedTimer('正在优化视频描述', 'image-to-video')
 
-      finalPrompt = await agnesApi.generateOptimizedPrompt(apiKey.value.trim(), videoPrompt.value.trim())
+        finalPrompt = await agnesApi.generateOptimizedPrompt(apiKey.value.trim(), videoPrompt.value.trim(), controller.signal)
 
-      stopElapsedTimer()
+        stopElapsedTimer()
+      }
+
+      currentStage.value = 2
+      startElapsedTimer('正在提交视频任务', 'image-to-video')
+      const startedAt = Date.now()
+      const videoId = await agnesApi.submitVideoTask(
+        apiKey.value.trim(), finalPrompt, duration.value, aspectRatio.value, uploadedImages.value, controller.signal
+      )
+      task = {
+        videoId, startedAt, input: videoPrompt.value, images: [...uploadedImages.value],
+        duration: duration.value, aspectRatio: aspectRatio.value, autoOptimize: autoGenerateImagePrompt.value
+      }
+      pendingVideoTasks.value['image-to-video'] = task
+      saveVideoSession()
     }
 
-    // 生成视频
     currentStage.value = 2
-    startElapsedTimer('正在生成视频', 'image-to-video')
-
-    const selectedDuration = durationOptions.find(d => d.value === duration.value)!
-    const selectedAspectRatio = aspectRatioOptions.find(r => r.value === aspectRatio.value)!
-
-    // 提交任务
-    const videoId = await agnesApi.submitVideoTask(
-      apiKey.value.trim(),
-      finalPrompt,
-      selectedDuration.value,
-      selectedAspectRatio.value,
-      uploadedImages.value
-    )
-
-    // 轮询状态（不更新currentStep，让计时器继续显示）
+    startElapsedTimer('正在查询视频生成进度', 'image-to-video')
     const videoUrl = await agnesApi.pollVideoStatus(
-      apiKey.value.trim(),
-      videoId,
-      (status) => {
-        // 轮询时不更新currentStep，保持计时器显示
-        // currentStep由startElapsedTimer控制
-      }
+      apiKey.value.trim(), task.videoId, undefined, controller.signal
     )
 
     stopElapsedTimer()
-    imageToVideoResult.value.generateTime = Math.round((Date.now() - currentStageStartTime.value) / 1000)
+    if (videoDisposed) return
+    imageToVideoResult.value.generateTime = Math.round((Date.now() - task.startedAt) / 1000)
     imageToVideoResult.value.videoUrl = videoUrl
+    pendingVideoTasks.value['image-to-video'] = null
+    saveVideoSession()
 
     currentStage.value = 3
     currentStepImageToVideo.value = '视频生成完成！'
     ElMessage.success('视频生成成功')
   } catch (error: any) {
-    stopElapsedTimer()
-    ElMessage.error(error.message || '生成失败')
-    currentStepImageToVideo.value = `生成失败: ${error.message || '未知错误'}`
-    console.error('图生视频错误:', error)
+    handleVideoTaskError(error, 'image-to-video')
   } finally {
+    if (videoAbortController === controller) videoAbortController = null
     isGeneratingImageToVideo.value = false
   }
 }
@@ -2612,9 +2749,11 @@ const generateImageToVideo = async () => {
             v-model:duration="duration"
             v-model:aspectRatio="aspectRatio"
             v-model:autoOptimize="autoGeneratePrompt"
-            :isGenerating="isGenerating"
+            :isGenerating="isVideoBusy"
+            :retryAfterSeconds="videoRetryAfterSeconds"
+            :hasPendingTask="!!pendingVideoTasks['text-to-video']"
             :currentStage="currentStage"
-            :currentStep="currentStep"
+            :currentStep="videoStatusStep"
             :generatedScript="generatedScript"
             :generatedVideoUrl="generatedVideoUrl"
             :scriptGenerateTime="scriptGenerateTime"
@@ -2641,10 +2780,12 @@ const generateImageToVideo = async () => {
             v-model:aspectRatio="aspectRatio"
             v-model:autoOptimize="autoGenerateImagePrompt"
             :uploadedImages="uploadedImages"
-            :isGenerating="isGenerating"
+            :isGenerating="isVideoBusy"
+            :retryAfterSeconds="videoRetryAfterSeconds"
+            :hasPendingTask="!!pendingVideoTasks['image-to-video']"
             :isUploading="isUploading"
             :currentStage="currentStage"
-            :currentStep="currentStep"
+            :currentStep="videoStatusStep"
             :generatedVideoUrl="generatedVideoUrl"
             :videoGenerateTime="videoGenerateTime"
             :videoDuration="videoDuration"
@@ -2943,7 +3084,7 @@ const generateImageToVideo = async () => {
       <div class="space-y-4 text-sm text-gray-700">
         <section>
           <h3 class="font-semibold mb-2">功能介绍</h3>
-          <p>基于 Agnes AI 的文生视频工具，输入主题自动生成专业视频 Prompt 并创作短视频。支持 5-12 秒时长，多种宽高比选择，24帧流畅播放。</p>
+          <p>基于 Agnes AI 的文生视频和图生视频工具，支持 5-12 秒时长、多种宽高比和可选提示词优化。服务限流时显示等待倒计时，保留已提交任务，支持继续查询。</p>
         </section>
 
         <section>
@@ -2951,7 +3092,8 @@ const generateImageToVideo = async () => {
           <ol class="list-decimal list-inside space-y-1">
             <li>输入视频主题，建议描述主体、动作、场景、镜头运动、光照和视觉风格</li>
             <li>选择视频时长（5秒/10秒/12秒）和宽高比（9:16竖屏/16:9横屏/1:1方形等）</li>
-            <li>点击生成，系统会先生成英文 Prompt，再提交视频任务并轮询查询进度</li>
+            <li>点击生成；开启自动优化时先生成英文 Prompt，再提交视频任务并查询进度</li>
+            <li>遇到服务限流时等待倒计时结束后手动重试；已提交的任务可点击“继续查询视频”，刷新页面后也可恢复查询</li>
             <li>生成完成后可在线预览或下载视频</li>
           </ol>
         </section>

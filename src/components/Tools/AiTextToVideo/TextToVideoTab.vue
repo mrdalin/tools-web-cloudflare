@@ -8,6 +8,8 @@
         v-model:aspectRatio="localAspectRatio"
         v-model:autoOptimize="localAutoOptimize"
         :disabled="isGenerating"
+        :retryAfterSeconds="retryAfterSeconds"
+        :hasPendingTask="hasPendingTask"
         @random="$emit('random-topic')"
         @generate="handleGenerate"
       />
@@ -51,6 +53,8 @@ interface Props {
   aspectRatio: string
   autoOptimize: boolean
   isGenerating: boolean
+  retryAfterSeconds: number
+  hasPendingTask: boolean
   currentStage: number
   currentStep: string
   generatedScript: string

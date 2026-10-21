@@ -6,6 +6,7 @@
       <div class="flex gap-2">
         <button
           @click="$emit('update:imageMode', 'single')"
+          :disabled="disabled || hasPendingTask"
           :class="['flex-1 py-2 px-4 rounded-lg border transition-colors',
             imageMode === 'single'
               ? 'bg-blue-500 text-white border-blue-500'
@@ -15,6 +16,7 @@
         </button>
         <button
           @click="$emit('update:imageMode', 'double')"
+          :disabled="disabled || hasPendingTask"
           :class="['flex-1 py-2 px-4 rounded-lg border transition-colors',
             imageMode === 'double'
               ? 'bg-blue-500 text-white border-blue-500'
@@ -36,7 +38,7 @@
           <img :src="img" class="w-full rounded-lg shadow" />
           <button
             @click="$emit('remove-image', index)"
-            :disabled="disabled"
+            :disabled="disabled || hasPendingTask"
             class="absolute top-1 right-1 px-2 py-1 bg-red-500 text-white rounded text-xs opacity-0 group-hover:opacity-100 transition-opacity disabled:bg-gray-300"
           >
             删除
@@ -51,14 +53,14 @@
         type="file"
         accept="image/*"
         @change="$emit('upload', $event)"
-        :disabled="disabled || isUploading"
+        :disabled="disabled || hasPendingTask || isUploading"
         class="hidden"
         :id="`imageUpload_${Date.now()}`"
       />
       <label
         :for="`imageUpload_${Date.now()}`"
         :class="['block w-full py-3 border-2 border-dashed rounded-lg text-center cursor-pointer hover:border-blue-500 transition-colors',
-          (disabled || isUploading) && 'opacity-50 cursor-not-allowed']"
+          (disabled || hasPendingTask || isUploading) && 'opacity-50 cursor-not-allowed']"
       >
         <div class="text-2xl mb-1">📷</div>
         <div class="text-sm text-gray-600">
@@ -74,7 +76,7 @@
         <div
           v-for="preset in presetImages"
           :key="preset.url"
-          @click="$emit('add-preset', preset.url)"
+          @click="!disabled && !hasPendingTask && $emit('add-preset', preset.url)"
           class="relative group cursor-pointer"
         >
           <img :src="preset.url" class="w-full rounded-lg shadow hover:opacity-80 transition-opacity" />
@@ -95,11 +97,11 @@
           placeholder="例如：慢镜头展示，柔和光照，电影质感"
           rows="3"
           class="flex-1 px-3 py-2 border rounded-lg text-sm"
-          :disabled="disabled"
+          :disabled="disabled || hasPendingTask"
         />
         <button
           @click="$emit('random-prompt')"
-          :disabled="disabled"
+          :disabled="disabled || hasPendingTask"
           class="px-3 py-2 bg-gray-100 hover:bg-gray-200 rounded-lg text-sm whitespace-nowrap disabled:bg-gray-50 disabled:cursor-not-allowed"
           title="随机示例"
         >
@@ -118,7 +120,7 @@
         :value="duration"
         @input="$emit('update:duration', Number(($event.target as HTMLSelectElement).value))"
         class="px-3 py-2 border rounded-lg text-sm"
-        :disabled="disabled"
+        :disabled="disabled || hasPendingTask"
       >
         <option v-for="opt in durationOptions" :key="opt.value" :value="opt.value">
           {{ opt.label }}
@@ -133,7 +135,7 @@
           type="checkbox"
           :checked="autoOptimize"
           @input="$emit('update:autoOptimize', ($event.target as HTMLInputElement).checked)"
-          :disabled="disabled"
+          :disabled="disabled || hasPendingTask"
           class="w-4 h-4"
         />
         <span class="text-sm font-medium">自动优化提示词</span>
@@ -150,7 +152,7 @@
         :value="aspectRatio"
         @input="$emit('update:aspectRatio', ($event.target as HTMLSelectElement).value)"
         class="px-3 py-2 border rounded-lg text-sm"
-        :disabled="disabled"
+        :disabled="disabled || hasPendingTask"
       >
         <option v-for="opt in aspectRatioOptions" :key="opt.value" :value="opt.value">
           {{ opt.label }}
@@ -161,10 +163,10 @@
     <!-- 生成按钮 -->
     <button
       @click="$emit('generate')"
-      :disabled="disabled"
+      :disabled="disabled || isUploading || retryAfterSeconds > 0"
       class="w-full py-3 bg-blue-500 text-white rounded-lg hover:bg-blue-600 disabled:bg-gray-300 disabled:cursor-not-allowed font-medium"
     >
-      {{ disabled ? '生成中...' : '生成视频' }}
+      {{ retryAfterSeconds > 0 ? `${retryAfterSeconds} 秒后${hasPendingTask ? '继续查询' : '重试'}` : disabled ? (hasPendingTask ? '查询中...' : '生成中...') : hasPendingTask ? '继续查询视频' : '生成视频' }}
     </button>
   </div>
 </template>
@@ -181,6 +183,8 @@ interface Props {
   aspectRatio: string
   autoOptimize: boolean
   disabled: boolean
+  retryAfterSeconds: number
+  hasPendingTask: boolean
   isUploading: boolean
 }
 

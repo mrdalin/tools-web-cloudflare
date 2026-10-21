@@ -1,5 +1,5 @@
 import { getCORSHeaders, handleCORSPreflight } from '../utils/cors.js'
-import { AGNES_BASE_URL, AGNES_VIDEO_MODEL, fetchWithRetry, friendlyAgnesError, getAgnesAuthorization, missingAgnesKeyResponse } from '../utils/agnes.js'
+import { AGNES_BASE_URL, AGNES_VIDEO_MODEL, agnesRateLimitResponse, fetchWithRetry, friendlyAgnesError, getAgnesAuthorization, missingAgnesKeyResponse } from '../utils/agnes.js'
 
 export async function onRequest(context) {
   const { request, env } = context
@@ -44,9 +44,14 @@ export async function onRequest(context) {
       },
       {
         attempts: 3,
-        timeoutMs: 30_000
+        timeoutMs: 30_000,
+        retryOnRateLimit: false
       }
     )
+
+    if (response.status === 429) {
+      return await agnesRateLimitResponse(response, corsHeaders, '视频')
+    }
 
     const result = await response.text()
 

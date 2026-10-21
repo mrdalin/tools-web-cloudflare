@@ -32,7 +32,7 @@
     </div>
 
     <!-- 进度提示 -->
-    <div v-if="currentStep" class="mb-4 p-3 bg-yellow-50 rounded-lg text-sm text-gray-700">
+    <div v-if="currentStep" role="status" class="mb-4 p-3 bg-yellow-50 rounded-lg text-sm text-gray-700 break-words">
       {{ currentStep }}
     </div>
 

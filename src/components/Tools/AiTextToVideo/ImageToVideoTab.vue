@@ -10,6 +10,8 @@
         v-model:autoOptimize="localAutoOptimize"
         :uploadedImages="uploadedImages"
         :disabled="isGenerating"
+        :retryAfterSeconds="retryAfterSeconds"
+        :hasPendingTask="hasPendingTask"
         :isUploading="isUploading"
         @upload="$emit('upload', $event)"
         @remove-image="$emit('remove-image', $event)"
@@ -59,6 +61,8 @@ interface Props {
   aspectRatio: string
   autoOptimize: boolean
   isGenerating: boolean
+  retryAfterSeconds: number
+  hasPendingTask: boolean
   isUploading: boolean
   currentStage: number
   currentStep: string

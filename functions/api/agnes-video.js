@@ -1,5 +1,5 @@
 import { getCORSHeaders } from '../utils/cors.js'
-import { AGNES_BASE_URL, AGNES_VIDEO_MODEL, fetchWithRetry, friendlyAgnesError, getAgnesAuthorization, missingAgnesKeyResponse } from '../utils/agnes.js'
+import { AGNES_BASE_URL, AGNES_VIDEO_MODEL, agnesRateLimitResponse, fetchWithRetry, friendlyAgnesError, getAgnesAuthorization, missingAgnesKeyResponse } from '../utils/agnes.js'
 
 export async function onRequest(context) {
   const { request, env } = context
@@ -42,10 +42,16 @@ export async function onRequest(context) {
         body: JSON.stringify({ ...body, model: AGNES_VIDEO_MODEL })
       },
       {
-        attempts: 3,
-        timeoutMs: 90_000
+        // Creating a task is not idempotent: do not create duplicates after a timeout.
+        attempts: 1,
+        timeoutMs: 90_000,
+        retryOnRateLimit: false
       }
     )
+
+    if (response.status === 429) {
+      return await agnesRateLimitResponse(response, corsHeaders, '视频')
+    }
 
     const result = await response.text()
 

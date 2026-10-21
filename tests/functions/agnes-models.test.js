@@ -166,6 +166,50 @@ test('video polling escapes the video ID, pins the Flash model and passes the re
   assert.deepEqual(await response.json(), result)
 })
 
+for (const [name, handler] of [['submission', video], ['status query', videoStatus]]) {
+  for (const [retryAfter, expectedSeconds] of [['240', 240], [null, 60]]) {
+    test(`video ${name} returns a readable 429 ${retryAfter ? 'with the upstream wait' : 'with a default wait'} after one request`, async (t) => {
+      const calls = mockUpstream(t, new Response('error code: 1015\n', {
+        status: 429,
+        headers: retryAfter ? { 'Retry-After': retryAfter } : {}
+      }))
+      const context = handler === video ? postContext({ prompt: 'A quiet forest', size: '720P' }) : {
+        request: new Request('https://youngbar.com/api/agnes-video-status?video_id=kept-task'),
+        env: { AGNES_API_KEY: 'server-key' }
+      }
+      const response = await handler(context)
+
+      assert.equal(calls.length, 1)
+      assert.equal(response.status, 429)
+      assert.equal(response.headers.get('Content-Type'), 'application/json')
+      assert.equal(response.headers.get('Cache-Control'), 'no-store')
+      assert.equal(response.headers.get('Retry-After'), String(expectedSeconds))
+      assert.deepEqual(await response.json(), {
+        error: {
+          code: 'rate_limit_exceeded',
+          message: `视频服务请求过于频繁，请在 ${expectedSeconds} 秒后重试`,
+          retry_after: expectedSeconds
+        }
+      })
+    })
+  }
+}
+
+test('video submission does not create another task after an ambiguous upstream failure', async (t) => {
+  const calls = mockUpstream(t, Response.json({ error: { message: 'upstream failed' } }, { status: 503 }))
+  const response = await video(postContext({ prompt: 'A quiet forest', size: '720P' }))
+  assert.equal(response.status, 503)
+  assert.equal(calls.length, 1)
+})
+
+test('video submission does not repeat a timed out POST', async (t) => {
+  const request = t.mock.method(globalThis, 'fetch', async () => { throw new DOMException('timeout', 'AbortError') })
+  const response = await video(postContext({ prompt: 'A quiet forest', size: '720P' }))
+  assert.equal(response.status, 504)
+  assert.equal(request.mock.callCount(), 1)
+  assert.match((await response.json()).error.message, /超时/)
+})
+
 test('image editing sends uploaded images to the new model inside extra_body', async (t) => {
   const calls = mockUpstream(t)
   const form = new FormData()

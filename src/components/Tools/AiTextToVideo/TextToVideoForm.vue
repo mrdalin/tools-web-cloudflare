@@ -10,11 +10,11 @@
           placeholder="例如：一只可爱的猫咪在草地上玩耍"
           rows="3"
           class="flex-1 px-3 py-2 border rounded-lg text-sm"
-          :disabled="disabled"
+          :disabled="disabled || hasPendingTask"
         />
         <button
           @click="$emit('random')"
-          :disabled="disabled"
+          :disabled="disabled || hasPendingTask"
           class="px-3 py-2 bg-gray-100 hover:bg-gray-200 rounded-lg text-sm whitespace-nowrap disabled:bg-gray-50 disabled:cursor-not-allowed"
           title="随机示例"
         >
@@ -33,7 +33,7 @@
         :value="duration"
         @input="$emit('update:duration', Number(($event.target as HTMLSelectElement).value))"
         class="px-3 py-2 border rounded-lg text-sm"
-        :disabled="disabled"
+        :disabled="disabled || hasPendingTask"
       >
         <option v-for="opt in durationOptions" :key="opt.value" :value="opt.value">
           {{ opt.label }}
@@ -48,7 +48,7 @@
           type="checkbox"
           :checked="autoOptimize"
           @input="$emit('update:autoOptimize', ($event.target as HTMLInputElement).checked)"
-          :disabled="disabled"
+          :disabled="disabled || hasPendingTask"
           class="w-4 h-4"
         />
         <span class="text-sm font-medium">自动优化提示词</span>
@@ -65,7 +65,7 @@
         :value="aspectRatio"
         @input="$emit('update:aspectRatio', ($event.target as HTMLSelectElement).value)"
         class="px-3 py-2 border rounded-lg text-sm"
-        :disabled="disabled"
+        :disabled="disabled || hasPendingTask"
       >
         <option v-for="opt in aspectRatioOptions" :key="opt.value" :value="opt.value">
           {{ opt.label }}
@@ -76,10 +76,10 @@
     <!-- 生成按钮 -->
     <button
       @click="$emit('generate')"
-      :disabled="disabled"
+      :disabled="disabled || retryAfterSeconds > 0"
       class="w-full py-3 bg-blue-500 text-white rounded-lg hover:bg-blue-600 disabled:bg-gray-300 disabled:cursor-not-allowed font-medium"
     >
-      {{ disabled ? '生成中...' : '生成视频' }}
+      {{ retryAfterSeconds > 0 ? `${retryAfterSeconds} 秒后${hasPendingTask ? '继续查询' : '重试'}` : disabled ? (hasPendingTask ? '查询中...' : '生成中...') : hasPendingTask ? '继续查询视频' : '生成视频' }}
     </button>
   </div>
 </template>
@@ -93,6 +93,8 @@ interface Props {
   aspectRatio: string
   autoOptimize: boolean
   disabled: boolean
+  retryAfterSeconds: number
+  hasPendingTask: boolean
 }
 
 defineProps<Props>()

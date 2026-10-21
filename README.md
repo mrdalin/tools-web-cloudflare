@@ -76,6 +76,8 @@ Agnes 调用使用官方基址 `https://api.agnes-ai.cn`，模型统一为：
 
 服务端模型常量在 `functions/utils/agnes.js` 中集中维护；专用代理会覆盖客户端传入的旧模型，避免浏览器旧页面继续调用旧版本。图像输入和输出格式放在 `extra_body.image`、`extra_body.response_format` 中；视频使用 `720P`，查询携带 `model_name=agnes-video-2.5-flash`，完成后优先读取顶层 `url`，兼容旧的 `metadata.url`。
 
+视频提交和状态查询收到上游 `429` 时立即返回中文限流提示与 `Retry-After`，缺少等待时间时默认 60 秒，不自动重试；视频提交也不重试超时或服务错误，避免重复创建任务。文生视频和图生视频共用限流倒计时，结束后由用户手动重试。已提交的任务编号、输入内容、生成选项与等待截止时间保存在当前浏览器标签页的 `sessionStorage`，查询暂停或刷新后可继续查询原任务，不重新提交；离开页面会停止轮询。
+
 接口文档：[Agnes 3.0 Flash](https://www.agnes-ai.cn/zh-Hans/docs/agnes-30-flash)、[Agnes Image 2.5 Flash](https://www.agnes-ai.cn/zh-Hans/docs/agnes-image-25-flash)、[Agnes Video 2.5 Flash](https://www.agnes-ai.cn/zh-Hans/docs/agnes-video-25-flash)。
 
 文本类 AI 工具统一请求同源接口 `/api/ai-chat`：

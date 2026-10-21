@@ -47,8 +47,60 @@ export interface ChatOptions {
   messages: Array<{ role: string; content: string }>
 }
 
-function sleep(ms: number) {
-  return new Promise(resolve => setTimeout(resolve, ms))
+function sleep(ms: number, signal?: AbortSignal) {
+  return new Promise<void>((resolve, reject) => {
+    if (signal?.aborted) {
+      reject(new DOMException('查询已暂停', 'AbortError'))
+      return
+    }
+    const onAbort = () => {
+      clearTimeout(timer)
+      reject(new DOMException('查询已暂停', 'AbortError'))
+    }
+    const timer = setTimeout(() => {
+      signal?.removeEventListener('abort', onAbort)
+      resolve()
+    }, ms)
+    signal?.addEventListener('abort', onAbort, { once: true })
+  })
+}
+
+export class AgnesVideoError extends Error {
+  status?: number
+  retryAfterSeconds?: number
+  permanent?: boolean
+
+  constructor(message: string, status?: number, retryAfterSeconds?: number) {
+    super(message)
+    this.name = 'AgnesVideoError'
+    this.status = status
+    this.retryAfterSeconds = retryAfterSeconds
+  }
+}
+
+async function getVideoResponseError(response: Response, fallback: string) {
+  const data = await response.json().catch(() => null)
+  const status = response.status
+
+  if (status === 429) {
+    const retryAfter = String(data?.error?.retry_after ?? response.headers.get('Retry-After') ?? '').trim()
+    const seconds = /^\d+$/.test(retryAfter) ? Number(retryAfter) : NaN
+    const retryAt = /^[A-Za-z]/.test(retryAfter) ? Date.parse(retryAfter) : NaN
+    const retryAfterSeconds = Number.isFinite(seconds)
+      ? Math.max(1, seconds)
+      : Number.isFinite(retryAt) ? Math.max(1, Math.ceil((retryAt - Date.now()) / 1000)) : 60
+    return new AgnesVideoError('视频服务请求过于频繁，请稍后重试', status, retryAfterSeconds)
+  }
+
+  if (status === 401 || status === 403) {
+    return new AgnesVideoError('视频服务认证失败，请联系站点管理员', status)
+  }
+
+  const message = data?.error?.message
+    || (typeof data?.error === 'string' ? data.error : '')
+    || data?.message
+    || (typeof data?.detail === 'string' ? data.detail : '')
+  return new AgnesVideoError(typeof message === 'string' && message.trim() ? message : fallback, status)
 }
 
 async function getResponseError(response: Response, fallback: string) {
@@ -70,19 +122,20 @@ function collectImageUrls(data: any): string[] {
 }
 
 function permanentError(message: string) {
-  const error = new Error(message) as Error & { permanent?: boolean }
+  const error = new AgnesVideoError(message)
   error.permanent = true
   return error
 }
 
 // 生成优化后的提示词
-export async function generateOptimizedPrompt(apiKey: string, topic: string): Promise<string> {
+export async function generateOptimizedPrompt(apiKey: string, topic: string, signal?: AbortSignal): Promise<string> {
   const response = await fetch('/api/agnes-chat', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
       'Authorization': `Bearer ${apiKey}`
     },
+    signal,
     body: JSON.stringify({
       model: 'agnes-3.0-flash',
       messages: [
@@ -117,7 +170,8 @@ export async function submitVideoTask(
   prompt: string,
   seconds: number,
   aspectRatio: string,
-  images?: string[]
+  images?: string[],
+  signal?: AbortSignal
 ): Promise<string> {
   const body: any = {
     model: 'agnes-video-2.5-flash',
@@ -141,15 +195,16 @@ export async function submitVideoTask(
       'Content-Type': 'application/json',
       'Authorization': `Bearer ${apiKey}`
     },
-    body: JSON.stringify(body)
+    body: JSON.stringify(body),
+    signal
   })
 
   if (!response.ok) {
-    throw new Error(await getResponseError(response, '视频生成任务提交失败'))
+    throw await getVideoResponseError(response, '视频生成任务提交失败，请稍后重试')
   }
 
   const data = await response.json()
-  if (!data.video_id) {
+  if (typeof data?.video_id !== 'string' || !data.video_id.trim()) {
     throw new Error(data?.error?.message || '视频生成任务没有返回任务ID，请稍后重试')
   }
   return data.video_id
@@ -159,20 +214,22 @@ export async function submitVideoTask(
 export async function pollVideoStatus(
   apiKey: string,
   videoId: string,
-  onProgress?: (status: string) => void
+  onProgress?: (status: string) => void,
+  signal?: AbortSignal
 ): Promise<string> {
   let consecutiveErrors = 0
 
   while (true) {
-    await sleep(5000)
+    await sleep(5000, signal)
 
     try {
       const statusResponse = await fetch(`/api/agnes-video-status?video_id=${encodeURIComponent(videoId)}`, {
-        headers: { 'Authorization': `Bearer ${apiKey}` }
+        headers: { 'Authorization': `Bearer ${apiKey}` },
+        signal
       })
 
       if (!statusResponse.ok) {
-        throw new Error(await getResponseError(statusResponse, '查询视频状态失败'))
+        throw await getVideoResponseError(statusResponse, '查询视频状态失败，请稍后重试')
       }
 
       const statusData = await statusResponse.json()
@@ -185,7 +242,7 @@ export async function pollVideoStatus(
 
       if (status === 'completed') {
         const videoUrl = statusData.url || statusData.metadata?.url || ''
-        if (!videoUrl) {
+        if (typeof videoUrl !== 'string' || !videoUrl.trim()) {
           throw permanentError('视频生成完成，但没有返回视频地址，请稍后重试')
         }
         return videoUrl
@@ -193,17 +250,18 @@ export async function pollVideoStatus(
         throw permanentError(statusData?.error?.message || '视频生成失败')
       }
     } catch (error: any) {
-      if (error?.permanent) throw error
+      if (error?.permanent || error?.name === 'AbortError' || signal?.aborted) throw error
+      if (error instanceof AgnesVideoError && error.status && error.status >= 400 && error.status < 500) throw error
 
       consecutiveErrors += 1
       if (consecutiveErrors >= 3) {
-        throw new Error(error?.message || '查询视频状态失败，请稍后重试')
+        throw error instanceof Error ? error : new Error('查询视频状态失败，请稍后重试')
       }
 
       if (onProgress) {
         onProgress('retrying')
       }
-      await sleep(3000)
+      await sleep(3000, signal)
     }
   }
 }
