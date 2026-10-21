@@ -7,6 +7,7 @@ import { useComponentStore } from '@/store/modules/component'
 import {rtrim} from '@/utils/string'
 import { ElMessage } from 'element-plus'
 import QrcodeVue3 from 'qrcode-vue3'
+import { getLastHomeVisit } from '@/utils/homeNavigation'
 const props = defineProps({
   title: String,
   id: Number
@@ -42,9 +43,28 @@ const findToolCateId = () => {
   }
 }
 
-// 返回到工具对应的分类
-const goBack = () => {
-  // 如果有分类ID，跳转到对应分类；否则跳转到首页
+// 优先返回实际浏览过的首页位置，直接打开工具时再定位到所属分类。
+const goBack = async () => {
+  const previous = router.options.history.state.back
+  if (typeof previous === 'string' && router.resolve(previous).path === '/') {
+    router.back()
+    return
+  }
+
+  const visit = getLastHomeVisit()
+  if (visit) {
+    const home = router.resolve(visit.fullPath)
+    router.push({
+      path: '/',
+      query: home.query,
+      hash: home.hash,
+      state: { homeReturnPosition: { ...visit.position } },
+    })
+    return
+  }
+
+  if (toolsStore.cates.length === 0) await toolsStore.getToolCate()
+  findToolCateId()
   if (toolCateId.value > 0) {
     router.push({
       path: '/',

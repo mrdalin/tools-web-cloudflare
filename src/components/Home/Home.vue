@@ -4,10 +4,11 @@ import { onMounted, watch, nextTick, onUnmounted, ref } from 'vue';
 import { useToolsStore } from '@/store/modules/tools'
 import { useComponentStore } from '@/store/modules/component'
 // import { ElMessage } from 'element-plus'
-import { useRoute, useRouter } from "vue-router"
+import { onBeforeRouteLeave, useRoute, useRouter, type RouteLocationNormalized } from "vue-router"
 import { Top } from '@element-plus/icons-vue'
 import { useSpriteLogo } from '@/components/Tools/useSpriteLogo'
 import { resolveActiveCategory, type CategoryPosition } from './scrollSpy'
+import { markHomeReady } from '@/utils/homeNavigation'
 //store
 const toolsStore = useToolsStore()
 const componentStore = useComponentStore()
@@ -25,6 +26,16 @@ const router = useRouter()
 const showBackTop = ref(false)
 const isLoadingCates = ref(false)
 const HOME_TOP_EVENT = 'youngbar:home-top'
+let leavingFor: RouteLocationNormalized | undefined
+let isUnmounted = false
+let activationTimer: number | undefined
+
+onBeforeRouteLeave((to) => {
+  leavingFor = to
+})
+const removeNavigationListener = router.afterEach((to, _from, failure) => {
+  if (failure && to === leavingFor) leavingFor = undefined
+})
 
 const ensureToolCates = async () => {
   if (toolsStore.cates.length > 0 || isLoadingCates.value) return
@@ -44,7 +55,10 @@ const getFirstCategoryAnchor = () => {
 }
 
 const scrollToTop = () => {
-  history.replaceState(null, '', '/')
+  if (route.query.value) {
+    router.replace({ path: '/', query: {} })
+    return
+  }
   const wasActive = isScrollListenerActive.value
   isScrollListenerActive.value = false
   isUserClickingCategory.value = true
@@ -124,7 +138,7 @@ const isScrollTriggeredUpdate = ref(false)
 // 滚动监听函数
 const handleScroll = () => {
   showBackTop.value = (window.pageYOffset || document.documentElement.scrollTop) > 300
-  if (!isScrollListenerActive.value) return
+  if (!isScrollListenerActive.value || leavingFor || route.path !== '/') return
   // 如果用户正在点击分类，暂时跳过滚动监听
   if (isUserClickingCategory.value) return
   
@@ -230,24 +244,26 @@ onMounted(async () => {
   await ensureToolCates()
   await nextTick()
 
-  // 只在有明确的 query.value 时才滚动到锚点
-  if (route.query && route.query.value) {
-    scrollToAnchor()
-  }
-  // 移除自动滚动到 #collect 的逻辑，避免页面一加载就滚动
+  if (isUnmounted || route.path !== '/') return
+  // 初次进入首页的定位交给路由，避免分类锚点覆盖历史滚动位置。
+  markHomeReady()
 
   // 延迟激活滚动监听，给用户一些时间
-  setTimeout(() => {
+  activationTimer = window.setTimeout(() => {
     // 只在首页激活滚动监听
     if (route.path === '/') {
       isScrollListenerActive.value = true
       window.addEventListener('scroll', throttledHandleScroll)
+      handleScroll()
     }
   }, 500) // 延迟500ms
   window.addEventListener(HOME_TOP_EVENT, resetHomeToTop)
 })
 
 onUnmounted(() => {
+  isUnmounted = true
+  window.clearTimeout(activationTimer)
+  removeNavigationListener()
   // 清理滚动监听
   isScrollListenerActive.value = false
   window.removeEventListener('scroll', throttledHandleScroll)
@@ -279,9 +295,6 @@ watch(() => route.query.value, async (value) => {
   await resetHomeToTop()
 })
 
-watch(() => toolsStore.cates.length, () => {
-  scrollToAnchor()
-})
 </script>
 
 <template>

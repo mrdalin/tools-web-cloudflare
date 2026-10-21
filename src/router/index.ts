@@ -1,7 +1,10 @@
 //通过vue-router插件实现模板路由配置
-import { createRouter, createWebHistory } from 'vue-router'
+import { createRouter, createWebHistory, type Router } from 'vue-router'
 import { constantRoute } from './router'
 import { getToolSeoMeta } from '@/components/Layout/ToolSeoContent/toolSeoMeta'
+import {
+  isHomeScrollPosition, prepareHomeScroll, rememberHomeVisit, waitForHomeReady,
+} from '@/utils/homeNavigation'
 import {
   HOME_PAGE_META, SITE_URL, getCanonicalUrl, getPageTitle,
   getPageStructuredData, isIndexablePage, serializeStructuredData,
@@ -48,14 +51,38 @@ const trackPageView = (path: string) => {
 }
 
 //创建路由器
-const router = createRouter({
+const router: Router = createRouter({
   history: createWebHistory(),
   routes: constantRoute,
-  scrollBehavior(to, from, savedPosition) {
+  async scrollBehavior(to, from, savedPosition) {
+    if (to.path === '/' && (from.path !== '/' || from.matched.length === 0)) {
+      const returnPosition = router.options.history.state.homeReturnPosition
+      const position = savedPosition || (isHomeScrollPosition(returnPosition) ? returnPosition : null)
+      await waitForHomeReady()
+      if (router.currentRoute.value !== to) return false
+      if (position) return { left: position.left, top: position.top, behavior: 'instant' }
+
+      const value = to.query.value
+      const anchor = Array.isArray(value) ? value[0] : value
+      const element = anchor ? document.getElementById(anchor) : null
+      if (element) {
+        return { el: element, top: parseFloat(getComputedStyle(element).scrollMarginTop) || 0, behavior: 'instant' }
+      }
+      return { left: 0, top: 0, behavior: 'instant' }
+    }
     if (savedPosition) return savedPosition
     if (to.path === from.path) return false
     return { left: 0, top: 0 }
   },
+})
+
+router.beforeResolve((to, from) => {
+  if (from.path === '/' && from.matched.length > 0 && to.path !== '/') {
+    rememberHomeVisit(from.fullPath, { left: window.scrollX, top: window.scrollY })
+  }
+  if (to.path === '/' && (from.path !== '/' || from.matched.length === 0)) {
+    prepareHomeScroll()
+  }
 })
 
 router.beforeEach((to, _from, next) => {
