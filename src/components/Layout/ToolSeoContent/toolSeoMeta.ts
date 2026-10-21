@@ -4,17 +4,54 @@ export interface ToolSeoMeta {
   description: string
 }
 
-const aliasPathMap = new Map([
-  ['/ai/text-to-image', '/ai-text-to-image'],
-])
-
 export const normalizeToolSeoPath = (path: string) => {
   if (!path || path === '/') return '/'
   const cleanPath = path.split('?')[0].replace(/\/+$/, '') || '/'
-  return aliasPathMap.get(cleanPath) || cleanPath
+  return cleanPath
 }
 
 export const toolSeoMetaMap: Record<string, ToolSeoMeta> = {
+  '/unit/length': {
+    title: '长度单位换算',
+    keywords: '长度换算,长度单位转换,在线长度换算',
+    description: '在线长度单位换算，支持千米、米、厘米、毫米、英尺、英寸等单位，输入任意数值即可同时查看其他单位结果。',
+  },
+  '/unit/area': {
+    title: '面积单位换算',
+    keywords: '面积换算,面积单位转换,在线面积换算',
+    description: '在线面积单位换算，支持平方米、平方千米、公顷、亩及常见英制面积单位，适合土地、房屋和测量数据整理。',
+  },
+  '/unit/weight': {
+    title: '重量单位换算',
+    keywords: '重量换算,重量单位转换,在线重量换算',
+    description: '在线重量单位换算，支持千克、克、吨、斤、两、磅和盎司等单位，便于比较包装重量、食材和物流数据。',
+  },
+  '/unit/time': {
+    title: '时间单位换算',
+    keywords: '时间换算,时间单位转换,在线时间换算',
+    description: '在线时间单位换算，支持日、小时、分钟、秒、毫秒、周以及年和月的近似换算，适合时长统计与开发调试。',
+  },
+  '/unit/temperature': {
+    title: '温度单位换算',
+    keywords: '温度换算,温度单位转换,在线温度换算',
+    description: '在线温度单位换算，支持摄氏度、华氏度、开尔文、列氏度和兰氏度，输入温度即可查看各温标的对应结果。',
+  },
+  '/unit/pressure': {
+    title: '压力单位换算',
+    keywords: '压力换算,压力单位转换,在线压力换算',
+    description: '在线压力单位换算，支持 Pa、kPa、hPa、MPa、bar、torr、psi 等单位，适合气压、设备参数与测量数据换算。',
+  },
+  '/unit/heat': {
+    title: '热量单位换算',
+    keywords: '热量换算,热量单位转换,在线热量换算',
+    description: '在线热量与能量单位换算，支持 Wh、mWh、kWh、MWh、J 和 kJ，可用于电能记录、设备耗能和学习计算。',
+  },
+  '/unit/power': {
+    title: '功率单位换算',
+    keywords: '功率换算,功率单位转换,在线功率换算',
+    description: '在线功率单位换算，支持 W、mW、kW、MW 和 GW，适合电器铭牌、设备选型与工程数据的单位统一。',
+  },
+
   '/json': {
     title: 'JSON格式化工具',
     keywords: 'JSON格式化,JSON校验,JSON压缩,JSON编辑器,在线JSON工具',
@@ -99,16 +136,6 @@ export const toolSeoMetaMap: Record<string, ToolSeoMeta> = {
     title: 'PNG/JPG格式转换工具',
     keywords: 'PNG转JPG,JPG转PNG,图片格式转换,在线图片转换,PNG转换,JPG转换',
     description: '在线 PNG、JPG 图片格式互转工具，支持质量调节和实时预览，适合透明图处理、照片压缩和常见图片格式转换。',
-  },
-  '/ai-text-to-image': {
-    title: 'AI文生图工具',
-    keywords: 'AI文生图,AI绘画,在线AI绘画,文生图工具,AI图片生成',
-    description: '在线 AI 文生图工具，输入中文或英文提示词生成图片，适合灵感草图、封面配图、头像素材和创意视觉探索。',
-  },
-  '/ai-translate': {
-    title: 'AI翻译工具',
-    keywords: 'AI翻译,在线翻译,多语言翻译,英文翻译,提示词翻译',
-    description: '在线 AI 翻译工具，支持多语言互译和语气优化，适合邮件、文档、短句、提示词和跨语言沟通内容处理。',
   },
   '/mock-data': {
     title: 'Mock数据生成器',

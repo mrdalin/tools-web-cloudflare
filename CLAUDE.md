@@ -4,7 +4,7 @@
 
 ## 项目概述
 
-Tools-Web 是一个基于 Vue 3 + TypeScript + Vite 的在线工具箱应用。提供 100+ 个工具，涵盖开发、文本处理、图片处理、数据可视化、游戏、AI 工具等多个分类。
+Tools-Web 是一个基于 Vue 3 + TypeScript + Vite 的在线工具箱应用。提供 100+ 个工具，涵盖开发、文本处理、图片处理、数据可视化、游戏、内容管理等多个分类。
 
 **技术栈：** Vue 3（Composition API）、TypeScript、Vite、Element Plus、Tailwind CSS、Pinia、Vue Router
 
@@ -24,10 +24,10 @@ Tools-Web 是一个基于 Vue 3 + TypeScript + Vite 的在线工具箱应用。�
 - 文件路径 `functions/api/foo/[[path]].js` → 对应路由 `/api/foo/*`（通配）
 - **`_routes.json` 中必须同时列出精确路径和带 `/*` 的通配路径**
 
-**示例：** 新增 `functions/api/favorite-apps.js`，必须同时添加：
+**示例：** 新增 `functions/api/bookmarks.js`，必须同时添加：
 ```json
-"/api/favorite-apps",
-"/api/favorite-apps/*"
+"/api/bookmarks",
+"/api/bookmarks/*"
 ```
 
 **部署前自检清单：**
@@ -40,11 +40,9 @@ Tools-Web 是一个基于 Vue 3 + TypeScript + Vite 的在线工具箱应用。�
 
 ### 本地开发注意事项
 
-### 本地开发注意事项
-
 - `pnpm dev` 仅启动 Vite（端口 5173），**不加载 Cloudflare Functions**
 - 调试完整应用时，先运行 `pnpm build:pro`，然后在终端 1 运行 `pnpm dev:wrangler`（端口 8788），终端 2 运行 `pnpm dev`
-- Vite 会把 `/api`、`/proxy` 和登录回调代理到 Wrangler；也可直接访问 `http://127.0.0.1:8788/`
+- Vite 会把 `/api` 和登录回调代理到 Wrangler；也可直接访问 `http://127.0.0.1:8788/`
 - 修改 `_routes.json` 后如遇 404，重启 wrangler 即可（缓存目录 `.wrangler` 在 Windows 上可能无法直接删除，但重启会自动刷新函数扫描）
 
 ## 快速导航
@@ -52,7 +50,7 @@ Tools-Web 是一个基于 Vue 3 + TypeScript + Vite 的在线工具箱应用。�
 - [命令与构建](.claude/project/commands.md) — 开发命令、构建与部署
 - [目录结构](.claude/project/structure.md) — 项目文件结构
 - [添加新工具](.claude/project/new-tool.md) — 创建新工具的完整步骤
-- [架构详情](.claude/project/architecture.md) — 状态管理、HTTP、AI、Supabase、D1、Functions
+- [架构详情](.claude/project/architecture.md) — 状态管理、HTTP、Supabase、D1、Functions
 - [编码规范](.claude/project/coding-conventions.md) — 编码规范、核心原则、UI 指南
 - [环境变量](.claude/project/env.md) — 环境变量说明
 - [通用模式与 SEO](.claude/project/patterns.md) — 工具组件结构、SEO 要求、布局组件

@@ -21,31 +21,20 @@ Youngbar 工具箱是部署在 Cloudflare Pages 上的一站式在线工具站�
 - 后端：Cloudflare Pages Functions
 - 数据库：Cloudflare D1，绑定名为 `DB`
 - 域名：`youngbar.com`
-- 文本 AI：Agnes API 为主，Pollinations 自动回退
 - 邮件验证码：Resend
 - 登录：邮箱验证码、邮箱密码、Google 登录
 - 统计：Google Analytics 4
 - SEO：已配置 `robots.txt`、`sitemap.xml`、canonical、基础 Open Graph、核心工具页 SEO 内容模块
 
-## 项目进度快照（2026-07-29）
+## 项目进度快照（2026-10-21）
 
-当前交付状态：
-
-- `main` 是唯一生产分支，推送后由 GitHub Actions 和 Cloudflare Pages 自动构建、部署。
-- 最近一轮路由与缓存故障已经闭环：缺失静态资源不再回退到 SPA HTML，单层工具路由会生成独立 HTML 壳，动态详情页继续由 `_redirects` 处理。
-- 生产 JS、CSS 和 Vite 资源名都包含当前提交的 12 位短 SHA，不同部署不会复用同一个资源 URL。
-- HTML 壳使用 `max-age=0, must-revalidate`；版本化的 `/js/*`、`/css/*`、`/assets/*` 使用一年 `immutable` 缓存；不存在的静态资源仍返回 `404` 和 `no-store`。
-- 当前自动化测试包含 7 个测试文件、26 个用例，覆盖 Pages 路由、缓存配置、AI 回退、每日文案内容池、定时清理鉴权和部分核心组件逻辑。
-
-最近一次交付验证：
-
-- `pnpm build:pro` 完成 3,660 个模块转换，并生成 129 个单层工具路由壳。
-- 构建产物中的 JS、CSS、assets 均带提交版本段，`dist` 不包含递归输出目录。
-- Cloudflare Preview、GitHub Actions CI 和 Production 部署均验证通过。
-- 使用全新 Edge 会话检查 `https://youngbar.com/old-photo-caption`：页面返回 `200`、无残留骨架屏、无业务脚本错误；抽检的 54 个 JS 均为当前提交版本，Brotli 可正常解码，未再出现 JS URL 返回 HTML 的情况。
-- 缺失 JS 路径返回 `404 + no-store`，不会被浏览器或边缘节点长期缓存为有效脚本。
-
-后续交付应至少保持上述测试、构建、Preview 和生产深链检查全部通过；涉及路由、缓存或构建文件名时，必须重新执行生产浏览器验证。
+- 主生产分支为 main，推送后自动执行 CI 和 Cloudflare Pages 构建部署。
+- AI 栏目、专用页面、模型适配与代理接口已退役；闪卡复习归入教育学术，本地五子棋继续保留。
+- 每个静态工具路由现在生成包含独立标题、描述、canonical、结构化数据和可读正文的 HTML。
+- 首页 HTML 提供分类与工具链接；原有交互继续由 Vue 按页面加载。
+- JS、CSS、assets 使用带提交版本的文件名和 immutable 缓存；未知地址和缺失资源保持真实 404。
+- 登录、个人资料和参数化分享详情不参与工具索引，站点地图只包含可索引的规范地址。
+- 涉及路由、缓存或资源文件名时，必须检查桌面、手机、生产深链及缺失资源响应。
 
 ## 常用功能
 
@@ -55,7 +44,7 @@ Youngbar 工具箱是部署在 Cloudflare Pages 上的一站式在线工具站�
 - 文本处理：Markdown、文本对比、字数统计、文本去重、字符串清理等。
 - 图片处理：二维码、图片压缩、图片裁剪、图片转 Base64、证件照、签名图片等。
 - 内容管理：笔记、待办、QA、收藏夹、体重记录、简历、公司对比等。
-- AI 工具：AI 对话、AI 翻译、AI 起名、每日文案、文生图、文生视频等。
+- 教育学术：单位换算、算法可视化、逻辑训练、闪卡复习等。
 - 趣味工具：2048、扫雷、数独、五子棋、记忆训练等。
 
 内容管理类功能的基本策略：
@@ -64,48 +53,17 @@ Youngbar 工具箱是部署在 Cloudflare Pages 上的一站式在线工具站�
 - 登录后：支持保存到云端，便于长期保存和多设备同步。
 - 必须登录的功能：页面需要明确提示用户先登录。
 
-## AI 文本调用与每日鸡汤内容池
+## 独立页面与搜索收录
 
-Agnes 调用使用官方基址 `https://api.agnes-ai.cn`，模型统一为：
+每个工具使用独立 URL，例如 /json、/md5、/base64。生产构建完成后，postbuild:pro 读取路由、分类、工具原有静态说明和精选使用指南，生成对应的 HTML 页面。搜索引擎及未启用 JavaScript 的浏览器可以直接读取标题、介绍、说明和相关链接；启用 JavaScript 后继续使用原有工具交互。
 
-| 用途 | 模型 | 接口 |
-| --- | --- | --- |
-| 文本和多模态识别 | `agnes-3.0-flash` | `/v1/chat/completions` |
-| 图像生成、编辑、穿搭 | `agnes-image-2.5-flash` | `/v1/images/generations` |
-| 文生视频和图生视频 | `agnes-video-2.5-flash` | `/v1/videos` |
+长度、面积、重量、时间、温度、压力、热量和功率换算分别使用 /unit/length、/unit/area 等独立页面，包含各自的说明、示例和常见问题。旧的 /unit?active=temperature 等参数链接在浏览器加载后自动切换到对应的新页面。
 
-服务端模型常量在 `functions/utils/agnes.js` 中集中维护；专用代理会覆盖客户端传入的旧模型，避免浏览器旧页面继续调用旧版本。图像输入和输出格式放在 `extra_body.image`、`extra_body.response_format` 中；视频使用 `720P`，查询携带 `model_name=agnes-video-2.5-flash`，完成后优先读取顶层 `url`，兼容旧的 `metadata.url`。
+页面生成与浏览器导航共同使用 src/utils/pageSeo.ts 中的规范地址、标题和索引规则。动态分享详情使用独立的 dynamic-page.html 入口并标记 noindex，不再返回首页副本；隐私政策旧地址和旧待办地址维持 301 跳转。
 
-视频提交和状态查询收到上游 `429` 时立即返回中文限流提示与 `Retry-After`，缺少等待时间时默认 60 秒，不自动重试；视频提交也不重试超时或服务错误，避免重复创建任务。文生视频和图生视频共用限流倒计时，结束后由用户手动重试。已提交的任务编号、输入内容、生成选项与等待截止时间保存在当前浏览器标签页的 `sessionStorage`，查询暂停或刷新后可继续查询原任务，不重新提交；离开页面会停止轮询。
+运行 pnpm generate:sitemap 可更新 public/sitemap.xml。每次生产构建同时重新生成 dist/sitemap.xml，避免路由和站点地图不同步。登录、个人资料、404、别名和参数化详情均不列入。站点地图不使用虚构的构建日期作为 lastmod。
 
-接口文档：[Agnes 3.0 Flash](https://www.agnes-ai.cn/zh-Hans/docs/agnes-30-flash)、[Agnes Image 2.5 Flash](https://www.agnes-ai.cn/zh-Hans/docs/agnes-image-25-flash)、[Agnes Video 2.5 Flash](https://www.agnes-ai.cn/zh-Hans/docs/agnes-video-25-flash)。
-
-文本类 AI 工具统一请求同源接口 `/api/ai-chat`：
-
-- 配置 `AGNES_API_KEY` 时，默认先调用 Agnes `agnes-3.0-flash`。
-- Agnes 免费文本模型的上游限额为每分钟 10 次请求。文本调用收到 `429` 后不自动重试，通用文本接口立即尝试备用服务；`/api/agnes-chat` 和旧代理的文本接口返回中文限流提示及 `Retry-After`，未提供等待时间时提示 60 秒后重试。站内按 IP 的防滥用限制独立于上游账号额度，不代表每个访客各有 10 次 Agnes 请求额度。
-- 图片生成接口收到上游 `429`（包括非 JSON 的 `error code: 1015`）后不自动重试，返回中文图像限流提示并保留 `Retry-After`。文生图页面保留提示词，按等待时间倒计时并暂时禁用生成按钮；未提供等待时间时，建议等待 60 秒再手动尝试。图片额度独立于文本的 10 RPM，等待结束不保证上游已解除限制。
-- Agnes 超时、报错、返回空正文或因长度截断时，自动回退到 Pollinations `openai-fast`。
-- 未配置 `AGNES_API_KEY` 时，直接使用 Pollinations。
-- Provider Key 只存在于 Cloudflare Pages 加密变量中，前端不能直接持有或调用这些 Key。
-
-`/ai-daily-motivation` 使用 D1 共享内容池减少 AI 调用：
-
-1. 页面先通过 `GET /api/daily-motivations?style=...` 读取该风格的历史文案。
-2. 浏览器用 `youngbar:ai-daily-motivation-seen:v1` 记录当前展示周期看过的文案 ID，并随机选择未展示内容。
-3. 只有未展示库存不足时，前端才通过 `POST /api/daily-motivations` 请求缺少的数量。
-4. 服务端确认该浏览器提交的当前库存已全部消费后，才调用现有的 Agnes → Pollinations 回退链路。
-5. AI 本次返回的全部有效文案都会写入 D1；页面只展示当前所需数量，剩余内容留给后续刷新。
-
-相关 D1 表：
-
-- `ai_daily_motivations`：按风格保存文案，`UNIQUE(style, content)` 防止重复。
-- `ai_daily_motivation_generation_locks`：按风格防止并发重复生成；正常请求结束后锁会释放，异常锁最多保留 60 秒。
-- `ai_daily_motivation_generation_rate_limits`：按每日哈希客户端和十分钟窗口限制生成次数，默认每个客户端最多生成 3 批。
-
-每日鸡汤的 GET 读取不受该限制；只有库存耗尽后真正调用 AI 的 POST 才消耗额度。达到限制时接口返回 `429` 和 `Retry-After`，防止恶意请求持续消耗 AI 配额。
-
-清除浏览器本地数据只会重置该浏览器的展示周期，不会删除 D1 共享内容池。不要为了让单个浏览器重新开始而清空生产数据库。
+独立且内容明确的页面有助于发现和理解，实际收录与排名仍由搜索引擎决定。
 
 ## 本地开发
 
@@ -157,7 +115,7 @@ pnpm dev:wrangler
 pnpm build:pro
 pnpm dev:wrangler
 
-# 终端 2：启动 Vite（端口 5173），/api、/proxy 和登录回调会代理到 8788
+# 终端 2：启动 Vite（端口 5173），/api 和登录回调会代理到 8788
 pnpm dev
 ```
 
@@ -220,14 +178,11 @@ Cloudflare Pages 后台只需要维护加密变量，也就是“变量和密钥
 JWT_SECRET=替换成足够长的随机字符串
 RESEND_API_KEY=re_xxx
 RESEND_FROM_EMAIL=Youngbar <noreply@youngbar.com>
-AGNES_API_KEY=你的 Agnes API Key
-IMGBB_API_KEY=你的 ImgBB API Key
 ```
 
 可选变量：
 
 ```env
-AITOOLS_API_KEY=
 
 GOOGLE_CLIENT_ID=
 VITE_GOOGLE_CLIENT_ID=
@@ -266,21 +221,8 @@ npx wrangler d1 execute tools-web-db --remote --file=functions/db/000_init_core_
 npx wrangler d1 execute tools-web-db --remote --file=functions/db/001_create_short_links.sql
 npx wrangler d1 execute tools-web-db --remote --file=functions/db/002_create_bookmarks.sql
 npx wrangler d1 execute tools-web-db --remote --file=functions/db/003_create_letters.sql
-npx wrangler d1 execute tools-web-db --remote --file=functions/db/005_create_ai_apps.sql
-npx wrangler d1 execute tools-web-db --remote --file=functions/db/006_insert_ai_apps_data.sql
-npx wrangler d1 execute tools-web-db --remote --file=functions/db/007_update_system_apps_prompts.sql
 npx wrangler d1 execute tools-web-db --remote --file=functions/db/008_create_user_season_scenery.sql
-npx wrangler d1 execute tools-web-db --remote --file=functions/db/009_add_ultimate_essence_analysis.sql
-npx wrangler d1 execute tools-web-db --remote --file=functions/db/010_add_domain_crash_course.sql
-npx wrangler d1 execute tools-web-db --remote --file=functions/db/011_add_critical_knowledge.sql
-npx wrangler d1 execute tools-web-db --remote --file=functions/db/012_add_prompt_reverse_engineering.sql
-npx wrangler d1 execute tools-web-db --remote --file=functions/db/013_add_content_distillation.sql
-npx wrangler d1 execute tools-web-db --remote --file=functions/db/014_add_cynefin_analysis.sql
-npx wrangler d1 execute tools-web-db --remote --file=functions/db/015_add_x_viral_content.sql
-npx wrangler d1 execute tools-web-db --remote --file=functions/db/016_create_favorite_apps.sql
 npx wrangler d1 execute tools-web-db --remote --file=functions/db/017_create_verification_codes.sql
-npx wrangler d1 execute tools-web-db --remote --file=functions/db/018_create_ai_daily_motivations.sql
-npx wrangler d1 execute tools-web-db --remote --file=functions/db/019_create_ai_daily_motivation_rate_limits.sql
 ```
 
 说明：
@@ -289,15 +231,7 @@ npx wrangler d1 execute tools-web-db --remote --file=functions/db/019_create_ai_
 - 已执行过的 SQL 不要重复盲目执行；执行前先确认当前数据库状态。
 - 新代码依赖新表时，生产环境应先执行对应迁移，再推送或合并会触发部署的代码。
 
-每日鸡汤内容池的常用只读检查：
-
-```bash
-npx wrangler d1 execute tools-web-db --remote --command "SELECT style, COUNT(*) AS count FROM ai_daily_motivations GROUP BY style ORDER BY style;"
-npx wrangler d1 execute tools-web-db --remote --command "SELECT style, locked_until FROM ai_daily_motivation_generation_locks;"
-npx wrangler d1 execute tools-web-db --remote --command "SELECT COUNT(*) AS active_rate_limit_rows FROM ai_daily_motivation_generation_rate_limits;"
-```
-
-锁表通常应为空。限流表会保留短期窗口记录，过期记录由请求顺带清理。仅在确认请求已结束且锁记录长期异常残留后再人工处理；正常异常锁会在 60 秒后失效。
+历史退役功能的迁移 SQL 作为数据库历史保留，不再作为新库必需步骤；本次改造不清空已有数据库数据。
 
 ## 发布流程
 
@@ -306,11 +240,11 @@ npx wrangler d1 execute tools-web-db --remote --command "SELECT COUNT(*) AS acti
 ```bash
 git switch main
 git pull
-git switch -c feature/功能名称
+git switch -c codex/功能名称
 git status
 git add 需要提交的文件
 git commit -m "说明这次改了什么"
-git push -u origin feature/功能名称
+git push -u origin codex/功能名称
 ```
 
 国内网络不稳定时，Windows CMD 可临时设置代理：
@@ -336,10 +270,10 @@ https://youngbar.com
 https://youngbar.com/markdown
 https://youngbar.com/json
 https://youngbar.com/api/mock-samples
-https://youngbar.com/ai-chat
-https://youngbar.com/ai-text-to-image
-https://youngbar.com/ai-daily-motivation
-https://youngbar.com/api/daily-motivations?style=%E5%8A%B1%E5%BF%97
+https://youngbar.com/base64
+https://youngbar.com/flashcards
+https://youngbar.com/travel-map/plaza
+https://youngbar.com/sitemap.xml
 ```
 
 ## 已完成的重要改造
@@ -347,7 +281,7 @@ https://youngbar.com/api/daily-motivations?style=%E5%8A%B1%E5%BF%97
 安全与账号：
 
 - 清理仓库中的真实密钥，密钥改由 Cloudflare 加密变量管理。
-- Markdown/AI/QA 渲染收口，避免直接渲染不可信 HTML。
+- Markdown/QA 渲染收口，避免直接渲染不可信 HTML。
 - API CORS 和代理 URL 校验加固。
 - 邮箱验证码增加专门表和服务端校验逻辑。
 - 密码哈希升级为 PBKDF2，并兼容旧密码迁移。
@@ -359,7 +293,7 @@ Cloudflare 部署：
 - `wrangler.toml` 维护 D1 绑定和普通变量。
 - `VITE_FUNCTIONS_BASE_URL` 支持前端和 Functions 分离，但当前 youngbar.com 使用同源 `/api/...`。
 - `dist/` 已从 Git 跟踪中移除，并加入 `.gitignore`。
-- `postbuild:pro` 为单层 SPA 路由生成 HTML 壳；`public/_redirects` 只处理动态详情页和旧路径重定向。
+- postbuild:pro 为每个静态路由生成独立页面及最新站点地图；public/_redirects 处理动态详情入口与旧地址跳转。
 - 生产构建会把当前提交短 SHA 加入 JS、CSS 和其他 Vite 资产名；这些版本化资源使用一年 `immutable` 缓存，HTML 壳仍要求重新验证。
 
 产品体验：
@@ -370,15 +304,6 @@ Cloudflare 部署：
 - 本地保存提示已补充“清除浏览器数据会丢失”的风险说明。
 - 页脚改为 Youngbar 版权和“一切来自 2006 年的「飘」”纪念文案。
 - 移除旧评论区、原作者备案信息和第三方统计/验证残留。
-
-AI：
-
-- 文本 AI 主要切到 Agnes `agnes-3.0-flash`。
-- Agnes 返回空正文、长度截断、超时或错误时，文本 AI 自动回退到 Pollinations `openai-fast`。
-- AI 每日励志鸡汤文已使用 D1 共享内容池和浏览器展示周期，库存耗尽后才生成并保存新内容。
-- 文生图/图生图支持 Agnes `agnes-image-2.5-flash` 方向。
-- 文生视频/图生视频支持 Agnes `agnes-video-2.5-flash` 方向。
-- 图床上传使用 ImgBB API Key。
 
 SEO 与统计：
 
@@ -405,7 +330,6 @@ SEO 与统计：
 - 新增外部 API 代理时，必须做 URL origin 白名单校验。
 - 新增密钥时，只放 Cloudflare 加密变量，并同步更新 `.dev.vars.example`。
 - 新增数据库表时，把 SQL 放到 `functions/db/`，使用递增编号。
-- 修改 `/api/daily-motivations` 时同时检查池耗尽校验、去重写入、风格锁和浏览器展示周期测试。
 - 修改 Cloudflare 变量后需要重新部署 Pages。
 - 改动 UI 后建议检查桌面和移动端，尤其是按钮文字、浮动顶部栏、底部页脚。
 
@@ -435,15 +359,9 @@ set ALL_PROXY=http://127.0.0.1:10808
 
 因为普通变量和绑定已经由 `wrangler.toml` 管理。Cloudflare 后台只允许继续维护加密变量，这是正常的。
 
-### 生成失败或 AI 偶发失败怎么办？
+### 新增工具页面为什么没有出现在站点地图？
 
-AI 接口本身可能偶发超时或限流。优先检查：
-
-- `AGNES_API_KEY` 是否存在。
-- Cloudflare Pages 是否已重新部署。
-- 浏览器 Network 中 `/api/ai-chat` 或 `/api/daily-motivations` 是否返回错误。
-- Agnes 后台 Key 额度、限流和调用状态（Pollinations 兜底走免费匿名档，无需 Key）。
-- 每日鸡汤失败时，确认 `018_create_ai_daily_motivations.sql` 和 `019_create_ai_daily_motivation_rate_limits.sql` 已应用，并使用上面的只读 SQL 检查内容池、锁表和限流表。
+确认路由包含独立的 title、keywords、description，属于静态路径且不是别名或账号页，再运行 pnpm generate:sitemap 和 pnpm build:pro。发布后直接检查该工具地址返回的原始 HTML 与 sitemap.xml。
 
 ## 已知遗留问题
 
@@ -463,8 +381,8 @@ AI 接口本身可能偶发超时或限流。优先检查：
 1. 先补浏览器端冒烟测试，把本轮路由与缓存故障的生产验证固化到 CI。
 2. 建立 Cloudflare Zone 设置的只读快照和变更记录，减少控制台配置漂移。
 3. 明确 Cloudflare Insights 的使用取舍并消除对应 CSP 控制台错误。
-4. 用 PageSpeed Insights 和 bundle 分析检查首页、JSON、Markdown、PDF、签名图片、富文本编辑器和 AI 生图等核心页，按页面拆分大型依赖。
-5. 为注册、登录、验证码、D1 读写和主要 AI 代理补充端到端测试与结构化异常日志。
+4. 用 PageSpeed Insights 和 bundle 分析检查首页、JSON、Markdown、PDF、签名图片、富文本编辑器等核心页，按页面拆分大型依赖。
+5. 为注册、登录、验证码、D1 读写和主要数据接口补充端到端测试与结构化异常日志。
 6. 根据 Google Search Console 的未收录原因，继续处理薄内容页、重复标题和无效链接。
 
 ## License

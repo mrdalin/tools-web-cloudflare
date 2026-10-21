@@ -3,7 +3,7 @@
 // PUT    /api/flashcards/decks/:id   body: { name?, description?, daily_new_limit? }
 // DELETE /api/flashcards/decks/:id   删除卡组（级联删除卡片与复习记录）
 
-import { extractUidFromRequest } from '../../_lib/model-resolver.js'
+import { extractUidFromRequest } from '../../../utils/request-user.js'
 
 const corsHeaders = {
   'Access-Control-Allow-Methods': 'GET, PUT, DELETE, OPTIONS',

@@ -1,3 +1,5 @@
+import { HOME_PAGE_META } from '@/utils/pageSeo'
+
 //对外暴露配置路由(常量路由)
 export const constantRoute = [
   //首页
@@ -5,10 +7,7 @@ export const constantRoute = [
     path: '/',
     component: () => import('@/components/Home/Home.vue'),
     name: 'home',
-    meta: {
-      keywords: '在线工具,开发运维,文本处理,图片处理,数据图表,趣味互动,选择随机,教育学术,内容管理,AI工具,好物网站,收藏夹,稍后读,书签管理,链接收藏,JSON转换,CSV,TSV,随机密码,UUID,时间戳转换,进制转换,单位换算,URL编码,URL参数,正则测试,Markdown,文本对比,文本去重,哈希,HMAC,Base64,Base64编码,Base64解码,文件大小转换,HTTP状态码,JWT解析,Cron生成,HTML实体,二维码生成,二维码识别,图片编辑,图片分割,图片转Base64,Base64转图片,文本转图片,色板,取色器,柱状图,折线图,饼图,散点图,摩斯电码,贪吃蛇,2048,俄罗斯方块,扫雷,打地鼠,数字华容道,数独,IP查询,网站信息,AI起名,AI变量名,文生图,AI翻译,Postman',
-      description: '一站式在线工具箱：覆盖开发运维、文本处理、图片处理、数据图表、趣味互动、选择随机、教育学术与 AI 工具；提供 JSON/CSV/TSV 互转、随机密码/UUID、时间戳与进制转换、单位换算、URL 编解码/参数解析、正则测试、Markdown、文本对比/去重、Base64 编解码、哈希校验、文件大小转换、HTTP 状态码、JWT 解析、Cron 表达式、HTML 实体、二维码生成与识别、在线图片编辑/分割、图片与 Base64 双向互转、文本转图片、色板取色器、柱状/折线/饼/散点图、摩斯电码，以及贪吃蛇/2048/俄罗斯方块/扫雷/打地鼠/数字华容道/数独等小游戏，另含 IP 查询、网站信息获取、AI 起名/变量名/文生图/翻译与在线请求调试等实用功能。另附收藏夹与稍后读功能方便管理网络链接。'
-    }
+    meta: HOME_PAGE_META,
   },
   {
     path: '/privacy',
@@ -17,7 +16,7 @@ export const constantRoute = [
     meta: {
       title: '隐私政策',
       keywords: 'Youngbar工具箱,隐私政策,Google登录,数据保护',
-      description: 'Youngbar工具箱隐私政策，说明账号、Google登录、工具数据、AI请求和第三方服务的数据处理方式。',
+      description: 'Youngbar工具箱隐私政策，说明账号、Google登录、工具数据和第三方服务的数据处理方式。',
     }
   },
   {
@@ -27,7 +26,7 @@ export const constantRoute = [
     meta: {
       title: '隐私政策',
       keywords: 'Youngbar工具箱,隐私政策,Google登录,数据保护',
-      description: 'Youngbar工具箱隐私政策，说明账号、Google登录、工具数据、AI请求和第三方服务的数据处理方式。',
+      description: 'Youngbar工具箱隐私政策，说明账号、Google登录、工具数据和第三方服务的数据处理方式。',
     }
   },
   // 用户信息页
@@ -240,6 +239,86 @@ export const constantRoute = [
       title: "单位转换",
       keywords: '在线单位换算,长度单位换算,面积单位换算,时间单位换算,重量单位换算,温度单位换算,压力单位换算,热量单位换算,功率单位换算。',
       description: '在线单位换算,长度单位换算,面积单位换算,时间单位换算,重量单位换算,温度单位换算,压力单位换算,热量单位换算,功率单位换算。',
+    }
+  },
+  {
+    path: '/unit/length',
+    component: () => import('@/components/Tools/Unit/Unit.vue'),
+    name: 'unit-length',
+    meta: {
+      title: '长度单位换算',
+      keywords: '长度换算,长度单位转换,在线长度换算',
+      description: '在线长度单位换算，支持千米、米、厘米、毫米、英尺、英寸等单位，输入任意数值即可同时查看其他单位结果。',
+    }
+  },
+  {
+    path: '/unit/area',
+    component: () => import('@/components/Tools/Unit/Unit.vue'),
+    name: 'unit-area',
+    meta: {
+      title: '面积单位换算',
+      keywords: '面积换算,面积单位转换,在线面积换算',
+      description: '在线面积单位换算，支持平方米、平方千米、公顷、亩及常见英制面积单位，适合土地、房屋和测量数据整理。',
+    }
+  },
+  {
+    path: '/unit/weight',
+    component: () => import('@/components/Tools/Unit/Unit.vue'),
+    name: 'unit-weight',
+    meta: {
+      title: '重量单位换算',
+      keywords: '重量换算,重量单位转换,在线重量换算',
+      description: '在线重量单位换算，支持千克、克、吨、斤、两、磅和盎司等单位，便于比较包装重量、食材和物流数据。',
+    }
+  },
+  {
+    path: '/unit/time',
+    component: () => import('@/components/Tools/Unit/Unit.vue'),
+    name: 'unit-time',
+    meta: {
+      title: '时间单位换算',
+      keywords: '时间换算,时间单位转换,在线时间换算',
+      description: '在线时间单位换算，支持日、小时、分钟、秒、毫秒、周以及年和月的近似换算，适合时长统计与开发调试。',
+    }
+  },
+  {
+    path: '/unit/temperature',
+    component: () => import('@/components/Tools/Unit/Unit.vue'),
+    name: 'unit-temperature',
+    meta: {
+      title: '温度单位换算',
+      keywords: '温度换算,温度单位转换,在线温度换算',
+      description: '在线温度单位换算，支持摄氏度、华氏度、开尔文、列氏度和兰氏度，输入温度即可查看各温标的对应结果。',
+    }
+  },
+  {
+    path: '/unit/pressure',
+    component: () => import('@/components/Tools/Unit/Unit.vue'),
+    name: 'unit-pressure',
+    meta: {
+      title: '压力单位换算',
+      keywords: '压力换算,压力单位转换,在线压力换算',
+      description: '在线压力单位换算，支持 Pa、kPa、hPa、MPa、bar、torr、psi 等单位，适合气压、设备参数与测量数据换算。',
+    }
+  },
+  {
+    path: '/unit/heat',
+    component: () => import('@/components/Tools/Unit/Unit.vue'),
+    name: 'unit-heat',
+    meta: {
+      title: '热量单位换算',
+      keywords: '热量换算,热量单位转换,在线热量换算',
+      description: '在线热量与能量单位换算，支持 Wh、mWh、kWh、MWh、J 和 kJ，可用于电能记录、设备耗能和学习计算。',
+    }
+  },
+  {
+    path: '/unit/power',
+    component: () => import('@/components/Tools/Unit/Unit.vue'),
+    name: 'unit-power',
+    meta: {
+      title: '功率单位换算',
+      keywords: '功率换算,功率单位转换,在线功率换算',
+      description: '在线功率单位换算，支持 W、mW、kW、MW 和 GW，适合电器铭牌、设备选型与工程数据的单位统一。',
     }
   },
   {
@@ -642,40 +721,6 @@ export const constantRoute = [
       description: '在线命理八卦工具，根据出生日期生成生肖与八卦卦象，提供五行属性、吉祥颜色与吉位方向建议。',
     }
   },
-  {
-    path: '/ai/text-to-image',
-    redirect: '/ai-text-to-image'
-  },
-  {
-    path: '/ai-text-to-image',
-    component: () => import('@/components/Tools/AiTextToImage/AiTextToImage.vue'),
-    name: 'AiTextToImage',
-    meta: {
-      title: "在线文生图",
-      keywords: '在线文生图,文生图,文生图工具,文生图服务',
-      description: '提供在线免费无限次数的文生图服务',
-    }
-  },
-  {
-    path: '/ai-text-to-video',
-    component: () => import('@/components/Tools/AiTextToVideo/AiTextToVideo.vue'),
-    name: 'AiTextToVideo',
-    meta: {
-      title: "AI文生视频",
-      keywords: 'AI文生视频,文本生成视频,AI视频生成,短视频创作',
-      description: '输入主题自动生成视频文案并创作短视频，支持5秒/10秒时长',
-    }
-  },
-  // {
-  //   path: '/ai-text-to-speech',
-  //   component: () => import('@/components/Tools/AiTextToSpeech/AiTextToSpeech.vue'),
-  //   name: 'AiTextToSpeech',
-  //   meta: {
-  //     title: "在线文本转语音",
-  //     keywords: '在线文本转语音,文本转语音,语音合成,AI语音',
-  //     description: '提供在线免费无限次数的文本转语音服务',
-  //   }
-  // },
   // 关于
   {
     path: '/about',
@@ -684,7 +729,7 @@ export const constantRoute = [
     meta: {
       title: "关于",
       keywords: '关于Youngbar,关于工具站',
-      description: '',
+      description: '了解 Youngbar 工具箱的项目来源、功能分类、开源代码和隐私政策。',
     }
   },
   // 登录页面
@@ -726,7 +771,7 @@ export const constantRoute = [
     meta: {
       title: '页面未找到',
       keywords: '404,页面未找到,Youngbar工具箱,工具搜索',
-      description: 'Youngbar工具箱页面未找到，可通过搜索快速找到 JSON、Markdown、二维码、AI 翻译等在线工具。',
+      description: 'Youngbar工具箱页面未找到，可通过搜索快速找到 JSON、Markdown、二维码、时间戳转换等在线工具。',
     }
   },
   {
@@ -950,26 +995,6 @@ export const constantRoute = [
     }
   },
   {
-    path: '/ai-image-edit',
-    component: () => import('@/components/Tools/AiImageEdit/AiImageEdit.vue'),
-    name: 'AiImageEdit',
-    meta: {
-      title: "AI图片编辑",
-      keywords: 'AI图片编辑,AI修图,图片处理,AI超分辨率,图生图,AI图片生成,在线修图',
-      description: 'AI智能图片编辑工具，支持图片编辑、图片生成和超分辨率，上传图片加文字描述即可一键生成',
-    }
-  },
-  {
-    path: '/ai-outfit',
-    component: () => import('@/components/Tools/AiOutfit/AiOutfit.vue'),
-    name: 'AiOutfit',
-    meta: {
-      title: 'AI 穿搭建议',
-      keywords: 'AI穿搭,虚拟试衣,outfit,穿搭建议,搭配,换装,AI试衣,服装替换',
-      description: '上传人物照片，可选上传衣物照片，AI 给出穿搭建议：未传衣物时自动设计穿搭，传了衣物时替换为指定衣物。',
-    }
-  },
-  {
     path: '/confession-wall',
     component: () => import('@/components/Tools/ConfessionWall/ConfessionWall.vue'),
     name: 'ConfessionWall',
@@ -1008,16 +1033,6 @@ export const constantRoute = [
       keywords: '歌单分享,在线听歌,音频播放,歌单浏览',
       description: '通过分享链接浏览与播放歌单内全部公开歌曲，无需登录',
     }
-  },
-  {
-    path: '/ai-media-works',
-    component: () => import('@/components/Tools/AiMediaWorks/AiMediaWorks.vue'),
-    name: 'AiMediaWorks',
-    meta: {
-      title: 'AI 媒体作品',
-      keywords: 'AI媒体作品,AI图片,AI视频,AI生成作品,agnes,作品画廊',
-      description: '汇集免费 AI 模型（Agnes 等）自动生成的图片与视频，每天定时更新，可按分类与类型筛选浏览。',
-    },
   },
   {
     path: '/oss-manager',
@@ -1136,36 +1151,6 @@ export const constantRoute = [
     }
   },
   {
-    path: '/aihub',
-    component: () => import('@/components/Tools/AiHub/AiHub.vue'),
-    name: 'aihub',
-    meta: {
-      title: 'AI工具导航',
-      keywords: 'AI工具导航,AI工具集合,AI第三方工具,AI网站',
-      description: '精选第三方AI工具分类导航，一键直达常用AI服务与网站',
-    }
-  },
-  {
-    path: '/ai-variable-name',
-    component: () => import('@/components/Tools/AiVariableName/AiVariableName.vue'),
-    name: 'ai-variable-name',
-    meta: {
-      title: 'AI起变量名',
-      keywords: 'AI变量名,AI变量,AI命名,AI起变量名',
-      description: '根据描述自动生成符合命名规范的变量名，支持多种命名风格与语言',
-    }
-  },
-  {
-    path: '/ai-name',
-    component: () => import('@/components/Tools/AiName/AiName.vue'),
-    name: 'ai-name',
-    meta: {
-      title: 'AI起名',
-      keywords: 'AI起名,起名字,宝宝起名,中文姓名,取名',
-      description: '输入父母姓氏，选择名的长度与性别，生成多个中文姓名，并给出命名理由',
-    }
-  },
-  {
     path: '/postman',
     component: () => import('@/components/Tools/PostmanLite/PostmanLite.vue'),
     name: 'postman',
@@ -1246,36 +1231,6 @@ export const constantRoute = [
     }
   },
   {
-    path: '/ai-translate',
-    component: () => import('@/components/Tools/AiTranslate/AiTranslate.vue'),
-    name: 'ai-translate',
-    meta: {
-      title: 'AI翻译',
-      keywords: 'AI翻译,自动检测,多语言翻译,LibreTranslate',
-      description: '支持多语言互译，源语言自动检测，免费使用'
-    }
-  },
-  {
-    path: '/ai-elementary-essay',
-    component: () => import('@/components/Tools/AiElementaryEssay/AiElementaryEssay.vue'),
-    name: 'ai-elementary-essay',
-    meta: {
-      title: 'AI小学作文',
-      keywords: 'AI小学作文,作文生成,小学生作文,年级作文,题材作文',
-      description: '按年级、体裁和关键词生成贴合小学生水平的作文，支持字数、风格与结构控制'
-    }
-  },
-  {
-    path: '/ai-daily-motivation',
-    component: () => import('@/components/Tools/AiDailyMotivation/AiDailyMotivation.vue'),
-    name: 'ai-daily-motivation',
-    meta: {
-      title: 'AI每日励志鸡汤文',
-      keywords: 'AI鸡汤文,励志鸡汤文,每日鸡汤,正能量,励志语录',
-      description: 'AI智能生成每日励志鸡汤文，支持多种风格选择，定时刷新，为你的每一天注入正能量'
-    }
-  },
-  {
     path: '/good-sites',
     component: () => import('@/components/Tools/GoodSites/GoodSites.vue'),
     name: 'good-sites',
@@ -1283,26 +1238,6 @@ export const constantRoute = [
       title: '好物网站导航',
       keywords: '好物网站,网站导航,优质网站,实用网站',
       description: '精选优质网站分类导航，一键直达常用服务与网站',
-    }
-  },
-  {
-    path: '/ai-chat',
-    component: () => import('@/components/Tools/AiChat/AiChat.vue'),
-    name: 'ai-chat',
-    meta: {
-      title: "AI对话",
-      keywords: 'AI对话,智能对话,AI助手,聊天机器人,智能问答',
-      description: '智能AI对话助手，支持多轮对话，提供专业、准确的回答，帮助你解决各种问题',
-    }
-  },
-  {
-    path: '/ai-interview',
-    component: () => import('@/components/Tools/AiInterview/AiInterview.vue'),
-    name: 'ai-interview',
-    meta: {
-      title: "AI面试",
-      keywords: 'AI面试,模拟面试,面试练习,技术面试,前端面试,后端面试,产品面试,面试助手',
-      description: 'AI智能面试助手，模拟真实面试场景，支持前端、后端、产品、数据分析等多种岗位类型，帮助提升面试表现和技能',
     }
   },
   {
@@ -1373,16 +1308,6 @@ export const constantRoute = [
       title: "假如你有100亿",
       keywords: '100亿人民币,假如有钱,富翁模拟,购物模拟,趣味互动',
       description: '假如你有100亿人民币的购物模拟器，体验富翁生活，购买房产、汽车、产业等',
-    }
-  },
-  {
-    path: '/ai-prompt',
-    component: () => import('@/components/Tools/AiPrompt/AiPrompt.vue'),
-    name: 'ai-prompt',
-    meta: {
-      title: 'AI提示词仓库',
-      keywords: 'AI提示词,提示词库,prompt,AI指令,创意提示词,编程提示词,写作提示词',
-      description: '精选顶级AI提示词库，涵盖写作、编程、创意、分析等多个领域的优质提示词，助力提升AI对话效果'
     }
   },
   {

@@ -3,7 +3,7 @@
 // PUT    /api/flashcards/cards/:id   body: { front?, back?, is_suspended? }
 // DELETE /api/flashcards/cards/:id   删除卡片（级联删除复习记录）
 
-import { extractUidFromRequest } from '../../_lib/model-resolver.js'
+import { extractUidFromRequest } from '../../../utils/request-user.js'
 
 const corsHeaders = {
   'Access-Control-Allow-Methods': 'GET, PUT, DELETE, OPTIONS',

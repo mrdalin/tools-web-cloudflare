@@ -21,9 +21,9 @@ const popularTools = [
   { title: 'JSON格式化', path: '/json' },
   { title: 'Markdown编辑器', path: '/markdown' },
   { title: '二维码生成', path: '/qrcode' },
-  { title: '随机密码', path: '/random-password' },
-  { title: 'AI绘画', path: '/ai-text-to-image' },
-  { title: 'AI翻译', path: '/ai-translate' },
+  { title: '随机密码', path: '/randompassword' },
+  { title: '时间戳转换', path: '/timetran' },
+  { title: 'Base64 编解码', path: '/base64' },
 ]
 
 const searchTools = async (keyword: string) => {
@@ -73,7 +73,7 @@ const goTool = (item: SearchToolInfo) => {
         :suffix-icon="Search"
         :loading="loading"
         :remote-method="searchTools"
-        placeholder="搜索工具，例如 JSON、二维码、AI 翻译"
+        placeholder="搜索工具，例如 JSON、二维码、单位换算"
         class="not-found-search"
         size="large"
       >

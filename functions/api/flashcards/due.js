@@ -9,7 +9,7 @@
 // 响应：
 //   data: { queue: [...], total: n, deck: {...} }
 
-import { extractUidFromRequest } from '../_lib/model-resolver.js'
+import { extractUidFromRequest } from '../../utils/request-user.js'
 
 const corsHeaders = {
   'Access-Control-Allow-Methods': 'GET, OPTIONS',

@@ -1,5 +1,5 @@
 ---
-description: 状态管理、HTTP 请求、AI 提供者、Supabase、D1 数据库、Cloudflare Functions 等架构详情
+description: 状态管理、HTTP 请求、Supabase、D1 数据库、Cloudflare Functions 等架构详情
 ---
 
 ## 状态管理（Pinia）
@@ -13,14 +13,6 @@ description: 状态管理、HTTP 请求、AI 提供者、Supabase、D1 数据库
 - **外部 API**：使用 `src/utils/request.ts`（axios 实例）
 - **Cloudflare Functions**：使用 `src/utils/functionsRequest.ts` - 自动从 localStorage 添加 Bearer 令牌
 - **Functions 代理**：通过 `VITE_SITE_URL` 环境变量路由
-
-## AI 提供者（`src/spi/`）
-
-抽象化的 AI 服务层，支持多个提供者：
-- **Pollinations**：免费 AI 图像生成、对话
-- **AiTools**：AI 工具目录
-
-添加新提供者需在 `src/spi/common/interfaces.ts` 中实现 `AIProvider` 接口
 
 ## Supabase 集成
 

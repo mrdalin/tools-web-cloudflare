@@ -128,7 +128,6 @@ export default defineConfig(({command, mode}) => {
       }),
       Components({
         resolvers: [ElementPlusResolver({ importStyle: 'sass' })],
-        globsExclude: ['src/components/Tools/AiChat/components/*.vue'],
         dts: false, // 生产环境禁用 dts 生成
       }),
       ElementPlus({}),
@@ -174,44 +173,6 @@ export default defineConfig(({command, mode}) => {
         clientFiles: ['./src/main.ts', './src/App.vue', './src/router/index.ts'],
       },
       proxy: {
-        '/api/agnes-chat': {
-          target: 'http://127.0.0.1:8788',
-          changeOrigin: true,
-        },
-        '/api/agnes-video': {
-          target: 'http://127.0.0.1:8788',
-          changeOrigin: true,
-        },
-        '/api/agnes-video-status': {
-          target: 'http://127.0.0.1:8788',
-          changeOrigin: true,
-        },
-        '/api/agnes-image-generations': {
-          target: 'http://127.0.0.1:8788',
-          changeOrigin: true,
-        },
-        '/api/agnes-proxy': {
-          target: 'http://127.0.0.1:8788',
-          changeOrigin: true,
-        },
-        '/api/agnes/chat': {
-          target: 'https://api.agnes-ai.cn/v1',
-          changeOrigin: true,
-          rewrite: (path) => path.replace(/^\/api\/agnes\/chat/, '/chat'),
-          secure: false
-        },
-        '/api/agnes/videos': {
-          target: 'https://api.agnes-ai.cn/v1',
-          changeOrigin: true,
-          rewrite: (path) => path.replace(/^\/api\/agnes\/videos/, '/videos'),
-          secure: false
-        },
-        '/api/agnes': {
-          target: 'https://api.agnes-ai.cn',
-          changeOrigin: true,
-          rewrite: (path) => path.replace(/^\/api\/agnes/, '/v1'),
-          secure: false
-        },
         [env.VITE_APP_BASE_API] : {
           target: env.VITE_SERVE,
           changeOrigin: true,
@@ -248,19 +209,7 @@ export default defineConfig(({command, mode}) => {
           target: 'http://127.0.0.1:8788',
           changeOrigin: true,
         },
-        '/api/ai-apps': {
-          target: 'http://127.0.0.1:8788',
-          changeOrigin: true,
-        },
-        '/api/favorite-apps': {
-          target: 'http://127.0.0.1:8788',
-          changeOrigin: true,
-        },
         '/api': {
-          target: 'http://127.0.0.1:8788',
-          changeOrigin: true,
-        },
-        '/proxy': {
           target: 'http://127.0.0.1:8788',
           changeOrigin: true,
         },

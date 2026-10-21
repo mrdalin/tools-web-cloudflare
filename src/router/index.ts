@@ -2,29 +2,16 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import { constantRoute } from './router'
 import { getToolSeoMeta } from '@/components/Layout/ToolSeoContent/toolSeoMeta'
-
-const appTitle = import.meta.env.VITE_APP_TITLE || 'Youngbar工具箱'
-const appDesc = import.meta.env.VITE_APP_DESC || '一个轻量的在线工具箱'
-const siteUrl = 'https://youngbar.com'
-const canonicalPathMap = new Map([
-  ['/ai/text-to-image', '/ai-text-to-image'],
-  ['/privacy-policy', '/privacy'],
-  ['/userinfo/todos', '/todos'],
-])
+import {
+  HOME_PAGE_META, SITE_URL, getCanonicalUrl, getPageTitle,
+  getPageStructuredData, isIndexablePage, serializeStructuredData,
+} from '@/utils/pageSeo'
 
 declare global {
   interface Window {
     gtag?: (...args: unknown[]) => void
   }
 }
-
-const getCanonicalPath = (path: string) => {
-  if (!path || path === '/') return '/'
-  const normalizedPath = path.replace(/\/+$/, '')
-  return canonicalPathMap.get(normalizedPath) || normalizedPath
-}
-
-const getCanonicalUrl = (path: string) => `${siteUrl}${getCanonicalPath(path)}`
 
 const resolvePageMeta = (
   path: string,
@@ -33,9 +20,9 @@ const resolvePageMeta = (
   const seoMeta = getToolSeoMeta(path)
 
   return {
-    title: seoMeta?.title || meta.title,
-    keywords: seoMeta?.keywords || meta.keywords,
-    description: seoMeta?.description || meta.description,
+    title: String(seoMeta?.title || meta.title || HOME_PAGE_META.title),
+    keywords: String(seoMeta?.keywords || meta.keywords || ''),
+    description: String(seoMeta?.description || meta.description || HOME_PAGE_META.description),
   }
 }
 
@@ -55,7 +42,7 @@ const trackPageView = (path: string) => {
 
   window.gtag('event', 'page_view', {
     page_title: document.title,
-    page_location: `${siteUrl}${path}`,
+    page_location: `${SITE_URL}${path}`,
     page_path: path,
   })
 }
@@ -72,6 +59,14 @@ const router = createRouter({
 })
 
 router.beforeEach((to, _from, next) => {
+  const unit = to.query.active
+  if (to.path === '/unit' && typeof unit === 'string' &&
+      ['length', 'area', 'weight', 'time', 'temperature', 'pressure', 'heat', 'power'].includes(unit)) {
+    const { active: _active, ...query } = to.query
+    next({ path: `/unit/${unit}`, query, hash: to.hash, replace: true })
+    return
+  }
+
   if (to.path.length > 1 && to.path.endsWith('/')) {
     next({
       path: to.path.replace(/\/+$/, ''),
@@ -82,24 +77,17 @@ router.beforeEach((to, _from, next) => {
     return
   }
 
-  const { title } = resolvePageMeta(to.path, to.meta)
-  if (title) {
-    document.title = `${title as string}-${appTitle}`
-  }
   next()
 })
 
 //路由后置卫士
-router.afterEach((to) => {
+router.afterEach((to, _from, failure) => {
+  if (failure) return
   const { title, keywords, description } = resolvePageMeta(to.path, to.meta)
   const canonicalUrl = getCanonicalUrl(to.path)
-
-  if (title) {
-    document.title = `${title as string}-${appTitle}`
-  } else {
-    document.title = `${appTitle}-${appDesc}`
-  }
-
+  const routePattern = to.matched[to.matched.length - 1]?.path || '/:unknown'
+  const indexable = isIndexablePage(to.path, routePattern)
+  document.title = getPageTitle(title)
   updateCanonical(canonicalUrl)
 
   // 批量更新 meta 标签
@@ -109,11 +97,34 @@ router.afterEach((to) => {
     { selector: 'meta[property="og:title"]', attr: 'content', value: document.title },
     { selector: 'meta[property="og:url"]', attr: 'content', value: canonicalUrl },
     { selector: 'meta[property="og:description"]', attr: 'content', value: String(description || '') },
+    { selector: 'meta[name="twitter:title"]', attr: 'content', value: document.title },
+    { selector: 'meta[name="twitter:description"]', attr: 'content', value: description },
+    { selector: 'meta[name="robots"]', attr: 'content', value: indexable ? 'index,follow' : 'noindex,follow' },
   ]
 
   metaUpdates.forEach(({ selector, attr, value }) => {
-    document.querySelector(selector)?.setAttribute(attr, value)
+    let element = document.querySelector(selector)
+    if (!element) {
+      const match = selector.match(/^meta\[(name|property)="([^"]+)"\]$/)!
+      element = document.createElement('meta')
+      element.setAttribute(match[1], match[2])
+      document.head.appendChild(element)
+    }
+    element.setAttribute(attr, value)
   })
+
+  let structuredData = document.querySelector<HTMLScriptElement>('#page-structured-data')
+  if (indexable) {
+    if (!structuredData) {
+      structuredData = document.createElement('script')
+      structuredData.id = 'page-structured-data'
+      structuredData.type = 'application/ld+json'
+      document.head.appendChild(structuredData)
+    }
+    structuredData.textContent = serializeStructuredData(getPageStructuredData(to.path, { title, description }))
+  } else {
+    structuredData?.remove()
+  }
 
   trackPageView(to.fullPath)
 })

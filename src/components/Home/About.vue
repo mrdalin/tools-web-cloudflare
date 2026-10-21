@@ -68,18 +68,9 @@ onMounted(async () => {
       <p>
         <el-text>主要基于Vite + Vue + ElementPlus + Typescript + TailwindCss + Cloudflare Functions开发，某些工具使用了第三方开源库，您可以在仓库的 <el-link :href="gitUrl + '/blob/main/package.json'" target="_blank" type="primary">package.json</el-link> 文件中找到完整的列表。</el-text>
       </p>
-        <div>
-          本站 AI 工具默认使用：
-            <ul class="list-disc list-inside ml-4">
-              <li>
-                <el-link href="https://agnes-ai.com" target="_blank" type="primary">Agnes AI</el-link>
-              </li>
-              <li>部分语音或兜底能力仍可能通过 Cloudflare Functions 调用第三方备用服务</li>
-            </ul>
-        </div>
       <h1 class="text-2xl font-bold mt-6 mb-6">隐私政策</h1>
       <p>
-        <el-text>账号、Google 登录、AI 请求和第三方服务的数据处理说明，请查看 <router-link to="/privacy" class="privacy-link">隐私政策</router-link>。</el-text>
+        <el-text>账号、Google 登录和第三方服务的数据处理说明，请查看 <router-link to="/privacy" class="privacy-link">隐私政策</router-link>。</el-text>
       </p>
 
       <h1 class="text-2xl font-bold mt-6 mb-6">友情链接</h1>

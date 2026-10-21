@@ -3,9 +3,9 @@
 //
 // 鉴权说明：目标仓库 user 表当前没有 is_admin 字段，因此「分组创建/删除、
 // 删除告白」这类管理操作仅要求登录（复用项目 JWT）。若后续给 user 表加上
-// is_admin 字段，可在此引入 isAdmin(db, uid) 做管理员校验。
+// is_admin 字段，可在此引入管理员权限校验。
 
-import { extractUidFromRequest } from '../_lib/model-resolver.js'
+import { extractUidFromRequest } from '../../utils/request-user.js'
 
 // 当前时间（ISO 8601 UTC，TEXT 存储，字典序即时间序）
 export function nowIso() {

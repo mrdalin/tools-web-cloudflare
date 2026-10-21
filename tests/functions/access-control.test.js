@@ -5,21 +5,18 @@ import { DatabaseSync } from 'node:sqlite'
 import test from 'node:test'
 
 import { AuthMiddleware } from '../../functions/middlewares/auth.js'
-import { onRequest as aiApps } from '../../functions/api/ai-apps.js'
-import { onRequest as favorites } from '../../functions/api/favorite-apps.js'
 import { onRequest as scenery } from '../../functions/api/user-season-scenery.js'
 import { onRequest as qaDetail } from '../../functions/api/qa/[id].js'
 import { onRequest as qaView } from '../../functions/api/qa-view/[id].js'
 import { onRequest as links } from '../../functions/api/links.js'
 import { onRequest as linkDetail } from '../../functions/api/links/[slug].js'
+import { onRequest as flashcardDecks } from '../../functions/api/flashcards/decks.js'
+import { onRequest as flashcardDeck } from '../../functions/api/flashcards/decks/[id].js'
+import { onRequest as confessionGroups } from '../../functions/api/confession/groups/index.js'
+import { extractUidFromRequest } from '../../functions/utils/request-user.js'
 
 const origin = 'https://youngbar.com'
 const secret = 'test-only-secret-for-access-control'
-const appData = {
-  title: 'Owner app', icon: 'test', description: 'Private app', category: 'general',
-  gradient_from: 'blue-50', gradient_to: 'blue-100', border_color: 'blue-200',
-  system_prompt: 'Private prompt'
-}
 
 function signToken(payload = {}, signingSecret = secret, header = { alg: 'HS256', typ: 'JWT' }) {
   const encode = value => Buffer.from(JSON.stringify(value)).toString('base64url')
@@ -34,8 +31,8 @@ function createEnv(t) {
   const sqlite = new DatabaseSync(':memory:')
   t.after(() => sqlite.close())
   for (const migration of [
-    '000_init_core_tables.sql', '001_create_short_links.sql', '005_create_ai_apps.sql',
-    '008_create_user_season_scenery.sql', '016_create_favorite_apps.sql'
+    '000_init_core_tables.sql', '001_create_short_links.sql',
+    '008_create_user_season_scenery.sql', '024_create_flashcards.sql', '029_create_confession_tables.sql'
   ]) {
     sqlite.exec(readFileSync(new URL(`../../functions/db/${migration}`, import.meta.url), 'utf8'))
   }
@@ -67,14 +64,6 @@ function request(path, method = 'GET', token, body) {
   return new Request(`${origin}${path}`, {
     method, headers, body: body === undefined ? undefined : JSON.stringify(body)
   })
-}
-
-async function seedApp(env, id = 'owner-app', uid = 'owner', type = 'custom') {
-  await env.DB.prepare(`INSERT INTO ai_apps
-    (id, name, icon, title, description, gradient_from, gradient_to, border_color,
-     app_type, uid, system_prompt, create_time, update_time)
-    VALUES (?, ?, 'test', ?, 'Private app', 'blue-50', 'blue-100', 'blue-200', ?, ?, ?, 'now', 'now')
-  `).bind(id, id, appData.title, type, uid, appData.system_prompt).run()
 }
 
 async function seedLink(env, slug = 'owned-link', uid = 'owner') {
@@ -113,13 +102,6 @@ test('JWT verification rejects invalid signatures, algorithms, identities and ti
 })
 
 for (const [name, handler, path, method, body] of [
-  ['AI app creation', aiApps, '/api/ai-apps', 'POST', appData],
-  ['AI app update', aiApps, '/api/ai-apps?id=owner-app', 'PUT', appData],
-  ['AI app deletion', aiApps, '/api/ai-apps?id=owner-app', 'DELETE'],
-  ['AI app detail', aiApps, '/api/ai-apps?id=owner-app', 'GET'],
-  ['favorite listing', favorites, '/api/favorite-apps', 'GET'],
-  ['favorite creation', favorites, '/api/favorite-apps', 'POST', { app_id: 'owner-app' }],
-  ['favorite deletion', favorites, '/api/favorite-apps?app_id=owner-app', 'DELETE'],
   ['scenery listing', scenery, '/api/user-season-scenery', 'GET'],
   ['scenery update', scenery, '/api/user-season-scenery', 'POST', { data: ['changed'] }]
 ]) {
@@ -130,56 +112,6 @@ for (const [name, handler, path, method, body] of [
     }
   })
 }
-
-test('AI app lists keep system apps public and custom apps private', async t => {
-  const env = createEnv(t)
-  await seedApp(env)
-  await seedApp(env, 'other-app', 'other')
-  await seedApp(env, 'system-app', '', 'system')
-  for (const token of [undefined, signToken({}, 'attacker-secret')]) {
-    const response = await aiApps({ request: request('/api/ai-apps', 'GET', token), env })
-    assert.equal(response.status, 200)
-    assert.deepEqual((await response.json()).data.map(app => app.id), ['system-app'])
-  }
-  const ownerList = await aiApps({ request: request('/api/ai-apps', 'GET', signToken()), env })
-  assert.deepEqual(new Set((await ownerList.json()).data.map(app => app.id)), new Set(['system-app', 'owner-app']))
-  const otherDetail = await aiApps({ request: request('/api/ai-apps?id=owner-app', 'GET', signToken({ uid: 'other' })), env })
-  assert.equal(otherDetail.status, 404)
-  const ownDetail = await aiApps({ request: request('/api/ai-apps?id=owner-app', 'GET', signToken()), env })
-  assert.equal((await ownDetail.json()).data.system_prompt, appData.system_prompt)
-})
-
-test('AI app mutations bind the verified owner and cannot change another user\'s app', async t => {
-  const env = createEnv(t)
-  const created = await aiApps({ request: request('/api/ai-apps', 'POST', signToken(), { ...appData, uid: 'other' }), env })
-  assert.equal(created.status, 200)
-  const { id } = (await created.json()).data
-  assert.equal((await env.DB.prepare('SELECT uid FROM ai_apps WHERE id = ?').bind(id).first()).uid, 'owner')
-  await aiApps({ request: request(`/api/ai-apps?id=${id}`, 'PUT', signToken({ uid: 'other' }), { ...appData, title: 'stolen' }), env })
-  await aiApps({ request: request(`/api/ai-apps?id=${id}`, 'DELETE', signToken({ uid: 'other' })), env })
-  assert.equal((await env.DB.prepare('SELECT title FROM ai_apps WHERE id = ?').bind(id).first()).title, appData.title)
-  await aiApps({ request: request(`/api/ai-apps?id=${id}`, 'PUT', signToken(), { ...appData, title: 'Updated' }), env })
-  assert.equal((await env.DB.prepare('SELECT title FROM ai_apps WHERE id = ?').bind(id).first()).title, 'Updated')
-  await aiApps({ request: request(`/api/ai-apps?id=${id}`, 'DELETE', signToken()), env })
-  assert.equal(await env.DB.prepare('SELECT id FROM ai_apps WHERE id = ?').bind(id).first(), null)
-})
-
-test('favorites use verified identity for reading, adding and deleting', async t => {
-  const env = createEnv(t)
-  await seedApp(env)
-  const saved = await favorites({ request: request('/api/favorite-apps', 'POST', signToken(), { app_id: 'owner-app', uid: 'other' }), env })
-  assert.equal(saved.status, 200)
-  const otherSave = await favorites({ request: request('/api/favorite-apps', 'POST', signToken({ uid: 'other' }), { app_id: 'owner-app' }), env })
-  assert.equal(otherSave.status, 403)
-  const ownList = await favorites({ request: request('/api/favorite-apps', 'GET', signToken()), env })
-  assert.equal((await ownList.json()).data[0].app_id, 'owner-app')
-  const otherList = await favorites({ request: request('/api/favorite-apps?ids=1', 'GET', signToken({ uid: 'other' })), env })
-  assert.deepEqual((await otherList.json()).data, [])
-  await favorites({ request: request('/api/favorite-apps?app_id=owner-app', 'DELETE', signToken({ uid: 'other' })), env })
-  assert.ok(await env.DB.prepare('SELECT id FROM user_favorite_apps').first())
-  await favorites({ request: request('/api/favorite-apps?app_id=owner-app', 'DELETE', signToken()), env })
-  assert.equal(await env.DB.prepare('SELECT id FROM user_favorite_apps').first(), null)
-})
 
 test('scenery reads and writes stay within the verified user', async t => {
   const env = createEnv(t)
@@ -272,4 +204,46 @@ test('short-link database errors do not report a successful deletion', async t =
     env: { JWT_SECRET: secret, DB: { prepare() { throw new Error('unavailable') } } }
   })
   assert.equal(response.status, 500)
+})
+
+test('shared request identity accepts only verified credentials after retiring the AI module', async () => {
+  for (const token of [undefined, 'broken.token', signToken({}, 'attacker-secret'), signToken({ exp: 1 })]) {
+    assert.equal(await extractUidFromRequest(request('/api/flashcards/decks', 'GET', token), { JWT_SECRET: secret }), '')
+  }
+  assert.equal(await extractUidFromRequest(request('/api/flashcards/decks', 'GET', signToken()), {}), '')
+  assert.equal(await extractUidFromRequest(request('/api/flashcards/decks', 'GET', signToken()), { JWT_SECRET: secret }), 'owner')
+})
+
+test('flashcards retain login protection and separate each user’s decks', async t => {
+  const env = createEnv(t)
+  for (const token of [undefined, signToken({}, 'attacker-secret'), signToken({ exp: 1 })]) {
+    const response = await flashcardDecks({ request: request('/api/flashcards/decks', 'POST', token, { name: 'denied' }), env })
+    assert.equal(response.status, 401)
+  }
+  const created = await flashcardDecks({ request: request('/api/flashcards/decks', 'POST', signToken(), { name: 'My cards', uid: 'other' }), env })
+  assert.equal(created.status, 200)
+  const { data: deck } = await created.json()
+  assert.equal((await env.DB.prepare('SELECT uid FROM flashcard_decks').first()).uid, 'owner')
+  const ownList = await flashcardDecks({ request: request('/api/flashcards/decks', 'GET', signToken()), env })
+  assert.deepEqual((await ownList.json()).data.map(item => item.id), [deck.id])
+  const otherList = await flashcardDecks({ request: request('/api/flashcards/decks', 'GET', signToken({ uid: 'other' })), env })
+  assert.deepEqual((await otherList.json()).data, [])
+  const foreignDeck = await flashcardDeck({ request: request(`/api/flashcards/decks/${deck.id}`, 'DELETE', signToken({ uid: 'other' })), env, params: { id: deck.id } })
+  assert.equal(foreignDeck.status, 404)
+  const ownDeck = await flashcardDeck({ request: request(`/api/flashcards/decks/${deck.id}`, 'GET', signToken()), env, params: { id: deck.id } })
+  assert.equal(ownDeck.status, 200)
+  assert.equal((await ownDeck.json()).data.name, 'My cards')
+})
+
+test('confession groups remain publicly readable with authenticated creation', async t => {
+  const env = createEnv(t)
+  for (const token of [undefined, signToken({}, 'attacker-secret'), signToken({ exp: 1 })]) {
+    const response = await confessionGroups({ request: request('/api/confession/groups', 'POST', token, { name: 'denied' }), env })
+    assert.equal(response.status, 401)
+  }
+  const created = await confessionGroups({ request: request('/api/confession/groups', 'POST', signToken(), { name: 'Study group' }), env })
+  assert.equal(created.status, 201)
+  const publicList = await confessionGroups({ request: request('/api/confession/groups'), env })
+  assert.equal(publicList.status, 200)
+  assert.ok((await publicList.json()).data.some(group => group.name === 'Study group'))
 })

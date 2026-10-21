@@ -1,8 +1,8 @@
 <script setup lang="ts">
-import { reactive, onMounted } from 'vue'
+import { computed } from 'vue'
 import DetailHeader from '@/components/Layout/DetailHeader/DetailHeader.vue'
 import ToolDetail from '@/components/Layout/ToolDetail/ToolDetail.vue'
-import { useRoute } from "vue-router"
+import { useRoute, useRouter } from 'vue-router'
 import Length from './Length.vue'
 import Area from './Area.vue'
 import Heat from './Heat.vue'
@@ -11,55 +11,23 @@ import Pressure from './Pressure.vue'
 import Temperature from './Temperature.vue'
 import Time from './Time.vue'
 import Weight from './Weight.vue'
-const info = reactive({
-  title: "单位转换",
-  activeName: 'lengthTab',
-})
-
 const route = useRoute()
-
-const handleClick = () => {
-
-}
-
-onMounted(() => {
-  if (route.query.active) {
-    switch (route.query.active) {
-      case 'area':
-        info.activeName = 'areaTab'
-        break;
-      case 'weight':
-        info.activeName = 'weightTab'
-        break;
-      case 'time':
-        info.activeName = 'timeTab'
-        break;
-      case 'temperature':
-        info.activeName = 'temperatureTab'
-        break;
-      case 'pressure':
-        info.activeName = 'pressureTab'
-        break;
-      case 'heat':
-        info.activeName = 'heatTab'
-        break;
-      case 'power':
-        info.activeName = 'powerTab'
-        break
-      default:
-        info.activeName = 'lengthTab'
-        break;
-    }
-  }
+const router = useRouter()
+const title = computed(() => String(route.meta.title || '单位转换'))
+const activeName = computed({
+  get: () => `${route.path.split('/')[2] || 'length'}Tab`,
+  set: (name: string) => {
+    router.push(`/unit/${name.replace(/Tab$/, '')}`)
+  },
 })
 </script>
 
 <template>
   <div>
-    <DetailHeader :title="info.title"></DetailHeader>
+    <DetailHeader :title="title"></DetailHeader>
     <div>
       <div  class="p-4 rounded-2xl bg-white">
-        <el-tabs v-model="info.activeName" class="demo-tabs" @tab-click="handleClick">
+        <el-tabs v-model="activeName" class="demo-tabs">
           <el-tab-pane label="长度" name="lengthTab">
             <Length/>
           </el-tab-pane>

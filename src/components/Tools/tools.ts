@@ -48,15 +48,8 @@ export const goodSitesData = [
     title: 'FMHY',
     url: 'https://fmhy.net/',
     rating: 4.9,
-    desc: '互联网上最大的免费资源集合！提供流媒体、下载、种子、游戏、阅读、教育等各类免费内容导航，涵盖广告拦截、AI工具、Android/iOS应用、Linux/macOS软件等丰富分类，是寻找免费资源的首选平台',
+    desc: '互联网上最大的免费资源集合！提供流媒体、下载、种子、游戏、阅读、教育等各类免费内容导航，涵盖广告拦截、Android/iOS应用、Linux/macOS软件等丰富分类，是寻找免费资源的首选平台',
     category: '免费资源'
-  },
-  {
-    title: 'awesome-gpt-image-2-prompts',
-    url: 'https://github.com/EvoLinkAI/awesome-gpt-image-2-prompts/blob/main/README_zh-CN.md',
-    rating: 4.8,
-    desc: 'GPT-Image-2 高质量提示词库，收录人像摄影、海报插画、角色设计、UI截图等场景的优秀案例。大多数案例来源于 X/Twitter 上的创作者社区，包含完整的提示词文本和效果预览',
-    category: 'AI工具'
   },
 ]
 
@@ -461,10 +454,19 @@ export function getToolsCate() {
       icon: '',
       list: [
         {
+          id: 'flashcards-2026-08-15',
+          title: '闪卡复习',
+          logo: '/images/logo/flashcards.png',
+          desc: 'Anki 风格间隔重复闪卡复习系统，自录入卡片、按 SM-2 调度到期复习，提升长期记忆效率',
+          url: '/flashcards/',
+          cateId: 4,
+          cate: '教育学术'
+        },
+        {
           id: 38,
           title: '单位换算',
           logo: '/images/logo/unit.png',
-          desc: '在线重量、长度、面积、时间、角度、速度、温度、压力、热量、功率等换算',
+          desc: '在线长度、面积、重量、时间、温度、压力、热量与功率单位换算',
           url: '/unit',
           cateId: 4,
           cate: '教育学术'
@@ -519,7 +521,7 @@ export function getToolsCate() {
           title: '长度单位转换',
           logo: '/images/logo/length.png',
           desc: '长度转换工具-支持国际长度单位，中国传统长度单位，英制长度单位',
-        url: '/unit?active=length',
+          url: '/unit/length',
           cateId: 4,
           cate: '教育学术'
         },
@@ -528,7 +530,7 @@ export function getToolsCate() {
           title: '面积单位转换',
           logo: '/images/logo/area.png',
           desc: '面积转换工具-支持国际面积单位，中国传统面积单位，英制面积单位',
-        url: '/unit?active=area',
+          url: '/unit/area',
           cateId: 4,
           cate: '教育学术'
         },
@@ -537,7 +539,7 @@ export function getToolsCate() {
           title: '重量单位转换',
           logo: '/images/logo/weight.png',
           desc: '重量转换工具-支持国际重量单位，中国传统重量单位，英制重量单位(常衡制和金衡制)',
-        url: '/unit?active=weight',
+          url: '/unit/weight',
           cateId: 4,
           cate: '教育学术'
         },
@@ -546,7 +548,7 @@ export function getToolsCate() {
           title: '时间单位转换',
           logo: '/images/logo/time_unit.png',
           desc: '时间单位转换工具-支持国际时间单位',
-        url: '/unit?active=time',
+          url: '/unit/time',
           cateId: 4,
           cate: '教育学术'
         },
@@ -555,7 +557,7 @@ export function getToolsCate() {
           title: '温度单位转换',
           logo: '/images/logo/temperature.png',
           desc: '温度单位转换工具-支持国际温度单位',
-        url: '/unit?active=temperature',
+          url: '/unit/temperature',
           cateId: 4,
           cate: '教育学术'
         },
@@ -564,7 +566,7 @@ export function getToolsCate() {
           title: '压力单位转换',
           logo: '/images/logo/pressure.png',
           desc: '压力单位转换工具-Pa/kPa/hPa/MPa/bar/torr/psi等',
-        url: '/unit?active=pressure',
+          url: '/unit/pressure',
           cateId: 4,
           cate: '教育学术'
         },
@@ -573,7 +575,7 @@ export function getToolsCate() {
           title: '热量单位转换',
           logo: '/images/logo/heat.png',
           desc: '热量单位转换工具-Wh/mWh/kWh/MWh/J/kJ等',
-        url: '/unit?active=heat',
+          url: '/unit/heat',
           cateId: 4,
           cate: '教育学术'
         },
@@ -582,7 +584,7 @@ export function getToolsCate() {
           title: '功率单位转换',
           logo: '/images/logo/power.png',
           desc: '功率单位转换工具-W/mW/kW/MW/GW等',
-        url: '/unit?active=power',
+          url: '/unit/power',
           cateId: 4,
           cate: '教育学术'
         },
@@ -1292,157 +1294,6 @@ export function getToolsCate() {
           url: '/music-playlist',
           cateId: 7,
           cate: '其他工具'
-        },
-      ]
-    },
-    {
-      id: 10,
-      title: 'AI工具',
-      icon: '',
-      list:[
-        {
-          id: 109,
-          title: '在线文生图',
-          logo: '/images/logo/ai_test_to_image.png',
-          desc: '输入提示词生成AI图片，遇到服务限流时显示等待时间和重试提示',
-          url: '/ai-text-to-image',
-          cateId: 10,
-          cate: 'AI工具'
-        },
-        {
-          id: 110,
-          title: 'AI工具导航',
-          logo: '/images/logo/ai_tools.png',
-          desc: '精选第三方AI工具分类导航，一键直达',
-          url: '/aihub',
-          cateId: 10,
-          cate: 'AI工具'
-        },
-        {
-          id: 111,
-          title: 'AI起变量名',
-          logo: '/images/logo/ai_variable_name.png',
-          desc: '根据描述自动生成符合命名规范的变量名，支持多种命名风格与语言',
-          url: '/ai-variable-name',
-          cateId: 10,
-          cate: 'AI工具'
-        },
-        {
-          id: 112,
-          title: 'AI起名',
-          logo: '/images/logo/ai_get_name.png',
-          desc: '输入父母姓氏、选择名长与性别，生成多个姓名并附命名理由',
-          url: '/ai-name',
-          cateId: 10,
-          cate: 'AI工具'
-        },
-        {
-          id: 113,
-          title: 'AI翻译',
-          logo: '/images/logo/ai_translate.png',
-          desc: '支持多语言互译，源语言自动检测',
-          url: '/ai-translate',
-          cateId: 10,
-          cate: 'AI工具'
-        },
-        {
-          id: 114,
-          title: 'AI小学作文',
-          logo: '/images/logo/ai_elementary_essay.png',
-          desc: '按年级/题材/关键词生成贴合小学生水平的作文',
-          url: '/ai-elementary-essay',
-          cateId: 10,
-          cate: 'AI工具'
-        },
-        {
-          id: 115,
-          title: 'AI每日励志鸡汤文',
-          logo: '/images/logo/ai_daily_motivation.png',
-          desc: 'AI智能生成每日励志鸡汤文，支持多种风格选择，定时刷新，为你的每一天注入正能量',
-          url: '/ai-daily-motivation',
-          cateId: 10,
-          cate: 'AI工具'
-        },
-        {
-          id: 116,
-          title: 'AI对话',
-          logo: '/images/logo/ai_chat.png',
-          desc: '智能AI对话助手，支持多轮对话，提供专业、准确的回答',
-          url: '/ai-chat',
-          cateId: 10,
-          cate: 'AI工具'
-        },
-        {
-          id: 117,
-          title: 'AI面试',
-          logo: '/images/logo/ai_interview.png',
-          desc: 'AI智能面试助手，模拟真实面试场景，支持多种岗位类型，提升面试表现',
-          url: '/ai-interview',
-          cateId: 10,
-          cate: 'AI工具'
-        },
-        {
-          id: 118,
-          title: 'AI提示词仓库',
-          logo: '/images/logo/ai_prompt.png',
-          desc: '精选顶级AI提示词库，涵盖写作、编程、创意、分析等多个领域，助力提升AI对话效果',
-          url: '/ai-prompt',
-          cateId: 10,
-          cate: 'AI工具'
-        },
-        {
-          id: 119,
-          title: 'AI文生视频',
-          logo: '/images/logo/ai_tools.png',
-          desc: '基于Agnes AI的文生视频和图生视频工具，支持5-12秒、宽高比选择和提示词优化，服务限流时显示倒计时并保留任务以继续查询',
-          url: '/ai-text-to-video',
-          cateId: 10,
-          cate: 'AI工具'
-        },
-        // {
-        //   id: 2,
-        //   title: '在线文本转语音',
-        //   logo: '/images/logo/ai_text_to_speech.png',
-        //   desc: '提供在线免费无限次数的文本转语音服务',
-        //   url: '/ai-text-to-speech',
-        //   cateId: 10,
-        //   cate: 'AI工具'
-        // }
-        {
-          id: 'flashcards-2026-08-15',
-          title: '闪卡复习',
-          logo: '/images/logo/flashcards.png',
-          desc: 'Anki 风格间隔重复闪卡复习系统，自录入卡片、按 SM-2 调度到期复习，提升长期记忆效率',
-          url: '/flashcards/',
-          cateId: 10,
-          cate: 'AI工具'
-        },
-        {
-          id: 'ai-image-edit',
-          title: 'AI图片编辑',
-          logo: '/images/logo/ai_image_edit.png',
-          desc: 'AI智能图片编辑，支持文生图和图生图，上传图片+文字描述即可一键生成或修改图片',
-          url: '/ai-image-edit/',
-          cateId: 10,
-          cate: 'AI工具'
-        },
-        {
-          id: 'ai-outfit',
-          title: 'AI 穿搭建议',
-          logo: '/images/logo/ai_outfit.png',
-          desc: '上传人物照片，可选上传衣物照片，AI 自动设计穿搭或按衣物照替换：未传衣物时自动设计穿搭，传了衣物时替换为指定衣物',
-          url: '/ai-outfit/',
-          cateId: 10,
-          cate: 'AI工具'
-        },
-        {
-          id: 'ai-media-works-2026-07-29',
-          title: 'AI 媒体作品',
-          logo: '/images/logo/ai-media-works.png',
-          desc: '汇集免费 AI 模型（Agnes 等）自动生成的图片与视频画廊，每天定时更新，可按分类与类型筛选浏览',
-          url: '/ai-media-works',
-          cateId: 10,
-          cate: 'AI工具'
         },
       ]
     },

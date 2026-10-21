@@ -6,7 +6,7 @@
 // 新卡 due_at = now（即立即可复习），repetitions=0, interval_days=0, ease_factor=2.5
 // is_suspended 默认 0
 
-import { extractUidFromRequest } from '../../../_lib/model-resolver.js'
+import { extractUidFromRequest } from '../../../../utils/request-user.js'
 
 const corsHeaders = {
   'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',

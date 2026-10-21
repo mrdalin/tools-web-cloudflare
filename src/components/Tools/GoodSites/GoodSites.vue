@@ -79,24 +79,7 @@ const cates: Cate[] = [
         title: 'FMHY',
         url: 'https://fmhy.net/',
         rating: 4.9,
-        desc: '互联网上最大的免费资源集合！提供流媒体、下载、种子、游戏、阅读、教育等各类免费内容导航，涵盖广告拦截、AI工具、Android/iOS应用、Linux/macOS软件等丰富分类，是寻找免费资源的首选平台'
-      },
-    ],
-  },
-  {
-    title: 'AI资源',
-    list: [
-      {
-        title: '提示词仓库',
-        url: 'https://docs.google.com/spreadsheets/d/1ngoQOhJqdguwNAilCl1joNwTje7FWWN9WiI2bo5VhpU/edit?gid=2093180351#gid=2093180351&range=A1',
-        rating: 4.8,
-        desc: '基于 Google Sheets 维护的提示词资源库，适合集中查看和整理各类 AI 提示词、场景模板与灵感示例，便于检索、收藏和复用'
-      },
-      {
-        title: 'awesome-gpt-image-2-prompts',
-        url: 'https://github.com/EvoLinkAI/awesome-gpt-image-2-prompts/blob/main/README_zh-CN.md',
-        rating: 4.8,
-        desc: 'GPT-Image-2 高质量提示词库，收录人像摄影、海报插画、角色设计、UI截图等场景的优秀案例。大多数案例来源于 X/Twitter 上的创作者社区，包含完整的提示词文本和效果预览'
+        desc: '互联网上最大的免费资源集合！提供流媒体、下载、种子、游戏、阅读、教育等各类免费内容导航，涵盖广告拦截、Android/iOS应用、Linux/macOS软件等丰富分类，是寻找免费资源的首选平台'
       },
     ],
   },

@@ -13,7 +13,7 @@
 //   - streak_days: 连续复习天数（最近一次复习到今天的天数差）
 //   - reviews_30d: 最近 30 天每日复习次数（数组）
 
-import { extractUidFromRequest } from '../../_lib/model-resolver.js'
+import { extractUidFromRequest } from '../../../utils/request-user.js'
 
 const corsHeaders = {
   'Access-Control-Allow-Methods': 'GET, OPTIONS',

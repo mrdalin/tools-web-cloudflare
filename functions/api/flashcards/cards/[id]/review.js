@@ -11,7 +11,7 @@
 //
 // 响应：返回更新后的卡片状态 + 四档预览（供前端 UI 即时刷新按钮提示）。
 
-import { extractUidFromRequest } from '../../../_lib/model-resolver.js'
+import { extractUidFromRequest } from '../../../../utils/request-user.js'
 import { calcNextReview, previewIntervals } from '../../_lib.js'
 
 const corsHeaders = {

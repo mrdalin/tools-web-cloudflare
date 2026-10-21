@@ -6,7 +6,6 @@ description: 项目目录结构
 src/
 ├── api/                    # API 请求模块
 ├── components/
-│   ├── Common/             # 共享组件（AiChatCore、ChatInput 等）
 │   ├── Layout/             # 布局组件（Header、Left sidebar、Footer 等）
 │   │   ├── DetailHeader/   # 工具页面头部
 │   │   ├── ToolDetail/     # 可折叠详情组件
@@ -15,7 +14,6 @@ src/
 │   └── Tools/              # 所有工具组件（100+ 个工具）
 │       └── Example/        # 新工具模板
 ├── router/                 # Vue Router 配置
-├── spi/                    # AI 提供者接口（Pollinations、AiTools）
 ├── store/                  # Pinia 状态管理
 │   └── modules/
 │       ├── component.ts    # UI 状态（侧边栏、分类）

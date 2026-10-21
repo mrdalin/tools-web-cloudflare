@@ -2,10 +2,10 @@
 // GET  /api/flashcards/decks       列出当前用户的所有卡组（含每组卡片数与今日到期数）
 // POST /api/flashcards/decks       body: { name, description?, daily_new_limit? }
 //
-// 鉴权：复用 model-resolver.js 的 extractUidFromRequest
+// 鉴权：使用共享的请求身份校验
 // 数据隔离：WHERE uid = ?
 
-import { extractUidFromRequest } from '../_lib/model-resolver.js'
+import { extractUidFromRequest } from '../../utils/request-user.js'
 
 const corsHeaders = {
   'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
