@@ -6,6 +6,7 @@ import path from 'node:path'
 import test from 'node:test'
 import { buildPagesRouteShells, getStaticPageRoutes, renderPageHtml } from '../../scripts/build-pages-route-shells.mjs'
 import { createSitemap, loadPageCatalog } from '../../scripts/page-catalog.mjs'
+import { onRequest } from '../../functions/_middleware.js'
 
 const redirects = readFileSync(new URL('../../public/_redirects', import.meta.url), 'utf8')
 const headers = readFileSync(new URL('../../public/_headers', import.meta.url), 'utf8')
@@ -70,6 +71,43 @@ test('caches versioned build assets without caching the HTML shell', () => {
       new RegExp(`${path.replace('*', '\\*')}\\r?\\n[ \\t]+Cache-Control: public, max-age=31536000, immutable`),
       `missing immutable cache policy for ${path}`,
     )
+  }
+})
+
+test('returns uncached 404s for removed media pages instead of cached route shells', async () => {
+  const routes = JSON.parse(readFileSync(new URL('../../functions/_routes.json', import.meta.url), 'utf8'))
+  assert.ok(routes.include.length + routes.exclude.length <= 100, 'Pages Functions route limit exceeded')
+  for (const path of ['/ai-text-to-image', '/ai-text-to-video']) {
+    assert.ok(routes.include.includes(path), `missing Functions registration for ${path}`)
+    for (const method of ['GET', 'HEAD']) {
+      const response = await onRequest({
+        request: new Request(`https://youngbar.com${path}?old=1`, { method }),
+        env: { ASSETS: { fetch: async (request) => {
+          assert.equal(request.url, 'https://youngbar.com/404')
+          assert.equal(request.method, 'GET')
+          return new Response(notFound, { headers: {
+            'Content-Type': 'text/html; charset=utf-8',
+            'Cache-Control': 'public, s-maxage=604800',
+            Age: '86400',
+            ETag: '"old"',
+          } })
+        } } },
+        next: () => assert.fail('removed pages must not use cached static routing'),
+      })
+      assert.equal(response.status, 404)
+      assert.equal(response.headers.get('Cache-Control'), 'no-store')
+      assert.equal(response.headers.get('X-Robots-Tag'), 'noindex')
+      assert.equal(response.headers.get('Age'), null)
+      assert.equal(response.headers.get('ETag'), null)
+      assert.equal(await response.text(), method === 'HEAD' ? '' : notFound)
+    }
+  }
+  for (const path of ['/json', '/ai-gomoku', '/api/flashcards/decks']) {
+    const response = await onRequest({
+      request: new Request(`https://youngbar.com${path}`),
+      next: () => new Response('active'),
+    })
+    assert.equal(await response.text(), 'active')
   }
 })
 
