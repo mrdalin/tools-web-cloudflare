@@ -26,20 +26,30 @@ export class LinksRouter {
         return await this.controller.index(authResult.user.id, pager, origin)
 
       case 'POST':
-        // POST /api/links - 创建短链接（无需登录）
+        // 允许匿名创建；登录用户的链接绑定到验签后的用户身份
+        const createAuth = request.headers.has('Authorization')
+          ? await AuthMiddleware.extractUserFromRequest(request, env)
+          : { success: true, user: null }
+        if (!createAuth.success) {
+          return AuthMiddleware.createAuthErrorResponse(createAuth.error, origin)
+        }
         try {
           const data = await request.json()
-          return await this.controller.store(data, origin)
+          return await this.controller.store(data, createAuth.user?.id, origin)
         } catch {
           return ApiResponse.error('请求数据格式错误', origin, 400)
         }
 
       case 'DELETE':
-        // DELETE /api/links/{slug} - 删除短链接
+        // DELETE /api/links/{slug} - 仅创建者可删除
+        const deleteAuth = await AuthMiddleware.extractUserFromRequest(request, env)
+        if (!deleteAuth.success) {
+          return AuthMiddleware.createAuthErrorResponse(deleteAuth.error, origin)
+        }
         if (!slug) {
           return ApiResponse.error('缺少短链接后缀', origin, 400)
         }
-        return await this.controller.destroy(slug, origin)
+        return await this.controller.destroy(slug, deleteAuth.user.id, origin)
 
       default:
         return ApiResponse.error('不支持的请求方法', origin, 405)

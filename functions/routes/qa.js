@@ -34,7 +34,7 @@ export class QARouter {
         console.log('Handling ID path:', { id, method })
         
         if (method === 'GET') {
-          return await this.getQAById(id, origin, env)
+          return await this.getQAById(id, request, origin, env)
         } else if (method === 'PUT') {
           return await this.updateQA(id, request, origin, env)
         } else if (method === 'DELETE') {
@@ -126,11 +126,20 @@ export class QARouter {
   }
 
   // 根据ID获取QA（需要认证）
-  async getQAById(id, origin, env) {
+  async getQAById(id, request, origin, env) {
+    const authResult = await AuthMiddleware.extractUserFromRequest(request, env)
+    if (!authResult.success) {
+      return AuthMiddleware.createAuthErrorResponse(authResult.error, origin)
+    }
+
     const qa = await this.qaModel.findById(id)
     
     if (!qa) {
       return ApiResponse.error('QA页面不存在', origin, 404)
+    }
+
+    if (qa.uid !== authResult.user.id) {
+      return ApiResponse.error('无权限访问', origin, 403)
     }
 
     return ApiResponse.success(qa, origin)

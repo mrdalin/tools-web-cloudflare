@@ -113,14 +113,22 @@ export class LinksService {
     }
   }
 
-  async deleteLink(slug) {
+  async deleteLink(slug, uid) {
+    if (!uid) {
+      return { success: false, error: '请先登录', status: 401 }
+    }
     try {
-      const queryBuilder = new QueryBuilder().where('slug', '=', slug)
-      await this.linkModel.deleteWithQuery(queryBuilder)
+      const queryBuilder = new QueryBuilder()
+        .where('slug', '=', slug)
+        .where('uid', '=', uid)
+      const deleted = await this.linkModel.deleteWithQuery(queryBuilder)
+      if (!deleted) {
+        return { success: false, error: '短链接不存在或无权删除', status: 404 }
+      }
       return { success: true }
     } catch (error) {
       console.error('LinksService deleteLink error:', error)
-      return { success: false, error: '删除失败' }
+      return { success: false, error: '删除失败', status: 500 }
     }
   }
 }

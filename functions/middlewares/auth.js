@@ -10,6 +10,10 @@ export class AuthMiddleware {
       }
 
       const [headerB64, payloadB64, signatureB64] = parts
+      const header = JSON.parse(atob(headerB64.replace(/-/g, '+').replace(/_/g, '/')))
+      if (header.alg !== 'HS256') {
+        throw new Error('Invalid JWT algorithm')
+      }
       
       // 验证签名
       const data = `${headerB64}.${payloadB64}`
@@ -55,8 +59,14 @@ export class AuthMiddleware {
 
       // 检查token是否过期
       const currentTime = Math.floor(Date.now() / 1000)
-      if (payload.exp && payload.exp < currentTime) {
+      if (!payload || typeof payload.uid !== 'string' || !payload.uid.trim()) {
+        throw new Error('Invalid user identity')
+      }
+      if (!Number.isFinite(payload.exp) || payload.exp <= currentTime) {
         throw new Error('Token expired')
+      }
+      if (payload.nbf !== undefined && (!Number.isFinite(payload.nbf) || payload.nbf > currentTime)) {
+        throw new Error('Token not yet valid')
       }
 
       return { success: true, payload }

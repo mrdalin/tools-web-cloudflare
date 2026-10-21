@@ -1,4 +1,5 @@
 import { getCORSHeaders } from '../utils/cors.js'
+import { AuthMiddleware } from '../middlewares/auth.js'
 
 // 用户收藏AI应用 API
 // GET    /api/favorite-apps          获取当前用户所有收藏（联表 ai_apps 返回完整应用信息）
@@ -18,26 +19,8 @@ export async function onRequest(context) {
   const db = env.DB
   const url = new URL(request.url)
 
-  // 从 JWT token 中提取用户信息
-  const getUserFromToken = async () => {
-    const authHeader = request.headers.get('Authorization')
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
-      return null
-    }
-    const token = authHeader.substring(7)
-    try {
-      const parts = token.split('.')
-      if (parts.length !== 3) return null
-      const payload = JSON.parse(atob(parts[1].replace(/-/g, '+').replace(/_/g, '/')))
-      if (payload.exp && payload.exp * 1000 <= Date.now()) return null
-      return payload
-    } catch (e) {
-      return null
-    }
-  }
-
-  const user = await getUserFromToken()
-  if (!user || !user.uid) {
+  const authResult = await AuthMiddleware.extractUserFromRequest(request, env)
+  if (!authResult.success) {
     return new Response(JSON.stringify({
       success: false,
       error: '请先登录'
@@ -46,7 +29,7 @@ export async function onRequest(context) {
       headers: { 'Content-Type': 'application/json', ...corsHeaders }
     })
   }
-  const uid = user.uid
+  const uid = authResult.user.id
 
   try {
     // GET - 获取收藏列表

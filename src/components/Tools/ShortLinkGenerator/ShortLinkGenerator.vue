@@ -46,8 +46,8 @@ const fetchServerLinks = async () => {
     const res = await fetch('/api/links', { headers: authHeaders() })
     if (!res.ok) return
     const body = await res.json()
-    if (body?.data?.data) {
-      state.recentLinks = body.data.data.map((item: any) => ({
+    if (Array.isArray(body?.data)) {
+      state.recentLinks = body.data.map((item: any) => ({
         slug: item.slug,
         url: item.url,
         title: item.title || '',
