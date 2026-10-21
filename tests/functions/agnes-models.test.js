@@ -111,6 +111,30 @@ test('image proxy upgrades cached models and preserves reference images and outp
   assert.equal((await response.json()).data[0].url, 'https://example.com/result.png')
 })
 
+for (const [retryAfter, expectedSeconds] of [['180', 180], [null, 60]]) {
+  test(`image rate limits preserve ${retryAfter ? 'the upstream wait' : 'a default wait'} without retrying`, async (t) => {
+    const calls = mockUpstream(t, new Response('error code: 1015\n', {
+      status: 429,
+      headers: retryAfter ? { 'Retry-After': retryAfter } : {}
+    }))
+    const response = await image(postContext({ prompt: 'A blue circle', size: '1024x1024' }))
+
+    assert.equal(calls.length, 1)
+    assert.equal(calls[0].body.model, 'agnes-image-2.5-flash')
+    assert.equal(response.status, 429)
+    assert.equal(response.headers.get('Content-Type'), 'application/json')
+    assert.equal(response.headers.get('Cache-Control'), 'no-store')
+    assert.equal(response.headers.get('Retry-After'), String(expectedSeconds))
+    assert.deepEqual(await response.json(), {
+      error: {
+        code: 'rate_limit_exceeded',
+        message: `图像服务请求过于频繁，请在 ${expectedSeconds} 秒后重试`,
+        retry_after: expectedSeconds
+      }
+    })
+  })
+}
+
 for (const mode of ['text', 'keyframe', 'reference']) {
   test(`video proxy uses Flash and preserves ${mode} inputs`, async (t) => {
     const calls = mockUpstream(t, { video_id: 'test-video' })

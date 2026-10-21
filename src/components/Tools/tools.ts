@@ -1304,7 +1304,7 @@ export function getToolsCate() {
           id: 109,
           title: '在线文生图',
           logo: '/images/logo/ai_test_to_image.png',
-          desc: '提供在线免费无限次数的AI文生图服务',
+          desc: '输入提示词生成AI图片，遇到服务限流时显示等待时间和重试提示',
           url: '/ai-text-to-image',
           cateId: 10,
           cate: 'AI工具'

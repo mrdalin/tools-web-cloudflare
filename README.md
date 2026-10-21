@@ -82,6 +82,7 @@ Agnes 调用使用官方基址 `https://api.agnes-ai.cn`，模型统一为：
 
 - 配置 `AGNES_API_KEY` 时，默认先调用 Agnes `agnes-3.0-flash`。
 - Agnes 免费文本模型的上游限额为每分钟 10 次请求。文本调用收到 `429` 后不自动重试，通用文本接口立即尝试备用服务；`/api/agnes-chat` 和旧代理的文本接口返回中文限流提示及 `Retry-After`，未提供等待时间时提示 60 秒后重试。站内按 IP 的防滥用限制独立于上游账号额度，不代表每个访客各有 10 次 Agnes 请求额度。
+- 图片生成接口收到上游 `429`（包括非 JSON 的 `error code: 1015`）后不自动重试，返回中文图像限流提示并保留 `Retry-After`。文生图页面保留提示词，按等待时间倒计时并暂时禁用生成按钮；未提供等待时间时，建议等待 60 秒再手动尝试。图片额度独立于文本的 10 RPM，等待结束不保证上游已解除限制。
 - Agnes 超时、报错、返回空正文或因长度截断时，自动回退到 Pollinations `openai-fast`。
 - 未配置 `AGNES_API_KEY` 时，直接使用 Pollinations。
 - Provider Key 只存在于 Cloudflare Pages 加密变量中，前端不能直接持有或调用这些 Key。

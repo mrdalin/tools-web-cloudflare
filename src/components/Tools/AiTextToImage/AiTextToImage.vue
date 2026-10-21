@@ -1,7 +1,7 @@
 <script setup lang="ts">
-import { ref, reactive, onMounted, computed, watch } from "vue";
+import { ref, reactive, onMounted, onUnmounted, computed, watch } from "vue";
 import { useRoute } from 'vue-router'
-import { generateAgnesImages } from "@/utils/agnesImage";
+import { AgnesImageError, generateAgnesImages } from "@/utils/agnesImage";
 
 import DetailHeader from "@/components/Layout/DetailHeader/DetailHeader.vue";
 import ToolDetail from "@/components/Layout/ToolDetail/ToolDetail.vue";
@@ -9,7 +9,7 @@ const maxHistoryCount = ref(Number(import.meta.env.VITE_AI_IMAGE_HISTORY_MAX) ||
 
 const info = reactive({
   title: "在线文生图",
-  desc: "免费无限次数生成图片，无需登录注册、直接使用，如果生成出错或者生成的内容和提示词不一致，请重试，或者重新进一下页面",
+  desc: "输入提示词生成图片，无需登录注册。生成受上游服务可用性和请求限制影响；遇到限流时，请等待页面倒计时结束后再试。",
   maxSeed: 100000000,
   // 预设提示词列表
   presetPrompts: [
@@ -70,6 +70,28 @@ const info = reactive({
 const prompt = ref(info.presetPrompts[0]); // 使用第一个预设提示词作为默认值
 const imageUrl = ref("");
 const isLoading = ref(false);
+const generationError = ref("");
+const retryAfterSeconds = ref(0);
+let retryTimer: ReturnType<typeof setInterval> | undefined;
+
+const clearRetryTimer = () => {
+  if (retryTimer !== undefined) {
+    clearInterval(retryTimer);
+    retryTimer = undefined;
+  }
+};
+
+const startRetryCountdown = (seconds: number) => {
+  clearRetryTimer();
+  const retryAt = Date.now() + seconds * 1000;
+  retryAfterSeconds.value = seconds;
+  retryTimer = setInterval(() => {
+    retryAfterSeconds.value = Math.max(0, Math.ceil((retryAt - Date.now()) / 1000));
+    if (retryAfterSeconds.value === 0) clearRetryTimer();
+  }, 1000);
+};
+
+onUnmounted(clearRetryTimer);
 
 // 模型列表
 const models = ref<{ value: string; label: string }[]>([
@@ -160,9 +182,10 @@ const randomPresetPrompt = () => {
 };
 
 const generateImage = async () => {
-  if (!prompt.value.trim() || !selectedModel.value) return;
+  if (!canGenerateImage.value) return;
 
   isLoading.value = true;
+  generationError.value = "";
   imageUrl.value = "";
 
   try {
@@ -179,7 +202,10 @@ const generateImage = async () => {
     saveToHistory(prompt.value, imageUrl.value);
   } catch (error) {
     console.error("生成失败:", error);
-    alert("图像生成失败，请稍后重试");
+    generationError.value = error instanceof Error ? error.message : "图像生成失败，请稍后重试";
+    if (error instanceof AgnesImageError && error.status === 429) {
+      startRetryCountdown(error.retryAfterSeconds || 60);
+    }
   } finally {
     isLoading.value = false;
   }
@@ -233,6 +259,7 @@ const clearAllHistory = () => {
 // 修改生成图像按钮的禁用条件
 const canGenerateImage = computed(() => {
   return !isLoading.value && 
+         retryAfterSeconds.value === 0 &&
          !modelsLoading.value && 
          !modelsLoadError.value && 
          selectedModel.value && 
@@ -528,8 +555,19 @@ const copyPrompt = async (text: string) => {
                   d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
                 ></path>
               </svg>
-              {{ isLoading ? "生成中..." : "生成图像" }}
+              {{ isLoading ? "生成中..." : retryAfterSeconds > 0 ? `请在 ${retryAfterSeconds} 秒后重试` : "生成图像" }}
             </button>
+
+            <div
+              v-if="generationError"
+              role="alert"
+              class="rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-800 break-words"
+            >
+              <p>{{ generationError }}</p>
+              <p v-if="retryAfterSeconds > 0" class="mt-2">
+                {{ retryAfterSeconds }} 秒后可再次尝试。页面会保留提示词，请等待后手动重试。
+              </p>
+            </div>
           </div>
 
           <!-- 右侧：生成结果 -->

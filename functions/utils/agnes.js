@@ -45,7 +45,11 @@ export function friendlyAgnesError(error) {
   return { status: 502, message: 'AI 服务暂时不稳定，请稍后重试' }
 }
 
-export async function agnesTextRateLimitResponse(response, corsHeaders) {
+export function agnesTextRateLimitResponse(response, corsHeaders) {
+  return agnesRateLimitResponse(response, corsHeaders, '文本')
+}
+
+export async function agnesRateLimitResponse(response, corsHeaders, serviceLabel) {
   const retryAfter = (response.headers.get('Retry-After') || '').trim()
   const seconds = /^\d+$/.test(retryAfter) ? Number(retryAfter) : NaN
   const retryAt = /^[A-Za-z]/.test(retryAfter) ? Date.parse(retryAfter) : NaN
@@ -60,7 +64,7 @@ export async function agnesTextRateLimitResponse(response, corsHeaders) {
   return new Response(JSON.stringify({
     error: {
       code: 'rate_limit_exceeded',
-      message: `文本服务请求过于频繁，请在 ${retryAfterSeconds} 秒后重试`,
+      message: `${serviceLabel}服务请求过于频繁，请在 ${retryAfterSeconds} 秒后重试`,
       retry_after: retryAfterSeconds
     }
   }), {
