@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { onMounted, watch, nextTick, onUnmounted, ref } from 'vue';
+import { onActivated, onDeactivated, watch, nextTick, onUnmounted, ref } from 'vue';
 // import { Star } from '@element-plus/icons-vue'
 import { useToolsStore } from '@/store/modules/tools'
 import { useComponentStore } from '@/store/modules/component'
@@ -9,6 +9,7 @@ import { Top } from '@element-plus/icons-vue'
 import { useSpriteLogo } from '@/components/Tools/useSpriteLogo'
 import { resolveActiveCategory, type CategoryPosition } from './scrollSpy'
 import { markHomeReady } from '@/utils/homeNavigation'
+defineOptions({ name: 'Home' })
 //store
 const toolsStore = useToolsStore()
 const componentStore = useComponentStore()
@@ -27,8 +28,11 @@ const showBackTop = ref(false)
 const isLoadingCates = ref(false)
 const HOME_TOP_EVENT = 'youngbar:home-top'
 let leavingFor: RouteLocationNormalized | undefined
-let isUnmounted = false
-let activationTimer: number | undefined
+let isHomeActive = false
+let activationVersion = 0
+let activationFrame: number | undefined
+
+const isCurrentHome = () => isHomeActive && !leavingFor && route.path === '/'
 
 onBeforeRouteLeave((to) => {
   leavingFor = to
@@ -55,6 +59,8 @@ const getFirstCategoryAnchor = () => {
 }
 
 const scrollToTop = () => {
+  if (!isCurrentHome()) return
+  const activation = activationVersion
   if (route.query.value) {
     router.replace({ path: '/', query: {} })
     return
@@ -64,10 +70,11 @@ const scrollToTop = () => {
   isUserClickingCategory.value = true
 
   const restoreScrollState = () => {
-    if (wasActive && route.path === '/') {
+    if (wasActive && isCurrentHome()) {
       isScrollListenerActive.value = true
     }
     window.setTimeout(() => {
+      if (activation !== activationVersion || !isCurrentHome()) return
       isUserClickingCategory.value = false
       handleScroll()
     }, 50)
@@ -79,6 +86,7 @@ const scrollToTop = () => {
     return
   }
   const step = () => {
+    if (activation !== activationVersion || !isCurrentHome()) return
     const current = document.documentElement.scrollTop || document.body.scrollTop
     if (current <= 0) {
       restoreScrollState()
@@ -93,13 +101,18 @@ const scrollToTop = () => {
 }
 
 const resetHomeToTop = async () => {
+  if (!isCurrentHome()) return
+  const activation = activationVersion
   await ensureToolCates()
+  if (activation !== activationVersion || !isCurrentHome()) return
   componentStore.setActiveCategory(getFirstCategoryAnchor())
   await nextTick()
   scrollToTop()
 }
 
 const scrollToAnchor = async () => {
+  if (!isCurrentHome()) return
+  const activation = activationVersion
   const v = route.query?.value as any
   const anchor = Array.isArray(v) ? v[0] : v
   if (typeof anchor !== 'string' || !anchor) return
@@ -113,6 +126,7 @@ const scrollToAnchor = async () => {
 
   await nextTick()
   requestAnimationFrame(() => {
+    if (activation !== activationVersion || !isCurrentHome()) return
     document?.getElementById(anchor)?.scrollIntoView({
       behavior: 'smooth',
       block: 'start',
@@ -121,7 +135,7 @@ const scrollToAnchor = async () => {
 
     // 滚动完成后，延迟恢复滚动监听
     setTimeout(() => {
-      if (wasActive) {
+      if (wasActive && activation === activationVersion && isCurrentHome()) {
         isScrollListenerActive.value = true
       }
     }, 1000)
@@ -138,7 +152,7 @@ const isScrollTriggeredUpdate = ref(false)
 // 滚动监听函数
 const handleScroll = () => {
   showBackTop.value = (window.pageYOffset || document.documentElement.scrollTop) > 300
-  if (!isScrollListenerActive.value || leavingFor || route.path !== '/') return
+  if (!isScrollListenerActive.value || !isCurrentHome()) return
   // 如果用户正在点击分类，暂时跳过滚动监听
   if (isUserClickingCategory.value) return
   
@@ -187,8 +201,9 @@ const handleScroll = () => {
         query: { value: activeCategory }
       })
       // 更新后重置标志
+      const activation = activationVersion
       setTimeout(() => {
-        isScrollTriggeredUpdate.value = false
+        if (activation === activationVersion) isScrollTriggeredUpdate.value = false
       }, 100)
     }
   }
@@ -206,6 +221,8 @@ const throttledHandleScroll = () => {
 
 //跳转锚点 - 复用Left.vue的逻辑
 const gotoAnchor = async (anchor: string) => {
+  if (!isCurrentHome()) return
+  const activation = activationVersion
   const q = route.query?.value as any
   const current = Array.isArray(q) ? q[0] : q
 
@@ -214,79 +231,70 @@ const gotoAnchor = async (anchor: string) => {
 
   // 1秒后恢复滚动监听
   setTimeout(() => {
-    isUserClickingCategory.value = false
+    if (activation === activationVersion) isUserClickingCategory.value = false
   }, 1000)
 
-  if (route.path === "/") {
-    if (current === anchor) {
-      await nextTick()
-      document?.getElementById(anchor)?.scrollIntoView({
-        behavior: 'smooth',
-        block: 'start',
-        inline: 'start',
-      })
-      return
-    }
-    await router.replace({
-      path: "/",
-      query: { value: anchor },
+  if (current === anchor) {
+    await nextTick()
+    if (activation !== activationVersion || !isCurrentHome()) return
+    document?.getElementById(anchor)?.scrollIntoView({
+      behavior: 'smooth',
+      block: 'start',
+      inline: 'start',
     })
-  } else {
-    await router.push({
-      path: "/",
-      query: { value: anchor },
-    })
+    return
   }
+  await router.replace({
+    path: "/",
+    query: { value: anchor },
+  })
 }
 
-onMounted(async () => {
-  await nextTick()
+onActivated(async () => {
+  const activation = ++activationVersion
+  leavingFor = undefined
   await ensureToolCates()
   await nextTick()
 
-  if (isUnmounted || route.path !== '/') return
+  if (activation !== activationVersion || route.path !== '/') return
+  isHomeActive = true
   // 初次进入首页的定位交给路由，避免分类锚点覆盖历史滚动位置。
   markHomeReady()
 
-  // 延迟激活滚动监听，给用户一些时间
-  activationTimer = window.setTimeout(() => {
-    // 只在首页激活滚动监听
-    if (route.path === '/') {
+  // 先让路由恢复位置，再在下一帧同步分类与滚动监听。
+  activationFrame = window.requestAnimationFrame(() => {
+    if (isCurrentHome()) {
       isScrollListenerActive.value = true
       window.addEventListener('scroll', throttledHandleScroll)
       handleScroll()
     }
-  }, 500) // 延迟500ms
+  })
   window.addEventListener(HOME_TOP_EVENT, resetHomeToTop)
 })
 
-onUnmounted(() => {
-  isUnmounted = true
-  window.clearTimeout(activationTimer)
-  removeNavigationListener()
-  // 清理滚动监听
+const deactivateHome = () => {
+  isHomeActive = false
+  activationVersion++
+  if (activationFrame !== undefined) window.cancelAnimationFrame(activationFrame)
   isScrollListenerActive.value = false
+  isUserClickingCategory.value = false
+  isScrollTriggeredUpdate.value = false
   window.removeEventListener('scroll', throttledHandleScroll)
   window.removeEventListener(HOME_TOP_EVENT, resetHomeToTop)
   if (scrollTimer) {
     cancelAnimationFrame(scrollTimer)
+    scrollTimer = null
   }
-})
+}
 
-// 监听路由变化
-watch(() => route.path, async (newPath) => {
-  if (newPath === '/') {
-    await ensureToolCates()
-    isScrollListenerActive.value = true
-    window.addEventListener('scroll', throttledHandleScroll)
-  } else {
-    isScrollListenerActive.value = false
-    window.removeEventListener('scroll', throttledHandleScroll)
-  }
+onDeactivated(deactivateHome)
+onUnmounted(() => {
+  deactivateHome()
+  removeNavigationListener()
 })
 
 watch(() => route.query.value, async (value) => {
-  if (route.path !== '/') return
+  if (!isCurrentHome()) return
   const anchor = Array.isArray(value) ? value[0] : value
   if (typeof anchor === 'string' && anchor) {
     scrollToAnchor()
@@ -332,12 +340,12 @@ watch(() => route.query.value, async (value) => {
                   <div class="font-semibold text-base line-clamp-1 text-slate-900">{{ item.title }}</div>
                 </div>
                 <div class="flex justify-between">
-                  <el-text size="small" class="tool-card-meta">{{ item.cate }}</el-text>
+                  <span class="tool-card-meta">{{ item.cate }}</span>
                 </div>
               </div>
             </div>
             <div class="flex items-center justify-between mt-2">
-              <el-text line-clamp="2" class="tool-card-desc">{{ item.desc }}</el-text>
+              <span class="tool-card-desc line-clamp-2" :title="item.desc">{{ item.desc }}</span>
             </div>
           </router-link>
       </div>
@@ -404,12 +412,17 @@ watch(() => route.query.value, async (value) => {
 }
 
 .tool-card-meta {
+  font-size: 12px;
   color: #64748b !important;
+  overflow-wrap: break-word;
 }
 
+/* 直接用 CSS 截断说明文字，避免逐张卡片测量布局。 */
 .tool-card-desc {
+  font-size: 14px;
   color: #475569 !important;
   line-height: 1.55;
+  overflow-wrap: break-word;
 }
 
 .fade-enter-active,

@@ -163,8 +163,11 @@ watch(
       </el-header>
       <el-main :class="[isSpecialPage ? '' : 'c-xs:pt-16', componentStore.hideAllUI && !isSpecialPage ? 'c-xs:pt-0' : '']">
         <router-view v-slot="{ Component, route }">
-          <transition name="fade" mode="out-in">
-            <component :is="Component" :key="route.path"></component>
+          <!-- 返回首页时复用已渲染的卡片，跳过路由淡入淡出。 -->
+          <transition :name="isHomePage ? 'home-return' : 'fade'" mode="out-in">
+            <KeepAlive include="Home" :max="1">
+              <component :is="Component" :key="route.path"></component>
+            </KeepAlive>
           </transition>
         </router-view>
         <ToolSeoContent v-if="!isSpecialPage && !isHomePage && !componentStore.hideAllUI && showToolSeoContent" />
