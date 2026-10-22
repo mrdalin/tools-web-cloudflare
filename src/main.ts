@@ -11,4 +11,7 @@ import pinia from './store'
 const app = createApp(App)
 app.use(pinia)
 app.use(router)
-router.isReady().then(() => app.mount('#app'))
+router.isReady()
+  .then(() => app.mount('#app'))
+  .catch((error) => console.error('Failed to start app:', error))
+  .finally(() => window.dispatchEvent(new Event('youngbar:startup-finished')))

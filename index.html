@@ -26,10 +26,47 @@
 
     <!-- 首屏关键 CSS 内联（避免主 CSS 加载期间出现白底闪烁） -->
     <style>
-      :root{--warm-50:#fefcf9;--warm-100:#fef7ed;--base-black:#7c2d12}
+      :root{--warm-50:#f7fbfa;--warm-100:#eef7f5;--base-black:#17212b}
       html,body{margin:0;padding:0}
-      body{background:#fef7ed;background:linear-gradient(135deg,#fef7ed 0%,#fdead5 100%);color:#7c2d12}
+      body{background:#f7fbfa;background:linear-gradient(135deg,#f7fbfa 0%,#eef7f5 100%);color:#17212b}
+      .app-startup{display:none;min-height:100vh}
+      .app-starting #app>.page-preview{display:none}
+      .app-starting .app-startup{display:block}
+      .app-startup *{box-sizing:border-box}
+      .app-startup-sidebar{position:fixed;inset:0 auto 0 0;width:240px;padding:28px 20px;background:#fff;border-right:1px solid #e2e8f0}
+      .app-startup-line{height:16px;margin-bottom:24px;border-radius:6px;background:#dbeae7}
+      .app-startup-line:nth-child(even){width:70%}
+      .app-startup-main{margin-left:240px;padding:24px 44px}
+      .app-startup-header{height:40px;margin-bottom:44px;border-radius:8px;background:rgba(255,255,255,.8)}
+      .app-startup-title{width:120px;height:24px;border-radius:6px;background:#dbeae7}
+      .app-startup-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:16px;margin-top:20px}
+      .app-startup-card{height:132px;border:1px solid #e2e8f0;border-radius:8px;background:rgba(255,255,255,.8)}
+      .app-startup-status{position:absolute;width:1px;height:1px;padding:0;overflow:hidden;clip-path:inset(50%);white-space:nowrap}
+      @media(max-width:991px){.app-startup-sidebar{display:none}.app-startup-main{margin-left:0;padding:16px 20px}}
+      @media(max-width:639px){.app-startup-grid{grid-template-columns:1fr}}
     </style>
+    <script>
+      // 交互页面接管前显示布局占位；无脚本或加载失败时保留可阅读的静态内容。
+      (() => {
+        const root = document.documentElement;
+        root.classList.add('app-starting');
+        let fallbackTimer;
+        const finish = () => {
+          root.classList.remove('app-starting');
+          clearTimeout(fallbackTimer);
+          window.removeEventListener('youngbar:startup-finished', finish);
+          window.removeEventListener('vite:preloadError', finish);
+          window.removeEventListener('error', onScriptError, true);
+        };
+        const onScriptError = (event) => {
+          if (event.target instanceof HTMLScriptElement && event.target.type === 'module') finish();
+        };
+        window.addEventListener('youngbar:startup-finished', finish);
+        window.addEventListener('vite:preloadError', finish);
+        window.addEventListener('error', onScriptError, true);
+        fallbackTimer = window.setTimeout(finish, 10000);
+      })();
+    </script>
 
     <!-- SEO metadata; production builds generate a unique copy for every page. -->
     <meta name="keywords" content="在线工具,免费工具,JSON格式化,Base64,时间戳转换,二维码,图片压缩,PDF工具,文本处理,单位换算">
@@ -54,7 +91,29 @@
     <!--[if lt IE 9]>
     <div class="notice chromeframe">您的浏览器版本<strong>很旧很旧</strong>，为了正常地访问网站，请升级您的浏览器</div>
     <![endif]-->
-    <div id="app"><!--page-content:start--><!--page-content:end--></div>
+    <div id="app">
+      <div class="app-startup" role="status" aria-live="polite">
+        <span class="app-startup-status">正在加载页面</span>
+        <div aria-hidden="true">
+          <div class="app-startup-sidebar">
+            <div class="app-startup-line"></div><div class="app-startup-line"></div>
+            <div class="app-startup-line"></div><div class="app-startup-line"></div>
+            <div class="app-startup-line"></div><div class="app-startup-line"></div>
+            <div class="app-startup-line"></div><div class="app-startup-line"></div>
+          </div>
+          <div class="app-startup-main">
+            <div class="app-startup-header"></div>
+            <div class="app-startup-title"></div>
+            <div class="app-startup-grid">
+              <div class="app-startup-card"></div><div class="app-startup-card"></div>
+              <div class="app-startup-card"></div><div class="app-startup-card"></div>
+              <div class="app-startup-card"></div><div class="app-startup-card"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <!--page-content:start--><!--page-content:end-->
+    </div>
     <noscript>
       <p>
         Youngbar 工具箱隐私政策：
