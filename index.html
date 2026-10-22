@@ -59,7 +59,10 @@
           window.removeEventListener('error', onScriptError, true);
         };
         const onScriptError = (event) => {
-          if (event.target instanceof HTMLScriptElement && event.target.type === 'module') finish();
+          // 第三方统计脚本被拦截时，本站页面仍可正常启动。
+          const script = event.target;
+          if (script instanceof HTMLScriptElement && script.type === 'module' && script.src
+            && new URL(script.src).origin === location.origin) finish();
         };
         window.addEventListener('youngbar:startup-finished', finish);
         window.addEventListener('vite:preloadError', finish);
