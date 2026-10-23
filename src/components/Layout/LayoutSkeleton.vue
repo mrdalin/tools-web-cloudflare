@@ -10,8 +10,8 @@ defineProps<{
 </script>
 
 <template>
-  <!-- Header 骨架：logo + 搜索框 + 右侧按钮 -->
-  <div v-if="variant === 'header'" class="h-16 px-4 flex items-center gap-4 border-b border-gray-100 bg-white">
+  <!-- Header 骨架：手机端和正式菜单一样固定，避免加载完成后页面上移。 -->
+  <div v-if="variant === 'header'" class="h-16 px-4 flex items-center gap-4 border-b border-gray-100 bg-white c-xs:fixed c-xs:top-0 c-xs:left-0 c-xs:right-0 c-xs:z-50">
     <div class="skel-block w-28 h-7 rounded"></div>
     <div class="skel-block flex-1 max-w-xl h-9 rounded-lg"></div>
     <div class="skel-block w-20 h-9 rounded-lg"></div>
