@@ -9,6 +9,7 @@ import { Top } from '@element-plus/icons-vue'
 import { useSpriteLogo } from '@/components/Tools/useSpriteLogo'
 import { resolveActiveCategory, type CategoryPosition } from './scrollSpy'
 import { markHomeReady } from '@/utils/homeNavigation'
+import FrequentTools from './FrequentTools.vue'
 defineOptions({ name: 'Home' })
 //store
 const toolsStore = useToolsStore()
@@ -307,6 +308,7 @@ watch(() => route.query.value, async (value) => {
 
 <template>
   <div class="md:mr-6 c-xs:mr-0">
+    <FrequentTools />
     <!-- list -->
     <div v-for="(cate, index) in toolsStore.cates" :key="index">
       <!-- cate title -->

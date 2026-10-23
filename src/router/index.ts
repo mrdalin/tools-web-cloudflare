@@ -9,6 +9,7 @@ import {
   HOME_PAGE_META, SITE_URL, getCanonicalUrl, getPageTitle,
   getPageStructuredData, isIndexablePage, serializeStructuredData,
 } from '@/utils/pageSeo'
+import { recordToolVisit } from '@/utils/frequentTools'
 
 declare global {
   interface Window {
@@ -108,8 +109,9 @@ router.beforeEach((to, _from, next) => {
 })
 
 //路由后置卫士
-router.afterEach((to, _from, failure) => {
+router.afterEach((to, from, failure) => {
   if (failure) return
+  recordToolVisit(to.path, from.path)
   const { title, keywords, description } = resolvePageMeta(to.path, to.meta)
   const canonicalUrl = getCanonicalUrl(to.path)
   const routePattern = to.matched[to.matched.length - 1]?.path || '/:unknown'
