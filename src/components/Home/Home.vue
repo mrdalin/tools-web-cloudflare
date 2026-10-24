@@ -8,7 +8,7 @@ import { onBeforeRouteLeave, useRoute, useRouter, type RouteLocationNormalized }
 import { Top } from '@element-plus/icons-vue'
 import { useSpriteLogo } from '@/components/Tools/useSpriteLogo'
 import { resolveActiveCategory, type CategoryPosition } from './scrollSpy'
-import { markHomeReady } from '@/utils/homeNavigation'
+import { markHomeReady, rememberHomeVisit } from '@/utils/homeNavigation'
 import FrequentTools from './FrequentTools.vue'
 defineOptions({ name: 'Home' })
 //store
@@ -32,14 +32,25 @@ let leavingFor: RouteLocationNormalized | undefined
 let isHomeActive = false
 let activationVersion = 0
 let activationFrame: number | undefined
+let lastHomePosition = { left: 0, top: 0 }
+let homeHistoryPosition: number | undefined
+
+const syncHomeHistoryPosition = () => {
+  const position = router.options.history.state.position
+  homeHistoryPosition = typeof position === 'number' ? position : undefined
+}
 
 const isCurrentHome = () => isHomeActive && !leavingFor && route.path === '/'
 
 onBeforeRouteLeave((to) => {
   leavingFor = to
+  if (to.path !== '/') {
+    rememberHomeVisit(route.fullPath, lastHomePosition, homeHistoryPosition)
+  }
 })
 const removeNavigationListener = router.afterEach((to, _from, failure) => {
   if (failure && to === leavingFor) leavingFor = undefined
+  if (!failure && to.path === '/') syncHomeHistoryPosition()
 })
 
 const ensureToolCates = async () => {
@@ -152,7 +163,10 @@ const isScrollTriggeredUpdate = ref(false)
 
 // 滚动监听函数
 const handleScroll = () => {
-  showBackTop.value = (window.pageYOffset || document.documentElement.scrollTop) > 300
+  const scrollLeft = window.scrollX || document.documentElement.scrollLeft || document.body.scrollLeft
+  const scrollTop = window.pageYOffset || document.documentElement.scrollTop || document.body.scrollTop
+  if (!leavingFor) lastHomePosition = { left: scrollLeft, top: scrollTop }
+  showBackTop.value = scrollTop > 300
   if (!isScrollListenerActive.value || !isCurrentHome()) return
   // 如果用户正在点击分类，暂时跳过滚动监听
   if (isUserClickingCategory.value) return
@@ -161,7 +175,6 @@ const handleScroll = () => {
   if (categories.length === 0) return
 
   // 获取当前滚动位置
-  const scrollTop = window.pageYOffset || document.documentElement.scrollTop
   const viewportHeight = window.innerHeight || document.documentElement.clientHeight
   const scrollHeight = Math.max(
     document.documentElement.scrollHeight,
@@ -259,6 +272,7 @@ onActivated(async () => {
 
   if (activation !== activationVersion || route.path !== '/') return
   isHomeActive = true
+  syncHomeHistoryPosition()
   // 初次进入首页的定位交给路由，避免分类锚点覆盖历史滚动位置。
   markHomeReady()
 

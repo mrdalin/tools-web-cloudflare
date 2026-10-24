@@ -3,7 +3,7 @@ import { createRouter, createWebHistory, type Router } from 'vue-router'
 import { constantRoute } from './router'
 import { getToolSeoMeta } from '@/components/Layout/ToolSeoContent/toolSeoMeta'
 import {
-  isHomeScrollPosition, prepareHomeScroll, rememberHomeVisit, waitForHomeReady,
+  getLastHomeVisit, isHomeScrollPosition, prepareHomeScroll, waitForHomeReady,
 } from '@/utils/homeNavigation'
 import {
   HOME_PAGE_META, SITE_URL, getCanonicalUrl, getPageTitle,
@@ -57,8 +57,15 @@ const router: Router = createRouter({
   routes: constantRoute,
   async scrollBehavior(to, from, savedPosition) {
     if (to.path === '/' && (from.path !== '/' || from.matched.length === 0)) {
-      const returnPosition = router.options.history.state.homeReturnPosition
-      const position = savedPosition || (isHomeScrollPosition(returnPosition) ? returnPosition : null)
+      const historyState = router.options.history.state
+      const returnPosition = historyState.homeReturnPosition
+      const visit = from.matched.length > 0 ? getLastHomeVisit() : null
+      // 相同分类地址也可能存在于多条历史记录中，只使用当前记录的位置。
+      const rememberedPosition = visit?.fullPath === to.fullPath
+        && visit.historyPosition === historyState.position ? visit.position : null
+      const position = rememberedPosition
+        || savedPosition
+        || (isHomeScrollPosition(returnPosition) ? returnPosition : null)
       await waitForHomeReady()
       if (router.currentRoute.value !== to) return false
       if (position) return { left: position.left, top: position.top, behavior: 'instant' }
@@ -78,9 +85,6 @@ const router: Router = createRouter({
 })
 
 router.beforeResolve((to, from) => {
-  if (from.path === '/' && from.matched.length > 0 && to.path !== '/') {
-    rememberHomeVisit(from.fullPath, { left: window.scrollX, top: window.scrollY })
-  }
   if (to.path === '/' && (from.path !== '/' || from.matched.length === 0)) {
     prepareHomeScroll()
   }

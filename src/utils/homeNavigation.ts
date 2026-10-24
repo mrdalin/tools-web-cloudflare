@@ -6,6 +6,7 @@ export interface HomeScrollPosition {
 interface HomeVisit {
   fullPath: string
   position: HomeScrollPosition
+  historyPosition?: number
 }
 
 const HOME_VISIT_KEY = 'youngbar:home-visit'
@@ -20,8 +21,8 @@ export const isHomeScrollPosition = (value: unknown): value is HomeScrollPositio
     && Number.isFinite(position.top) && position.top >= 0
 }
 
-export const rememberHomeVisit = (fullPath: string, position: HomeScrollPosition) => {
-  lastHomeVisit = { fullPath, position }
+export const rememberHomeVisit = (fullPath: string, position: HomeScrollPosition, historyPosition?: number) => {
+  lastHomeVisit = { fullPath, position, historyPosition }
   try {
     sessionStorage.setItem(HOME_VISIT_KEY, JSON.stringify(lastHomeVisit))
   } catch {
