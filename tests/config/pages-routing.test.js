@@ -74,6 +74,12 @@ test('caches versioned build assets without caching the HTML shell', () => {
   }
 })
 
+test('allows local QR decoding and first-party camera access without eval', () => {
+  assert.match(headers, /Permissions-Policy: camera=\(self\), microphone=\(\), geolocation=\(\)/)
+  assert.match(headers, /worker-src 'self' blob:;/)
+  assert.doesNotMatch(headers, /'unsafe-eval'/)
+})
+
 test('returns uncached 404s for removed media pages instead of cached route shells', async () => {
   const routes = JSON.parse(readFileSync(new URL('../../functions/_routes.json', import.meta.url), 'utf8'))
   assert.ok(routes.include.length + routes.exclude.length <= 100, 'Pages Functions route limit exceeded')

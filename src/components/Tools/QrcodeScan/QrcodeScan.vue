@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { reactive, ref } from 'vue'
-import { QrcodeStream, QrcodeDropZone, QrcodeCapture } from 'qrcode-reader-vue3'
+// Compile the source locally: the legacy bundle uses eval, which our CSP blocks.
+import { QrcodeStream, QrcodeDropZone, QrcodeCapture } from 'qrcode-reader-vue3/src/index.js'
 import { ElMessage } from 'element-plus'
 import DetailHeader from '@/components/Layout/DetailHeader/DetailHeader.vue'
 import ToolDetail from '@/components/Layout/ToolDetail/ToolDetail.vue'
@@ -27,6 +28,15 @@ const handleScan = (result: string) => {
 const handleError = (error: any) => {
   console.error('扫描错误:', error)
   ElMessage.error('扫描失败，请重试')
+}
+
+const handleCameraInit = async (initialization: Promise<unknown>) => {
+  try {
+    await initialization
+  } catch (error) {
+    isScanning.value = false
+    ElMessage.error('无法打开摄像头，请检查设备和浏览器权限，或使用图片识别')
+  }
 }
 
 const startScan = () => {
@@ -116,6 +126,7 @@ const openLink = (url: string) => {
             <div class="border-2 border-dashed border-gray-300 rounded-lg p-4 mb-4 max-w-md mx-auto">
               <QrcodeStream
                 v-if="isScanning"
+                @init="handleCameraInit"
                 @decode="handleScan"
                 @error="handleError"
                 class="w-full"
@@ -208,4 +219,4 @@ const openLink = (url: string) => {
   border-color: #409eff;
   background-color: #f0f9ff;
 }
-</style> 
+</style>
