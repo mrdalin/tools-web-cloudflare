@@ -11,9 +11,14 @@ export interface UserInfo {
  * 读取本地存储的 TOKEN
  */
 export function getLocalToken(): string | null {
-    const t = localStorage.getItem('TOKEN') || '';
-    const token = t.trim();
-    return token ? token : null;
+    try {
+        const t = localStorage.getItem('TOKEN') || '';
+        const token = t.trim();
+        return token ? token : null;
+    } catch {
+        // 禁用本地存储时按未登录处理，保持公共工具和导航可用。
+        return null;
+    }
 }
 
 /**

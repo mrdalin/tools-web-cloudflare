@@ -82,6 +82,15 @@ const isHomePage = computed(() => {
 const showToolSeoContent = computed(() => hasToolSeoContent(route.path));
 const canShowDiscuss = computed(() => !isSpecialPage.value && !isHomePage.value && !componentStore.hideAllUI)
 
+// 专注模式跟随当前地址，返回首页或浏览历史时同步恢复导航。
+watch(
+  () => !isHomePage.value && !isSpecialPage.value && route.query.focus === '1',
+  (enabled) => {
+    if (componentStore.hideAllUI !== enabled) componentStore.setHideAllUI(enabled)
+  },
+  { immediate: true, flush: 'sync' },
+)
+
 const stopDiscussObserver = () => {
   if (discussObserver) {
     discussObserver.disconnect()

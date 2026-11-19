@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, reactive, onMounted, computed, onUnmounted, nextTick } from 'vue'
+import { ref, onMounted, computed, onUnmounted, nextTick } from 'vue'
 import { Search } from '@element-plus/icons-vue';
 import { ElMessage } from 'element-plus'
 import { useToolsStore } from '@/store/modules/tools'
@@ -15,17 +15,26 @@ const route = useRoute()
 const routeLoading = ref(false)
 
 // 监听路由变化，显示加载状态
-router.beforeEach((_to, _from, next) => {
+const removeBeforeEach = router.beforeEach((_to, _from, next) => {
   routeLoading.value = true
   next()
 })
 
-router.afterEach(() => {
+const removeAfterEach = router.afterEach(() => {
+  routeLoading.value = false
+})
+const removeOnError = router.onError(() => {
   routeLoading.value = false
 })
 // const isNavDrawer = ref(false)
 const loading = ref(false)
-const options = ref<ToolsInfo[]>([])
+type ToolSearchOption = Omit<ToolsInfo, 'id'> & {
+  id: number | string
+  isExternalSite?: boolean
+  externalUrl?: string
+}
+const options = ref<ToolSearchOption[]>([])
+const selectedTool = ref<number | string>()
 //store
 const toolsStore = useToolsStore()
 const componentStore = useComponentStore()
@@ -47,49 +56,32 @@ const isLoggedIn = computed(() => userStore.getLoginStatus)
 // 计算属性：获取用户信息
 const user = computed(() => userStore.getUserInfo)
 
-//查询参数
-const searchParam = reactive({
-  cateId: 0,
-  title: '',
-  route: '',
-})
-
-//search
-// const search = async () => {
-//   try {
-//     await toolsStore.getTools(searchParam)
-//     //关闭抽屉
-//     isNavDrawer.value = false
-//   } catch (error) {
-//     console.log(error)
-//   }
-// }
-
-//选择分类
-// const chooseCate = (cateId: number) => {
-//   searchParam.cateId = cateId
-//   search()
-// }
-
 //搜索工具
 const searchTools = async (query: string) => {
   loading.value = true
   options.value = []
-  if (query) {
-    searchParam.title = query
-    options.value = await toolsStore.getTools(searchParam)
+  const title = query.trim()
+  if (title) {
+    options.value = await toolsStore.getTools({ cateId: 0, title, route: '' })
   }
   loading.value = false
 }
 
-const optionClick = (item: any) => {
+const selectTool = (id: number | string) => {
+  const item = options.value.find(option => option.id === id)
+  if (!item) return
   floatingHeaderVisible.value = false
   // 如果是好物网站,直接打开外部链接
   if (item.isExternalSite && item.externalUrl) {
-    window.open(item.externalUrl, '_blank')
+    window.open(item.externalUrl, '_blank', 'noopener,noreferrer')
   } else {
     router.push(item.url)
   }
+  // 清空已选值，返回后仍能再次选择同一工具。
+  nextTick(() => {
+    selectedTool.value = undefined
+    options.value = []
+  })
 }
 
 const gotoHomeTop = async () => {
@@ -116,7 +108,7 @@ const gotoHomeTop = async () => {
 
 const ensureHomeReadyAfterLogout = async () => {
   componentStore.setActiveCategory('')
-  searchParam.title = ''
+  selectedTool.value = undefined
   options.value = []
 
   if (toolsStore.cates.length === 0) {
@@ -241,6 +233,9 @@ onMounted(() => {
 })
 
 onUnmounted(() => {
+  removeBeforeEach()
+  removeAfterEach()
+  removeOnError()
   // 移除事件监听
   document.removeEventListener('click', handleClickOutside)
   window.removeEventListener('scroll', handleWindowScroll)
@@ -292,17 +287,8 @@ onUnmounted(() => {
       
     
       <div class="c-xs:w-[85%] w-full mr-3">
-        <!-- <el-input 
-          v-model="searchParam.title" 
-          placeholder="搜索工具" 
-          class="h-10 ml-3" 
-          @keyup.enter.native="search">
-          <template #append>
-            <el-button :icon="Search" @click="search"/>
-          </template>
-        </el-input> -->
         <el-select
-          v-model="searchParam.title"
+          v-model="selectedTool"
           filterable
           remote
           reserve-keyword
@@ -312,6 +298,7 @@ onUnmounted(() => {
           placeholder="输入关键词搜索，如文本、json、图片等"
           :remote-method="searchTools"
           :loading="loading"
+          @change="selectTool"
           class="ml-3 w-full"
           size="large"
         >
@@ -320,7 +307,6 @@ onUnmounted(() => {
             :key="item.id"
             :label="item.title + ' - ' + item.desc"
             :value="item.id"
-            @click="optionClick(item)"
           >
           </el-option>
         </el-select>

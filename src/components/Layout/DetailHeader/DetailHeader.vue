@@ -97,7 +97,6 @@ const copyShareText = async () => {
 
 const toggleSidebar = (value: string | number | boolean) => {
   const boolValue = Boolean(value)
-  componentStore.setHideAllUI(boolValue)
 
   // 同步到 URL 参数
   const query = { ...route.query }
@@ -113,11 +112,6 @@ const toggleSidebar = (value: string | number | boolean) => {
 
 onMounted(() => {
   findToolCateId()
-
-  // 从 URL 恢复专注模式
-  if (route.query.focus === '1') {
-    componentStore.setHideAllUI(true)
-  }
 })
 
 </script>
@@ -145,7 +139,7 @@ onMounted(() => {
       <div class="flex items-center gap-2 px-3 py-2">
         <span class="text-sm font-medium text-warm-700">专注模式</span>
         <el-switch
-          v-model="componentStore.hideAllUI"
+          :model-value="componentStore.hideAllUI"
           @change="toggleSidebar"
           size="default"
         />
