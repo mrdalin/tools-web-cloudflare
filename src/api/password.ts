@@ -44,17 +44,9 @@ const API_BASE_URL = '/api/passwords'
 export async function getAllGroups(): Promise<PasswordGroup[]> {
   try {
     const response = await functionsRequest.get<any>(`${API_BASE_URL}/groups`)
-    console.log('getAllGroups 完整响应:', response)
-    console.log('getAllGroups response.data:', response.data)
-    console.log('getAllGroups response.status:', response.status)
-    console.log('getAllGroups response.headers:', response.headers)
-
-    // 尝试不同的数据路径
     const data = response.data?.data || response.data || []
-    console.log('解析后的 groups:', data)
     return data
   } catch (error: any) {
-    console.error('获取分组失败:', error)
     ElMessage.error(error.response?.data?.error || '获取分组失败')
     return []
   }
@@ -66,7 +58,6 @@ export async function getGroupById(id: string): Promise<PasswordGroup | null> {
     const response = await functionsRequest.get<PasswordGroup>(`${API_BASE_URL}/groups/${id}`)
     return response.data || null
   } catch (error: any) {
-    console.error('获取分组失败:', error)
     ElMessage.error(error.response?.data?.error || '获取分组失败')
     return null
   }
@@ -78,7 +69,6 @@ export async function createGroup(data: { name: string; color: string }): Promis
     const response = await functionsRequest.post<{ id: string; message: string }>(`${API_BASE_URL}/groups`, data)
     return response.data
   } catch (error: any) {
-    console.error('创建分组失败:', error)
     ElMessage.error(error.response?.data?.error || '创建分组失败')
     throw error
   }
@@ -90,7 +80,6 @@ export async function updateGroup(id: string, data: { name?: string; color?: str
     const response = await functionsRequest.put(`${API_BASE_URL}/groups/${id}`, data)
     return response.data
   } catch (error: any) {
-    console.error('更新分组失败:', error)
     ElMessage.error(error.response?.data?.error || '更新分组失败')
     throw error
   }
@@ -102,7 +91,6 @@ export async function deleteGroup(id: string): Promise<any> {
     const response = await functionsRequest.delete(`${API_BASE_URL}/groups/${id}`)
     return response.data
   } catch (error: any) {
-    console.error('删除分组失败:', error)
     ElMessage.error(error.response?.data?.error || '删除分组失败')
     throw error
   }
@@ -131,7 +119,6 @@ export async function getAllEntries(options?: { groupId?: string; page?: number;
     const url = queryString ? `${API_BASE_URL}/entries?${queryString}` : `${API_BASE_URL}/entries`
 
     const response = await functionsRequest.get<any>(url)
-    console.log('getAllEntries response:', response.data)
 
     // 后端直接返回分页数据，不需要再嵌套一层
     const data = response.data as PaginatedResponse<PasswordEntry> | undefined
@@ -142,10 +129,8 @@ export async function getAllEntries(options?: { groupId?: string; page?: number;
       pageSize: data?.pageSize || 20,
       totalPages: data?.totalPages || 0
     }
-    console.log('Parsed paginated entries:', result)
     return result
   } catch (error: any) {
-    console.error('获取密码条目失败:', error)
     ElMessage.error(error.response?.data?.error || '获取密码条目失败')
     return {
       list: [],
@@ -163,7 +148,6 @@ export async function getEntryById(id: string): Promise<PasswordEntry | null> {
     const response = await functionsRequest.get<PasswordEntry>(`${API_BASE_URL}/entries/${id}`)
     return response.data || null
   } catch (error: any) {
-    console.error('获取密码条目失败:', error)
     ElMessage.error(error.response?.data?.error || '获取密码条目失败')
     return null
   }
@@ -182,7 +166,6 @@ export async function createEntry(data: {
     const response = await functionsRequest.post<{ id: string; message: string }>(`${API_BASE_URL}/entries`, data)
     return response.data
   } catch (error: any) {
-    console.error('创建密码条目失败:', error)
     ElMessage.error(error.response?.data?.error || '创建密码条目失败')
     throw error
   }
@@ -201,7 +184,6 @@ export async function updateEntry(id: string, data: {
     const response = await functionsRequest.put(`${API_BASE_URL}/entries/${id}`, data)
     return response.data
   } catch (error: any) {
-    console.error('更新密码条目失败:', error)
     ElMessage.error(error.response?.data?.error || '更新密码条目失败')
     throw error
   }
@@ -213,7 +195,6 @@ export async function deleteEntry(id: string): Promise<any> {
     const response = await functionsRequest.delete(`${API_BASE_URL}/entries/${id}`)
     return response.data
   } catch (error: any) {
-    console.error('删除密码条目失败:', error)
     ElMessage.error(error.response?.data?.error || '删除密码条目失败')
     throw error
   }
@@ -229,7 +210,6 @@ export async function exportPasswords(): Promise<Blob> {
     })
     return response.data
   } catch (error: any) {
-    console.error('导出密码失败:', error)
     ElMessage.error(error.response?.data?.error || '导出密码失败')
     throw error
   }
@@ -248,7 +228,6 @@ export async function importPasswords(file: File): Promise<{ success: number; fa
     })
     return response.data
   } catch (error: any) {
-    console.error('导入密码失败:', error)
     ElMessage.error(error.response?.data?.error || '导入密码失败')
     throw error
   }

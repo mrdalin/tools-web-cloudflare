@@ -4,7 +4,48 @@ import DetailHeader from '@/components/Layout/DetailHeader/DetailHeader.vue'
 import ToolDetail from '@/components/Layout/ToolDetail/ToolDetail.vue'
 import {jwtDecode} from 'jwt-decode'
 import { ElMessage } from 'element-plus'
-import randomize from 'randomatic'
+
+const siteUrl = import.meta.env.VITE_SITE_URL || window.location.origin
+const siteHost = siteUrl.replace(/^https?:\/\//, '').replace(/\/+$/, '')
+
+const getHmacHash = (algorithm: unknown) => {
+  if (algorithm === 'HS256') return 'SHA-256'
+  if (algorithm === 'HS384') return 'SHA-384'
+  if (algorithm === 'HS512') return 'SHA-512'
+  return null
+}
+
+const encodeBase64Url = (value: Uint8Array) => {
+  let binary = ''
+  for (const byte of value) binary += String.fromCharCode(byte)
+  return btoa(binary).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '')
+}
+
+const decodeBase64Url = (value: string) => {
+  if (!/^[A-Za-z0-9_-]*$/.test(value) || value.length % 4 === 1) {
+    throw new Error('Token签名编码无效')
+  }
+  const base64 = value.replace(/-/g, '+').replace(/_/g, '/')
+  const binary = atob(base64.padEnd(Math.ceil(base64.length / 4) * 4, '='))
+  const bytes = Uint8Array.from(binary, character => character.charCodeAt(0))
+  if (encodeBase64Url(bytes) !== value) throw new Error('Token签名编码无效')
+  return bytes
+}
+
+const encodeJsonObject = (value: string) => {
+  let parsed: unknown
+  try {
+    parsed = JSON.parse(value)
+  } catch {
+    throw new Error('Header 和 Payload 必须是有效 JSON')
+  }
+  if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) {
+    throw new Error('JWT Header 和 Payload 必须是 JSON 对象')
+  }
+  return encodeBase64Url(new TextEncoder().encode(JSON.stringify(parsed)))
+}
+
+const createRandomSecret = () => encodeBase64Url(crypto.getRandomValues(new Uint8Array(32)))
 
 // 添加tab状态
 const activeTab = ref('parse')
@@ -21,13 +62,13 @@ const generateData = reactive({
     "typ": "JWT"
   }, null, 2),
   payload: JSON.stringify({
-    "iss": (import.meta.env.VITE_SITE_URL).replace(/^https?:\/\//, ''),
+    "iss": siteHost,
     "sub": "youngbar-user",
-    "aud": (import.meta.env.VITE_SITE_URL).replace(/^https?:\/\//, '').split('.')[1],
+    "aud": siteHost,
     "iat": Math.floor(Date.now() / 1000),
     "exp": Math.floor(Date.now() / 1000) + 3600
   }, null, 2),
-  secret: 'youngbar-secret-key',
+  secret: createRandomSecret(),
   generatedToken: ''
 })
 
@@ -53,8 +94,7 @@ const parser = () => {
     signatureValid.value = false
     signatureInvalid.value = false
     ElMessage.success('解析成功')
-  } catch (e) {
-    console.log('Invalid token', e)
+  } catch {
     invalidToken.value = true
     decodeHeader.value = ''
     decodePayload.value = ''
@@ -65,8 +105,15 @@ const parser = () => {
 }
 
 // 添加JWT签名校验功能
-const verifySignature = () => {
-  if (!info.token || !verifySecret.value) {
+const verifySignature = async () => {
+  signatureValid.value = false
+  signatureInvalid.value = false
+
+  if (!info.token.trim()) {
+    ElMessage.warning('请输入JWT Token')
+    return
+  }
+  if (!verifySecret.value) {
     ElMessage.warning('请输入Secret')
     return
   }
@@ -77,15 +124,28 @@ const verifySignature = () => {
       ElMessage.error('Token格式不正确')
       return
     }
-    
-    // 获取header和payload
-    const signature = parts[2]
-    
-    // 使用提供的secret重新计算签名
-    const expectedSignature = btoa(unescape(encodeURIComponent(verifySecret.value)))
-    
-    // 简单的签名比较（实际项目中应该使用真实的加密库）
-    if (signature === expectedSignature) {
+    const header = jwtDecode<{ alg?: string }>(info.token, { header: true })
+    const hash = getHmacHash(header.alg)
+    if (!hash) {
+      ElMessage.error('仅支持 HS256、HS384、HS512 签名算法')
+      return
+    }
+
+    const key = await crypto.subtle.importKey(
+      'raw',
+      new TextEncoder().encode(verifySecret.value),
+      { name: 'HMAC', hash },
+      false,
+      ['verify'],
+    )
+    const valid = await crypto.subtle.verify(
+      'HMAC',
+      key,
+      decodeBase64Url(parts[2]),
+      new TextEncoder().encode(`${parts[0]}.${parts[1]}`),
+    )
+
+    if (valid) {
       signatureValid.value = true
       signatureInvalid.value = false
       ElMessage.success('签名校验成功！')
@@ -94,8 +154,7 @@ const verifySignature = () => {
       signatureInvalid.value = true
       ElMessage.error('签名校验失败！')
     }
-  } catch (e) {
-    console.log('Verify signature error', e)
+  } catch {
     ElMessage.error('校验过程中发生错误')
   }
 }
@@ -112,35 +171,60 @@ const clear = () => {
 }
 
 // 生成JWT
-const generateJWT = () => {
+let generationVersion = 0
+const generateJWT = async (notifyOnError = false) => {
+  const currentVersion = ++generationVersion
+  const headerValue = generateData.header
+  const payloadValue = generateData.payload
+  const secretValue = generateData.secret
+
   try {
-    // 简单的JWT生成实现（实际项目中建议使用专业的JWT库）
-    const header = btoa(unescape(encodeURIComponent(generateData.header)))
-    const payload = btoa(unescape(encodeURIComponent(generateData.payload)))
-    
-    // 这里使用简单的签名算法，实际项目中应该使用真实的加密库
-    const signature = btoa(unescape(encodeURIComponent(generateData.secret)))
-    
-    generateData.generatedToken = `${header}.${payload}.${signature}`
-  } catch (e) {
-    console.log('Generate JWT error', e)
+    if (!secretValue) throw new Error('请输入签名密钥')
+    const header = encodeJsonObject(headerValue)
+    const payload = encodeJsonObject(payloadValue)
+    const parsedHeader = JSON.parse(headerValue) as { alg?: string }
+    const hash = getHmacHash(parsedHeader.alg)
+    if (!hash) throw new Error('仅支持 HS256、HS384、HS512 签名算法')
+
+    const key = await crypto.subtle.importKey(
+      'raw',
+      new TextEncoder().encode(secretValue),
+      { name: 'HMAC', hash },
+      false,
+      ['sign'],
+    )
+    const signature = new Uint8Array(await crypto.subtle.sign(
+      'HMAC',
+      key,
+      new TextEncoder().encode(`${header}.${payload}`),
+    ))
+
+    if (currentVersion !== generationVersion) return
+    generateData.generatedToken = `${header}.${payload}.${encodeBase64Url(signature)}`
+  } catch (error) {
+    if (currentVersion !== generationVersion) return
+    generateData.generatedToken = ''
+    if (notifyOnError) {
+      ElMessage.error(error instanceof Error ? error.message : 'JWT生成失败')
+    }
   }
 }
 
 // 清空生成数据
 const clearGenerate = () => {
+  generationVersion++
   generateData.header = JSON.stringify({
     "alg": "HS256",
     "typ": "JWT"
   }, null, 2)
   generateData.payload = JSON.stringify({
-    "iss": (import.meta.env.VITE_SITE_URL).replace(/^https?:\/\//, ''),
+    "iss": siteHost,
     "sub": "youngbar-user",
-    "aud": (import.meta.env.VITE_SITE_URL).replace(/^https?:\/\//, '').split('.')[1],
+    "aud": siteHost,
     "iat": Math.floor(Date.now() / 1000),
     "exp": Math.floor(Date.now() / 1000) + 3600
   }, null, 2)
-  generateData.secret = 'youngbar-secret-key'
+  generateData.secret = createRandomSecret()
   generateData.generatedToken = ''
 }
 
@@ -164,8 +248,8 @@ const updateTimestamps = () => {
     payload.iat = Math.floor(Date.now() / 1000)
     payload.exp = Math.floor(Date.now() / 1000) + selectedExpiration.value
     generateData.payload = JSON.stringify(payload, null, 2)
-  } catch (e) {
-    console.log('Update timestamps error', e)
+  } catch {
+    ElMessage.error('Payload JSON 格式无效，无法更新时间戳')
   }
 }
 
@@ -196,19 +280,14 @@ const copyJWT = async () => {
         document.body.removeChild(textArea)
       }
     }
-  } catch (err) {
-    console.error('复制失败:', err)
+  } catch {
     ElMessage.error('复制失败，请手动复制')
   }
 }
 
 // 生成随机密钥
 const generateRandomSecret = () => {
-  // 随机生成20-40位的长度
-  const length = Math.floor(Math.random() * (40 - 20 + 1)) + 20
-  // 使用 randomatic 生成随机长度的字符串，包含大小写字母、数字和特殊字符
-  const secret = randomize('*', length)
-  generateData.secret = secret
+  generateData.secret = createRandomSecret()
 }
 
 // 复制Secret到剪贴板
@@ -216,8 +295,7 @@ const copySecret = () => {
   if (navigator.clipboard && window.isSecureContext) {
     navigator.clipboard.writeText(generateData.secret).then(() => {
       ElMessage.success('Secret已复制到剪贴板')
-    }).catch(err => {
-      console.error('复制失败:', err)
+    }).catch(() => {
       ElMessage.error('复制失败，请手动复制')
     })
   } else {
@@ -241,41 +319,24 @@ const copySecret = () => {
   }
 }
 
-onMounted(() => {
-  // 页面加载时自动生成JWT并设置为示例token
-  generateJWT()
-  // 将生成的token设置为示例token
+onMounted(async () => {
+  // Wait for Web Crypto before parsing the initial token.
+  await generateJWT()
   info.token = generateData.generatedToken
-  parser()
+  if (info.token) parser()
 })
 
 // 监听数据变化，自动生成JWT
 watch(
   () => [generateData.header, generateData.payload, generateData.secret],
-  () => {
-    if (generateData.header && generateData.payload && generateData.secret) {
-      generateJWT()
+  ([header, payload, secret]) => {
+    if (header && payload && secret) {
+      void generateJWT()
+    } else {
+      generationVersion++
+      generateData.generatedToken = ''
     }
   },
-  { deep: true }
-)
-
-// 监听payload内部字段变化
-watch(
-  () => generateData.payload,
-  (newPayload) => {
-    try {
-      const payload = JSON.parse(newPayload)
-      // 如果payload解析成功且有必要的字段，自动生成JWT
-      if (payload.iss && payload.sub && payload.aud) {
-        generateJWT()
-      }
-    } catch (e) {
-      // payload格式错误时不生成
-      console.log('Payload format error:', e)
-    }
-  },
-  { deep: true }
 )
 </script>
 
@@ -393,7 +454,7 @@ watch(
 
             <!-- 操作按钮 -->
             <div class="flex gap-2">
-              <el-button type="primary" @click="generateJWT">生成JWT</el-button>
+              <el-button type="primary" @click="generateJWT(true)">生成JWT</el-button>
               <el-button @click="clearGenerate">重置</el-button>
             </div>
 
@@ -431,7 +492,7 @@ watch(
         <strong>JWT生成功能：</strong><br>
         • 自定义Header和Payload内容<br>
         • 支持过期时间快速设置（1小时到15天）<br>
-        • 随机生成20-40位长度的安全密钥<br>
+        • 使用加密安全随机数生成32字节密钥<br>
         • 一键复制生成的JWT Token和Secret<br>
         • 实时预览生成的JWT结构<br>
         <br>

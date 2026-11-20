@@ -160,7 +160,6 @@ const handleGoogleSignIn = async (response: any) => {
 
       if (result.data.success) {
         const jwt = jwtDecode<{ username: string }>(result.data.token);
-        console.log("jwt", jwt);
         ElMessage.success(`欢迎回来，${jwt.username}！`);
         // 保存 JWT
         localStorage.setItem("TOKEN", result.data.token);
@@ -173,7 +172,6 @@ const handleGoogleSignIn = async (response: any) => {
       }
     } catch (error) {
       ElMessage.error("谷歌登录失败，请重试");
-      console.error("Google sign-in error:", error);
     } finally {
       loading.value = false;
     }

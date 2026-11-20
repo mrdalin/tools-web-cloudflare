@@ -113,8 +113,6 @@ const loadData = async () => {
       search: info.searchQuery
     })
 
-    console.log('✓ 从数据库加载的数据:', result)
-
     entries.value = result.list
     total.value = result.total
     totalPages.value = result.totalPages
@@ -126,7 +124,6 @@ const loadData = async () => {
 
       // 如果没有默认分组，创建默认分组
       if (groups.value.length === 0) {
-        console.log('⚠ 没有分组，创建默认分组')
         const defaultGroups = [
           { name: '社交媒体', color: '#409EFF' },
           { name: '工作', color: '#67C23A' },
@@ -141,11 +138,9 @@ const loadData = async () => {
 
         // 重新加载分组
         groups.value = await passwordApi.getAllGroups()
-        console.log('✓ 默认分组创建完成')
       }
     }
   } catch (e: any) {
-    console.error('✗ 加载数据失败:', e)
     ElMessage.error(e.message || '加载数据失败')
   } finally {
     info.isLoading = false
@@ -336,7 +331,6 @@ const saveEntry = async () => {
     await loadData()
     info.showDialog = false
   } catch (e: any) {
-    console.error('保存失败:', e)
     ElMessage.error(e.message || '保存失败')
   }
 }
@@ -357,7 +351,6 @@ const deleteEntry = async (entry: PasswordEntry) => {
     await loadData()
   } catch (e: any) {
     if (e !== 'cancel') {
-      console.error('删除失败:', e)
       ElMessage.error(e.message || '删除失败')
     }
   }
@@ -425,8 +418,8 @@ const exportPasswords = async () => {
     window.URL.revokeObjectURL(url)
 
     ElMessage.success('密码导出成功')
-  } catch (e: any) {
-    console.error('导出失败:', e)
+  } catch {
+    // The API helper already displays the export error.
   }
 }
 
@@ -456,8 +449,8 @@ const importPasswords = async () => {
 
     // 重新加载数据
     await loadData()
-  } catch (e: any) {
-    console.error('导入失败:', e)
+  } catch {
+    // The API helper already displays the import error.
   }
 }
 
@@ -543,7 +536,6 @@ const saveGroup = async () => {
     // 重新加载数据和统计
     await loadData()
   } catch (e: any) {
-    console.error('保存分组失败:', e)
     ElMessage.error(e.message || '保存分组失败')
   }
 }
@@ -580,7 +572,6 @@ const deleteGroup = async (groupId: string) => {
     await loadData()
   } catch (e: any) {
     if (e !== 'cancel') {
-      console.error('删除分组失败:', e)
       ElMessage.error(e.message || '删除分组失败')
     }
   }

@@ -30,7 +30,6 @@ const findToolCateId = () => {
       const tool = cate.list.find((t: any) => rtrim(t.url, '/') === currentPath)
       if (tool) {
         toolCateId.value = cate.id
-        console.log('Found tool:', tool.title, 'in category:', cate.title, 'cateId:', cate.id)
         return
       }
     }
@@ -39,7 +38,6 @@ const findToolCateId = () => {
   // 如果没找到，使用第一个分类
   if (toolsStore.cates.length > 0) {
     toolCateId.value = toolsStore.cates[0].id
-    console.log('Tool not found, using default category:', toolCateId.value)
   }
 }
 
