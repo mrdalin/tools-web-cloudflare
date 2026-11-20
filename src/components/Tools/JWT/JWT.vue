@@ -79,6 +79,17 @@ const invalidToken = ref(false)
 const verifySecret = ref('')
 const signatureValid = ref(false)
 const signatureInvalid = ref(false)
+let signatureRequest = 0
+
+watch(
+  () => [info.token, verifySecret.value],
+  () => {
+    signatureRequest++
+    signatureValid.value = false
+    signatureInvalid.value = false
+  },
+  { flush: 'sync' },
+)
 
 //解析
 const parser = () => {
@@ -106,25 +117,28 @@ const parser = () => {
 
 // 添加JWT签名校验功能
 const verifySignature = async () => {
+  const request = ++signatureRequest
+  const token = info.token.trim()
+  const secret = verifySecret.value
   signatureValid.value = false
   signatureInvalid.value = false
 
-  if (!info.token.trim()) {
+  if (!token) {
     ElMessage.warning('请输入JWT Token')
     return
   }
-  if (!verifySecret.value) {
+  if (!secret) {
     ElMessage.warning('请输入Secret')
     return
   }
   
   try {
-    const parts = info.token.split('.')
+    const parts = token.split('.')
     if (parts.length !== 3) {
       ElMessage.error('Token格式不正确')
       return
     }
-    const header = jwtDecode<{ alg?: string }>(info.token, { header: true })
+    const header = jwtDecode<{ alg?: string }>(token, { header: true })
     const hash = getHmacHash(header.alg)
     if (!hash) {
       ElMessage.error('仅支持 HS256、HS384、HS512 签名算法')
@@ -133,17 +147,20 @@ const verifySignature = async () => {
 
     const key = await crypto.subtle.importKey(
       'raw',
-      new TextEncoder().encode(verifySecret.value),
+      new TextEncoder().encode(secret),
       { name: 'HMAC', hash },
       false,
       ['verify'],
     )
+    if (request !== signatureRequest || info.token.trim() !== token || verifySecret.value !== secret) return
+
     const valid = await crypto.subtle.verify(
       'HMAC',
       key,
       decodeBase64Url(parts[2]),
       new TextEncoder().encode(`${parts[0]}.${parts[1]}`),
     )
+    if (request !== signatureRequest || info.token.trim() !== token || verifySecret.value !== secret) return
 
     if (valid) {
       signatureValid.value = true
@@ -155,6 +172,7 @@ const verifySignature = async () => {
       ElMessage.error('签名校验失败！')
     }
   } catch {
+    if (request !== signatureRequest || info.token.trim() !== token || verifySecret.value !== secret) return
     ElMessage.error('校验过程中发生错误')
   }
 }

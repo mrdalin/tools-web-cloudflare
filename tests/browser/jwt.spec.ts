@@ -32,6 +32,29 @@ test('generates a standards-compliant HMAC JWT, verifies it, and clears it for i
   await page.getByRole('button', { name: '校验签名' }).click()
   await expect(page.getByText('✗ 签名校验失败', { exact: true })).toBeVisible()
 
+  await page.getByPlaceholder('请输入用于校验的Secret').fill('browser-test-secret')
+  await page.evaluate(() => {
+    const subtle = crypto.subtle as SubtleCrypto & { releaseKeyImport?: () => void; keyImportStarted?: boolean }
+    const originalImportKey = subtle.importKey.bind(subtle)
+    Object.defineProperty(subtle, 'importKey', {
+      configurable: true,
+      value: (...args: Parameters<SubtleCrypto['importKey']>) => new Promise<CryptoKey>((resolve, reject) => {
+        subtle.keyImportStarted = true
+        subtle.releaseKeyImport = () => { void originalImportKey(...args).then(resolve, reject) }
+      }),
+    })
+  })
+  await page.getByRole('button', { name: '校验签名' }).click()
+  await expect.poll(() => page.evaluate(() => (crypto.subtle as any).keyImportStarted)).toBe(true)
+  await page.getByPlaceholder('请输入用于校验的Secret').fill('changed-secret')
+  await page.evaluate(() => (crypto.subtle as any).releaseKeyImport())
+  await expect(page.getByText('✗ 签名校验失败', { exact: true })).toHaveCount(0)
+  await page.evaluate(() => {
+    delete (crypto.subtle as any).importKey
+    delete (crypto.subtle as any).releaseKeyImport
+    delete (crypto.subtle as any).keyImportStarted
+  })
+
   await page.getByRole('tab', { name: 'JWT生成' }).click()
   const header = page.getByPlaceholder('请输入JWT头部信息')
   for (const [alg, hash] of [['HS384', 'sha384'], ['HS512', 'sha512']] as const) {
