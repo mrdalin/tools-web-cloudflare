@@ -1,51 +1,154 @@
 <script setup lang="ts">
-import { reactive, ref } from 'vue'
-// Compile the source locally: the legacy bundle uses eval, which our CSP blocks.
-import { QrcodeStream, QrcodeDropZone, QrcodeCapture } from 'qrcode-reader-vue3/src/index.js'
+import { computed, onBeforeUnmount, ref, watch } from 'vue'
+import jsQR from 'jsqr'
 import { ElMessage } from 'element-plus'
 import DetailHeader from '@/components/Layout/DetailHeader/DetailHeader.vue'
 import ToolDetail from '@/components/Layout/ToolDetail/ToolDetail.vue'
 import { Camera, Upload, CopyDocument, Delete } from '@element-plus/icons-vue'
 
-const info = reactive({
-  title: "二维码识别",
-  scanResult: '',
-  isScanning: false,
-  activeTab: 'upload', // 改为默认显示图片识别
-})
-
-// 识别结果
+const activeTab = ref('upload')
 const scanResult = ref('')
 const isScanning = ref(false)
+const video = ref<HTMLVideoElement | null>(null)
+const imageStatus = ref<'reading' | 'found' | 'empty' | 'error' | ''>('')
+const imageMessage = {
+  reading: '正在识别图片…',
+  found: '二维码识别成功',
+  empty: '未识别到二维码，请换一张更清晰的图片',
+  error: '图片读取失败，请选择可打开的图片',
+  '': '',
+}
+let imageRequest = 0
+let cameraRequest = 0
+let stream: MediaStream | null = null
+let scanTimer: ReturnType<typeof setTimeout> | undefined
 
-// 识别二维码功能
-const handleScan = (result: string) => {
-  scanResult.value = result
-  ElMessage.success('二维码识别成功！')
-  isScanning.value = false
+const readQrCode = (
+  context: CanvasRenderingContext2D,
+  source: HTMLImageElement | HTMLVideoElement,
+  width: number,
+  height: number,
+) => {
+  // Bound the amount of pixel data the decoder has to process on mobile.
+  const scale = Math.min(1, 2048 / Math.max(width, height))
+  const w = Math.max(1, Math.round(width * scale))
+  const h = Math.max(1, Math.round(height * scale))
+  if (context.canvas.width !== w) context.canvas.width = w
+  if (context.canvas.height !== h) context.canvas.height = h
+  context.fillStyle = '#fff'
+  context.fillRect(0, 0, w, h)
+  context.drawImage(source, 0, 0, w, h)
+  return jsQR(context.getImageData(0, 0, w, h).data, w, h)?.data ?? ''
 }
 
-const handleError = (error: any) => {
-  console.error('扫描错误:', error)
-  ElMessage.error('扫描失败，请重试')
-}
-
-const handleCameraInit = async (initialization: Promise<unknown>) => {
+const readImage = async (file: File) => {
+  const request = ++imageRequest
+  scanResult.value = ''
+  imageStatus.value = 'reading'
+  const url = URL.createObjectURL(file)
   try {
-    await initialization
-  } catch (error) {
-    isScanning.value = false
-    ElMessage.error('无法打开摄像头，请检查设备和浏览器权限，或使用图片识别')
+    const image = new Image()
+    image.src = url
+    await image.decode()
+    if (request !== imageRequest) return
+    const context = document.createElement('canvas').getContext('2d')!
+    scanResult.value = readQrCode(context, image, image.naturalWidth, image.naturalHeight)
+    imageStatus.value = scanResult.value ? 'found' : 'empty'
+  } catch {
+    if (request === imageRequest) imageStatus.value = 'error'
+  } finally {
+    URL.revokeObjectURL(url)
   }
 }
 
-const startScan = () => {
-  isScanning.value = true
+const selectImage = (event: Event) => {
+  const input = event.target as HTMLInputElement
+  const file = input.files?.[0]
+  input.value = ''
+  if (file) void readImage(file)
+}
+
+const dropImage = (event: DragEvent) => {
+  const file = event.dataTransfer?.files[0]
+  if (file) void readImage(file)
 }
 
 const stopScan = () => {
+  ++cameraRequest
+  clearTimeout(scanTimer)
+  stream?.getTracks().forEach(track => track.stop())
+  stream = null
+  if (video.value) video.value.srcObject = null
   isScanning.value = false
 }
+
+const startScan = async () => {
+  const preview = video.value
+  if (isScanning.value || activeTab.value !== 'camera' || !preview) return
+  const request = ++cameraRequest
+  isScanning.value = true
+
+  try {
+    const pendingStream = await navigator.mediaDevices.getUserMedia({
+      audio: false,
+      video: { facingMode: { ideal: 'environment' }, width: { ideal: 640 }, height: { ideal: 480 } },
+    })
+    // Permission may resolve after leaving the tab or even the tool page.
+    if (request !== cameraRequest) {
+      pendingStream.getTracks().forEach(track => track.stop())
+      return
+    }
+    stream = pendingStream
+    for (const track of stream.getVideoTracks()) {
+      track.addEventListener('ended', () => {
+        if (request === cameraRequest) stopScan()
+      }, { once: true })
+    }
+    preview.srcObject = stream
+    await preview.play()
+  } catch {
+    if (request !== cameraRequest) return
+    stopScan()
+    ElMessage.error('无法打开摄像头，请检查设备和浏览器权限，或使用图片识别')
+    return
+  }
+
+  if (request !== cameraRequest) return
+  const context = document.createElement('canvas').getContext('2d', { willReadFrequently: true })!
+  const scanFrame = () => {
+    if (request !== cameraRequest) return
+    try {
+      if (preview.readyState >= HTMLMediaElement.HAVE_CURRENT_DATA && preview.videoWidth && preview.videoHeight) {
+        const result = readQrCode(context, preview, preview.videoWidth, preview.videoHeight)
+        if (result) {
+          scanResult.value = result
+          ElMessage.success('二维码识别成功！')
+          stopScan()
+          return
+        }
+      }
+      scanTimer = setTimeout(scanFrame, 350)
+    } catch {
+      stopScan()
+      ElMessage.error('扫描失败，请重试')
+    }
+  }
+  scanFrame()
+}
+
+watch(activeTab, tab => {
+  if (tab === 'camera') {
+    ++imageRequest
+    imageStatus.value = ''
+  } else {
+    stopScan()
+  }
+}, { flush: 'sync' })
+
+onBeforeUnmount(() => {
+  ++imageRequest
+  stopScan()
+})
 
 // 复制结果
 const copyResult = async () => {
@@ -65,55 +168,48 @@ const copyResult = async () => {
 // 清空结果
 const clearResult = () => {
   scanResult.value = ''
+  imageStatus.value = ''
   ElMessage.success('已清空结果')
 }
 
-// 打开链接
-const openLink = (url: string) => {
-  window.open(url, '_blank')
+const resultLink = computed(() => {
+  try {
+    const url = new URL(scanResult.value)
+    return ['https:', 'http:'].includes(url.protocol) ? url.href : ''
+  } catch {
+    return ''
+  }
+})
+
+const openLink = () => {
+  if (resultLink.value) window.open(resultLink.value, '_blank', 'noopener,noreferrer')
 }
 </script>
 
 <template>
   <div class="flex flex-col mt-3 ml-4 flex-1 mr-3">
-    <DetailHeader :title="info.title"></DetailHeader>
+    <DetailHeader title="二维码识别" />
 
     <div class="p-6 rounded-2xl bg-white shadow-sm">
       <!-- 识别方式选择 -->
-      <el-tabs v-model="info.activeTab" class="mb-6">
+      <el-tabs v-model="activeTab" class="mb-6">
         <el-tab-pane label="图片识别" name="upload">
           <div class="text-center">
             <h3 class="text-lg font-medium text-gray-900 mb-4">图片识别</h3>
             
-            <div class="border-2 border-dashed border-gray-300 rounded-lg p-8 max-w-md mx-auto">
-              <!-- 使用 QrcodeCapture 处理文件上传 -->
-              <QrcodeCapture
-                @decode="handleScan"
-                @error="handleError"
-                class="w-full"
-              >
-                <!-- 自定义上传界面 -->
-                <div class="text-center py-8">
-                  <el-icon class="text-4xl text-gray-400 mb-4">
-                    <Upload />
-                  </el-icon>
-                  <div class="text-gray-500">
-                    <p>点击选择图片或拖拽图片到此处</p>
-                    <p class="text-sm">支持 PNG、JPG、JPEG 等格式</p>
-                  </div>
-                </div>
-              </QrcodeCapture>
-              
-              <!-- 拖拽区域 -->
-              <QrcodeDropZone
-                @decode="handleScan"
-                @error="handleError"
-                class="w-full h-32 mt-4 border-2 border-dashed border-gray-300 rounded-lg flex items-center justify-center"
-              >
-                <div class="text-center">
-                  <p class="text-gray-500 text-sm">或拖拽图片到此处</p>
-                </div>
-              </QrcodeDropZone>
+            <div class="max-w-md mx-auto" data-testid="qr-image-drop" @dragover.prevent @drop.prevent="dropImage">
+              <input id="qr-image-file" type="file" accept="image/*" aria-label="选择图片" class="sr-only peer" @change="selectImage" />
+              <label for="qr-image-file" class="block cursor-pointer rounded-lg border-2 border-dashed border-gray-300 px-4 py-8 peer-focus-visible:outline peer-focus-visible:outline-2 peer-focus-visible:outline-offset-2 peer-focus-visible:outline-blue-600">
+                <el-icon class="text-4xl text-gray-400 mb-4"><Upload /></el-icon>
+                <span class="block font-medium text-gray-700">选择图片或拖拽图片到此处</span>
+                <span class="block mt-1 text-sm text-gray-500">PNG、JPG、GIF 等</span>
+              </label>
+              <p role="status" class="mt-3 min-h-[1.25rem] text-sm" :class="{
+                'text-red-700': imageStatus === 'error',
+                'text-amber-700': imageStatus === 'empty',
+                'text-green-700': imageStatus === 'found',
+                'text-gray-500': imageStatus === 'reading',
+              }">{{ imageMessage[imageStatus] }}</p>
             </div>
           </div>
         </el-tab-pane>
@@ -124,14 +220,8 @@ const openLink = (url: string) => {
             
             <!-- 扫描区域 -->
             <div class="border-2 border-dashed border-gray-300 rounded-lg p-4 mb-4 max-w-md mx-auto">
-              <QrcodeStream
-                v-if="isScanning"
-                @init="handleCameraInit"
-                @decode="handleScan"
-                @error="handleError"
-                class="w-full"
-              />
-              <div v-else class="text-center py-8">
+              <video v-show="isScanning" ref="video" class="block w-full aspect-[4/3] bg-gray-900 object-contain rounded" autoplay muted playsinline />
+              <div v-if="!isScanning" class="text-center py-8">
                 <el-icon class="text-4xl text-gray-400 mb-4">
                   <Camera />
                 </el-icon>
@@ -188,10 +278,10 @@ const openLink = (url: string) => {
         </div>
         
         <!-- 如果是链接，提供打开链接的按钮 -->
-        <div v-if="scanResult.startsWith('http')" class="mt-4">
+        <div v-if="resultLink" class="mt-4">
           <el-button 
             type="success" 
-            @click="openLink(scanResult)"
+            @click="openLink"
           >
             打开链接
           </el-button>

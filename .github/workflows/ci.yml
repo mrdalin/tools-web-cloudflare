@@ -36,3 +36,18 @@ jobs:
 
       - name: Run tests
         run: node --test tests/**/*.test.js
+
+      - name: Install browser for smoke tests
+        run: pnpm exec playwright install --with-deps --only-shell chromium
+
+      - name: Run browser smoke tests against Cloudflare Pages build
+        run: pnpm test:browser
+
+      - name: Upload browser traces after a failed check
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-browser-traces
+          path: test-results/
+          if-no-files-found: ignore
+          retention-days: 7
