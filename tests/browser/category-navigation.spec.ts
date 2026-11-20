@@ -1,4 +1,14 @@
-import { expect, test } from '@playwright/test'
+import { expect, test, type Locator } from '@playwright/test'
+
+async function clickAndReadScroll(link: Locator) {
+  // Clicking can scroll a focused link a few pixels further into view on mobile.
+  // Compare with the actual departure position, after that browser adjustment.
+  const top = link.evaluate(element => new Promise<number>(resolve => {
+    element.addEventListener('click', () => resolve(scrollY), { capture: true, once: true })
+  }))
+  await link.click()
+  return top
+}
 
 const categories = [
   [2, '/developer-tools', '开发运维', 28],
@@ -54,16 +64,14 @@ test('returns to the same category position and preserves the homepage history',
   await page.goto('/')
   const category = page.locator('.category-title[href="/education-tools"]')
   await category.scrollIntoViewIfNeeded()
-  const homeTop = await page.evaluate(() => scrollY)
-  await category.click()
+  const homeTop = await clickAndReadScroll(category)
   await expect(page.getByRole('heading', { name: '教育学术', exact: true })).toBeVisible()
   const card = page.locator('.tool-card').last()
   const path = await card.getAttribute('href')
   for (const back of ['tool', 'browser']) {
     await card.scrollIntoViewIfNeeded()
-    const top = await page.evaluate(() => scrollY)
+    const top = await clickAndReadScroll(card)
     expect(top).toBeGreaterThan(100)
-    await card.click()
     await expect(page).toHaveURL(url => url.pathname === path)
     const backButton = page.getByRole('button', { name: '返回', exact: true })
     await expect(backButton).toBeVisible()

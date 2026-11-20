@@ -1,4 +1,6 @@
 import { HOME_PAGE_META } from '@/utils/pageSeo'
+// 分类页体积小且共用卡片，提前加载可避免首次点击分类时再等待下载。
+import Category from '@/components/Home/Category.vue'
 
 //对外暴露配置路由(常量路由)
 export const constantRoute = [
@@ -12,7 +14,7 @@ export const constantRoute = [
   // 工具分类各自拥有独立页面，旧查询参数入口自动迁移。
   {
     path: '/developer-tools',
-    component: () => import('@/components/Home/Category.vue'),
+    component: Category,
     name: 'category-2',
     meta: {
       categoryId: 2,
@@ -23,7 +25,7 @@ export const constantRoute = [
   },
   {
     path: '/text-tools',
-    component: () => import('@/components/Home/Category.vue'),
+    component: Category,
     name: 'category-3',
     meta: {
       categoryId: 3,
@@ -34,7 +36,7 @@ export const constantRoute = [
   },
   {
     path: '/education-tools',
-    component: () => import('@/components/Home/Category.vue'),
+    component: Category,
     name: 'category-4',
     meta: {
       categoryId: 4,
@@ -45,7 +47,7 @@ export const constantRoute = [
   },
   {
     path: '/image-tools',
-    component: () => import('@/components/Home/Category.vue'),
+    component: Category,
     name: 'category-5',
     meta: {
       categoryId: 5,
@@ -56,7 +58,7 @@ export const constantRoute = [
   },
   {
     path: '/data-tools',
-    component: () => import('@/components/Home/Category.vue'),
+    component: Category,
     name: 'category-8',
     meta: {
       categoryId: 8,
@@ -67,7 +69,7 @@ export const constantRoute = [
   },
   {
     path: '/fun-tools',
-    component: () => import('@/components/Home/Category.vue'),
+    component: Category,
     name: 'category-11',
     meta: {
       categoryId: 11,
@@ -78,7 +80,7 @@ export const constantRoute = [
   },
   {
     path: '/random-tools',
-    component: () => import('@/components/Home/Category.vue'),
+    component: Category,
     name: 'category-9',
     meta: {
       categoryId: 9,
@@ -89,7 +91,7 @@ export const constantRoute = [
   },
   {
     path: '/other-tools',
-    component: () => import('@/components/Home/Category.vue'),
+    component: Category,
     name: 'category-7',
     meta: {
       categoryId: 7,
@@ -100,7 +102,7 @@ export const constantRoute = [
   },
   {
     path: '/useful-websites',
-    component: () => import('@/components/Home/Category.vue'),
+    component: Category,
     name: 'category-12',
     meta: {
       categoryId: 12,
@@ -111,7 +113,7 @@ export const constantRoute = [
   },
   {
     path: '/productivity-tools',
-    component: () => import('@/components/Home/Category.vue'),
+    component: Category,
     name: 'category-13',
     meta: {
       categoryId: 13,

@@ -59,6 +59,10 @@ export function readStaticExport(source, name, bindings) {
 
 export function getRouteRecords(source) {
   const sourceFile = parseSource(source)
+  const componentImports = new Map(sourceFile.statements
+    .filter(ts.isImportDeclaration)
+    .filter((statement) => statement.importClause?.name)
+    .map((statement) => [statement.importClause.name.text, literal(statement.moduleSpecifier)]))
   const routes = declaration(sourceFile, 'constantRoute')
   if (!ts.isArrayLiteralExpression(routes)) throw new Error('constantRoute must be a static array')
   return routes.elements.map((node) => {
@@ -72,7 +76,11 @@ export function getRouteRecords(source) {
       }
     }
     const component = node.properties.find((item) => item.name?.getText(sourceFile) === 'component')
-    if (component) findComponent(component)
+    if (component && ts.isIdentifier(component.initializer)) {
+      route.componentPath = componentImports.get(component.initializer.text)
+    } else if (component) {
+      findComponent(component)
+    }
     return route
   })
 }
