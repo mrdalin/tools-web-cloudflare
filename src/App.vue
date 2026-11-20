@@ -34,6 +34,7 @@ import { useRoute } from 'vue-router';
 import { Top } from '@element-plus/icons-vue';
 import zhCn from 'element-plus/dist/locale/zh-cn.mjs'
 import { hasToolSeoContent } from '@/components/Layout/ToolSeoContent/toolSeoMeta'
+import { isToolDirectoryPath } from '@/utils/categoryRoutes'
 
 const showBackTop = ref(false)
 const discussTrigger = ref<HTMLElement | null>(null)
@@ -80,11 +81,12 @@ const isHomePage = computed(() => {
   return route.name === 'home' || route.path === '/';
 });
 const showToolSeoContent = computed(() => hasToolSeoContent(route.path));
-const canShowDiscuss = computed(() => !isSpecialPage.value && !isHomePage.value && !componentStore.hideAllUI)
+const isDirectoryPage = computed(() => isToolDirectoryPath(route.path))
+const canShowDiscuss = computed(() => !isSpecialPage.value && !isDirectoryPage.value && !componentStore.hideAllUI)
 
 // 专注模式跟随当前地址，返回首页或浏览历史时同步恢复导航。
 watch(
-  () => !isHomePage.value && !isSpecialPage.value && route.query.focus === '1',
+  () => !isDirectoryPage.value && !isSpecialPage.value && route.query.focus === '1',
   (enabled) => {
     if (componentStore.hideAllUI !== enabled) componentStore.setHideAllUI(enabled)
   },
@@ -173,7 +175,7 @@ watch(
       <el-main :class="[isSpecialPage ? '' : 'c-xs:pt-16', componentStore.hideAllUI && !isSpecialPage ? 'c-xs:pt-0' : '']">
         <router-view v-slot="{ Component, route }">
           <!-- 返回首页时复用已渲染的卡片，跳过路由淡入淡出。 -->
-          <transition :name="isHomePage ? 'home-return' : 'fade'" mode="out-in">
+          <transition :name="isDirectoryPage ? 'home-return' : 'fade'" mode="out-in">
             <KeepAlive include="Home" :max="1">
               <component :is="Component" :key="route.path"></component>
             </KeepAlive>

@@ -7,6 +7,7 @@ import { useComponentStore } from '@/store/modules/component'
 import { useUserStore } from '@/store/modules/user'
 import 'element-plus/theme-chalk/display.css'
 import { ToolsInfo } from '@/components/Tools/tools.type.ts';
+import { normalizePagePath } from '@/utils/pageSeo'
 
 import { useRoute, useRouter } from 'vue-router'
 
@@ -75,7 +76,7 @@ const selectTool = (id: number | string) => {
   if (item.isExternalSite && item.externalUrl) {
     window.open(item.externalUrl, '_blank', 'noopener,noreferrer')
   } else {
-    router.push(item.url)
+    router.push(normalizePagePath(item.url))
   }
   // 清空已选值，返回后仍能再次选择同一工具。
   nextTick(() => {
@@ -92,13 +93,8 @@ const gotoHomeTop = async () => {
     window.dispatchEvent(new CustomEvent('youngbar:home-top'))
   }
 
-  if (route.path === '/' && !route.query?.value) {
-    dispatchHomeTop()
-    return
-  }
-
   if (route.path === '/') {
-    await router.replace({ path: '/', query: {} })
+    dispatchHomeTop()
     return
   }
 
@@ -258,14 +254,17 @@ onUnmounted(() => {
     }"
   >
     <div class="flex items-center w-full">
-      <Transition name="fold" class="hidden c-sm:block c-md:hidden c-xs:block">
-        <svg v-if="!componentStore.leftComDrawer" @click="componentStore.setleftComDrawerStatus(true)" t="1702978210636" class="icon" viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg" p-id="7618" width="30" height="30">
+      <button type="button" class="hidden c-sm:block c-md:hidden c-xs:block"
+        :aria-label="componentStore.leftComDrawer ? '关闭分类菜单' : '打开分类菜单'"
+        :aria-expanded="componentStore.leftComDrawer"
+        @click="componentStore.setleftComDrawerStatus(!componentStore.leftComDrawer)">
+        <svg v-if="!componentStore.leftComDrawer" aria-hidden="true" t="1702978210636" class="icon" viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg" p-id="7618" width="30" height="30">
           <path fill="#334155" fill-opacity=".9" d="M895.936 256l-768-0.896 0.128-64L896 192l-0.064 64zM179.2 689.152l202.688-152a32 32 0 0 0 0-51.2L179.2 333.952a32 32 0 0 0-51.2 25.6v304a32 32 0 0 0 51.2 25.6z m12.8-89.6v-176l117.312 88L192 599.552zM896 544H480v-64H896v64z m-0.064 288l-768-0.896 0.128-64L896 768l-0.064 64z" p-id="7619"></path>
         </svg>
-        <svg v-else @click="componentStore.setleftComDrawerStatus(false)" t="1702978577170" class="icon" viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg" p-id="1587" width="30" height="30">
+        <svg v-else aria-hidden="true" t="1702978577170" class="icon" viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg" p-id="1587" width="30" height="30">
           <path fill="#444" fill-opacity=".9" d="M128.064 192l768 0.896-0.128 64L128 256l0.064-64z m514.048 294.848a32 32 0 0 0 0 51.2l202.688 152a32 32 0 0 0 51.2-25.6v-304a32 32 0 0 0-51.2-25.6l-202.688 152zM832 424.448v176l-117.312-88L832 424.448zM128 480h416v64H128v-64z m0.064 288l768 0.896-0.128 64L128 832l0.064-64z" p-id="1588"></path>
         </svg>
-      </Transition>
+      </button>
 
       <!-- c-md:block -->
       <Transition name="fold" class="hidden c-md:block">

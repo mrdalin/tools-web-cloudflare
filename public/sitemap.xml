@@ -1,6 +1,16 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url><loc>https://youngbar.com/</loc></url>
+  <url><loc>https://youngbar.com/developer-tools</loc></url>
+  <url><loc>https://youngbar.com/text-tools</loc></url>
+  <url><loc>https://youngbar.com/education-tools</loc></url>
+  <url><loc>https://youngbar.com/image-tools</loc></url>
+  <url><loc>https://youngbar.com/data-tools</loc></url>
+  <url><loc>https://youngbar.com/fun-tools</loc></url>
+  <url><loc>https://youngbar.com/random-tools</loc></url>
+  <url><loc>https://youngbar.com/other-tools</loc></url>
+  <url><loc>https://youngbar.com/useful-websites</loc></url>
+  <url><loc>https://youngbar.com/productivity-tools</loc></url>
   <url><loc>https://youngbar.com/privacy</loc></url>
   <url><loc>https://youngbar.com/timetran</loc></url>
   <url><loc>https://youngbar.com/md5</loc></url>

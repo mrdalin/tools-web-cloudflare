@@ -1,10 +1,20 @@
 import { getCORSHeaders } from './utils/cors.js'
+import { getLegacyCategoryPath } from '../src/utils/categoryRoutes.js'
 
 export async function onRequest(context) {
   const { request } = context
   const origin = request.headers.get('Origin')
   const url = new URL(request.url)
   const path = url.pathname
+
+  if (path === '/' && ['GET', 'HEAD'].includes(request.method)) {
+    const categoryPath = getLegacyCategoryPath(url.searchParams.get('value'))
+    if (categoryPath) {
+      url.pathname = categoryPath
+      url.searchParams.delete('value')
+      return new Response(null, { status: 301, headers: { Location: url.href } })
+    }
+  }
 
   // 这两个旧页面仍可能命中静态资源缓存，直接返回当前 404 页面。
   if (path === '/ai-text-to-image' || path === '/ai-text-to-video') {

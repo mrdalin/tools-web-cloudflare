@@ -1,6 +1,7 @@
 {
   "version": 1,
   "include": [
+    "/",
     "/ai-text-to-image",
     "/ai-text-to-video",
     "/google-auth",
@@ -8,7 +9,6 @@
     "/api/notes/*",
     "/api/passwords",
     "/api/passwords/*",
-    "/api/passwords/entries",
     "/api/passwords/entries/*",
     "/api/passwords/export",
     "/api/passwords/groups",

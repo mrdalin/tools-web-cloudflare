@@ -9,6 +9,117 @@ export const constantRoute = [
     name: 'home',
     meta: HOME_PAGE_META,
   },
+  // 工具分类各自拥有独立页面，旧查询参数入口自动迁移。
+  {
+    path: '/developer-tools',
+    component: () => import('@/components/Home/Category.vue'),
+    name: 'category-2',
+    meta: {
+      categoryId: 2,
+      title: '开发运维工具大全',
+      keywords: '开发运维,在线工具,免费工具,Youngbar工具箱',
+      description: '汇集 JSON 格式化、时间戳转换、加密编码、正则表达式和开发文档等工具，帮助处理日常开发与运维任务。',
+    },
+  },
+  {
+    path: '/text-tools',
+    component: () => import('@/components/Home/Category.vue'),
+    name: 'category-3',
+    meta: {
+      categoryId: 3,
+      title: '文本处理工具大全',
+      keywords: '文本处理,在线工具,免费工具,Youngbar工具箱',
+      description: '提供文本清洗、内容对比、Markdown 编辑、字数统计和格式转换等在线工具，方便整理与编辑文本。',
+    },
+  },
+  {
+    path: '/education-tools',
+    component: () => import('@/components/Home/Category.vue'),
+    name: 'category-4',
+    meta: {
+      categoryId: 4,
+      title: '教育学术工具大全',
+      keywords: '教育学术,在线工具,免费工具,Youngbar工具箱',
+      description: '汇集计算、学习、记忆训练和学术辅助工具，方便完成日常学习与知识练习。',
+    },
+  },
+  {
+    path: '/image-tools',
+    component: () => import('@/components/Home/Category.vue'),
+    name: 'category-5',
+    meta: {
+      categoryId: 5,
+      title: '图片处理工具大全',
+      keywords: '图片处理,在线工具,免费工具,Youngbar工具箱',
+      description: '提供图片压缩、格式转换、裁剪、取色和图片编辑等在线工具，快速处理常见图片任务。',
+    },
+  },
+  {
+    path: '/data-tools',
+    component: () => import('@/components/Home/Category.vue'),
+    name: 'category-8',
+    meta: {
+      categoryId: 8,
+      title: '数据图表工具大全',
+      keywords: '数据图表,在线工具,免费工具,Youngbar工具箱',
+      description: '使用在线图表与数据可视化工具整理数据、绘制图形，直观展示数据关系。',
+    },
+  },
+  {
+    path: '/fun-tools',
+    component: () => import('@/components/Home/Category.vue'),
+    name: 'category-11',
+    meta: {
+      categoryId: 11,
+      title: '趣味互动工具大全',
+      keywords: '趣味互动,在线工具,免费工具,Youngbar工具箱',
+      description: '汇集小游戏与趣味互动工具，随时体验益智挑战和轻松有趣的互动功能。',
+    },
+  },
+  {
+    path: '/random-tools',
+    component: () => import('@/components/Home/Category.vue'),
+    name: 'category-9',
+    meta: {
+      categoryId: 9,
+      title: '选择随机工具大全',
+      keywords: '选择随机,在线工具,免费工具,Youngbar工具箱',
+      description: '提供随机数、随机中文人名、抛硬币、投骰子与选择辅助工具，帮助生成随机结果并做出选择。',
+    },
+  },
+  {
+    path: '/other-tools',
+    component: () => import('@/components/Home/Category.vue'),
+    name: 'category-7',
+    meta: {
+      categoryId: 7,
+      title: '其他实用工具大全',
+      keywords: '其他工具,在线工具,免费工具,Youngbar工具箱',
+      description: '汇集金额大写、颜色选择、公司对比、旅游地图与音乐播放等实用功能，方便处理工作与生活中的常见任务。',
+    },
+  },
+  {
+    path: '/useful-websites',
+    component: () => import('@/components/Home/Category.vue'),
+    name: 'category-12',
+    meta: {
+      categoryId: 12,
+      title: '好物网站工具大全',
+      keywords: '好物网站,在线工具,免费工具,Youngbar工具箱',
+      description: '发现实用网站和优质网络资源，按需查找常用的在线服务与网站。',
+    },
+  },
+  {
+    path: '/productivity-tools',
+    component: () => import('@/components/Home/Category.vue'),
+    name: 'category-13',
+    meta: {
+      categoryId: 13,
+      title: '内容管理工具大全',
+      keywords: '内容管理,在线工具,免费工具,Youngbar工具箱',
+      description: '使用笔记、待办、密码管理、简历和生活记录工具，整理个人内容与日常事项。',
+    },
+  },
   {
     path: '/privacy',
     component: () => import('@/components/Home/Privacy.vue'),

@@ -7,6 +7,7 @@ import test from 'node:test'
 import { buildPagesRouteShells, getStaticPageRoutes, renderPageHtml } from '../../scripts/build-pages-route-shells.mjs'
 import { createSitemap, loadPageCatalog } from '../../scripts/page-catalog.mjs'
 import { onRequest } from '../../functions/_middleware.js'
+import { CATEGORY_PATHS, getCategoryId, getLegacyCategoryPath } from '../../src/utils/categoryRoutes.js'
 
 const redirects = readFileSync(new URL('../../public/_redirects', import.meta.url), 'utf8')
 const headers = readFileSync(new URL('../../public/_headers', import.meta.url), 'utf8')
@@ -142,6 +143,35 @@ test('writes nested static pages while leaving dynamic routes to redirects', asy
   assert.equal(existsSync(path.join(outputDir, 'flashcards')), false)
 })
 
+test('permanently redirects every legacy category URL and preserves unrelated parameters', async () => {
+  const { categories } = await loadPageCatalog()
+  assert.deepEqual(Object.keys(CATEGORY_PATHS).sort(), categories.map((category) => String(category.id)).sort())
+  const routes = JSON.parse(readFileSync(new URL('../../functions/_routes.json', import.meta.url), 'utf8'))
+  assert.ok(routes.include.includes('/'), 'the homepage must run legacy redirects before serving HTML')
+  for (const category of categories) {
+    assert.equal(getCategoryId(category.path), category.id)
+    for (const method of ['GET', 'HEAD']) {
+      const response = await onRequest({
+        request: new Request(`https://www.youngbar.com/?value=cate_${category.id}&utm_source=old&tag=a&tag=b`, { method }),
+        next: () => assert.fail('legacy category URL must redirect before static routing'),
+      })
+      assert.equal(response.status, 301)
+      assert.equal(response.headers.get('Location'), `https://www.youngbar.com${category.path}?utm_source=old&tag=a&tag=b`)
+      assert.equal(await response.text(), '')
+    }
+  }
+  for (const value of [null, ['cate_2'], 'cate_999', 'cate_02', '//example.com', 'cate_2/../json']) {
+    assert.equal(getLegacyCategoryPath(value), null)
+  }
+  for (const url of ['/', '/?value=cate_999', '/?value=https://example.com', '/randompassword?value=cate_2']) {
+    const response = await onRequest({
+      request: new Request(`https://youngbar.com${url}`),
+      next: () => new Response('active'),
+    })
+    assert.equal(await response.text(), 'active')
+  }
+})
+
 test('publishes tool-specific metadata, readable content, and a consistent sitemap', async (t) => {
   const outputDir = await mkdtemp(path.join(tmpdir(), 'tools-web-seo-'))
   t.after(() => rm(outputDir, { recursive: true, force: true }))
@@ -198,9 +228,19 @@ test('publishes tool-specific metadata, readable content, and a consistent sitem
 
   const { pages, categories } = await loadPageCatalog()
   for (const category of categories) {
+    assert.ok(routes.includes(category.path), `missing category route: ${category.path}`)
+    const page = pages.find((page) => page.path === category.path)
+    assert.equal(page.meta.categoryId, category.id)
+    const categoryHtml = await readFile(path.join(outputDir, `${category.path.slice(1)}.html`), 'utf8')
+    assert.ok(categoryHtml.includes(`<h1>${page.meta.title}</h1>`))
+    assert.ok(categoryHtml.includes(`rel="canonical" href="https://youngbar.com${category.path}"`))
+    assert.match(categoryHtml, /name="robots" content="index,follow"/)
+    assert.ok(html.index.includes(`href="${category.path}"`), 'home must link to the independent category page')
     for (const tool of category.list) {
       assert.ok(html.index.includes(`href="${tool.url.replace(/\/+$/, '')}"`), `missing crawlable link: ${tool.url}`)
+      assert.ok(categoryHtml.includes(`href="${tool.url.replace(/\/+$/, '')}"`), `missing category tool: ${tool.url}`)
     }
+    assert.equal((categoryHtml.match(/<li>/g) || []).length, category.list.length, 'category must list only its own tools')
   }
   const sitemap = await readFile(path.join(outputDir, 'sitemap.xml'), 'utf8')
   assert.equal(sitemap, createSitemap(pages))

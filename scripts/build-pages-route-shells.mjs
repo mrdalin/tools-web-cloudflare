@@ -89,10 +89,14 @@ function renderGuide(content) {
 async function renderPageBody(page, categories) {
   const header = `<nav aria-label="网站导航"><a href="/">Youngbar工具箱</a><a href="/about">关于本站</a><a href="/privacy">隐私政策</a></nav>
 <h1>${escapeHtml(page.meta.title)}</h1><p>${escapeHtml(page.meta.description)}</p>`
-  if (page.path === '/') {
-    return `<main class="page-preview">${header}${categories.map((category) => `<section>
-<h2>${escapeHtml(category.title)}</h2><ul class="tool-list">${category.list.map((tool) => `<li>
-<a href="${escapeHtml(tool.url.replace(/\/+$/, '') || '/')}">${escapeHtml(tool.title)}</a><p>${escapeHtml(tool.desc)}</p></li>`).join('')}</ul></section>`).join('')}</main>`
+  if (page.path === '/' || page.category) {
+    const listedCategories = page.category ? [page.category] : categories
+    const navigation = page.category ? `<section><h2>其他工具分类</h2>${renderLinks(categories
+      .filter((category) => category.path !== page.path)
+      .map((category) => ({ path: category.path, label: category.title })))}</section>` : ''
+    return `<main class="page-preview">${header}${listedCategories.map((category) => `<section>
+<h2><a href="${escapeHtml(category.path)}">${escapeHtml(category.title)}</a></h2><ul class="tool-list">${category.list.map((tool) => `<li>
+<a href="${escapeHtml(tool.url.replace(/\/+$/, '') || '/')}">${escapeHtml(tool.title)}</a><p>${escapeHtml(tool.desc)}</p></li>`).join('')}</ul></section>`).join('')}${navigation}</main>`
   }
   const description = await getComponentDescription(page)
   const related = page.related.length ? `<section><h2>相关工具</h2>${renderLinks(page.related)}</section>` : ''

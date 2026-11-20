@@ -2,6 +2,7 @@ import { readFileSync } from 'node:fs'
 import { readFile } from 'node:fs/promises'
 import path from 'node:path'
 import ts from 'typescript'
+import { getCategoryPath } from '../src/utils/categoryRoutes.js'
 
 export const projectRoot = path.resolve(import.meta.dirname, '..')
 export const defaultRouterPath = path.join(projectRoot, 'src/router/router.ts')
@@ -98,6 +99,7 @@ export async function loadPageCatalog({ routerPath = defaultRouterPath } = {}) {
   const contents = readStaticExport(contentSource, 'toolSeoContents')
   const categories = readStaticExport(toolsSource, 'getToolsCate').map((category) => ({
     ...category,
+    path: getCategoryPath(category.id),
     list: category.list.filter((tool) => staticPaths.has(pageSeo.normalizePagePath(tool.url))),
   })).filter((category) => category.list.length)
   const tools = categories.flatMap((category) => category.list.map((tool) => ({
@@ -113,7 +115,8 @@ export async function loadPageCatalog({ routerPath = defaultRouterPath } = {}) {
       .filter((item) => item.category === tool?.category && item.path !== route.path)
       .slice(0, 6).map((item) => ({ path: item.path, label: item.title }))
     return {
-      ...route, meta, tool, content: contents[route.path],
+      ...route, meta, tool, category: categories.find((category) => category.path === route.path),
+      content: contents[route.path],
       related: related.filter((item) => staticPaths.has(item.path)),
       indexable: pageSeo.isIndexablePage(route.path),
     }

@@ -1,3 +1,5 @@
+import { isToolDirectoryPath } from './categoryRoutes'
+
 export interface HomeScrollPosition {
   left: number
   top: number
@@ -35,7 +37,7 @@ export const getLastHomeVisit = (): HomeVisit | null => {
   try {
     const visit = JSON.parse(sessionStorage.getItem(HOME_VISIT_KEY) || 'null')
     if (visit && typeof visit.fullPath === 'string'
-      && /^\/(?:[?#]|$)/.test(visit.fullPath) && isHomeScrollPosition(visit.position)) {
+      && isToolDirectoryPath(visit.fullPath.split(/[?#]/)[0]) && isHomeScrollPosition(visit.position)) {
       lastHomeVisit = visit
     }
   } catch {
@@ -44,7 +46,7 @@ export const getLastHomeVisit = (): HomeVisit | null => {
   return lastHomeVisit
 }
 
-// 路由切换有淡出动画，必须等首页卡片渲染完成后才能恢复较深的位置。
+// 首页和分类页都要等卡片渲染完成，再恢复列表的滚动位置。
 export const prepareHomeScroll = () => {
   resolveHomeReady()
   homeReady = new Promise<void>((resolve) => {

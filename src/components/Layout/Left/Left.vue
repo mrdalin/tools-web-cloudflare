@@ -5,6 +5,7 @@ import { rtrim } from "@/utils/string";
 import { useToolsStore } from "@/store/modules/tools";
 import { useComponentStore } from "@/store/modules/component";
 import { useRouter, useRoute } from "vue-router";
+import { getCategoryId, getCategoryPath } from '@/utils/categoryRoutes';
 const router = useRouter();
 const route = useRoute();
 
@@ -20,8 +21,6 @@ const componentStore = useComponentStore();
 const menuReady = ref(false);
 // el-menu 实例引用，用于路由切换后强制展开分类
 const menuRef = ref<InstanceType<any> | null>(null);
-// 标记是否已经初始化过默认分类
-const hasInitializedDefaultCategory = ref(false);
 
 // 计算当前活跃分类
 const computedActiveCategory = computed(() => {
@@ -46,35 +45,6 @@ const handleOpen = () => {};
 
 const handleClose = () => {};
 
-//跳转锚点
-const gotoAnchor = async (anchor: string) => {
-  const q = route.query?.value as any;
-  const current = Array.isArray(q) ? q[0] : q;
-
-  if (route.path === "/") {
-    if (current === anchor) {
-      componentStore.setleftComDrawerStatus(false);
-      await nextTick();
-      document?.getElementById(anchor)?.scrollIntoView({
-        behavior: "smooth",
-        block: "start",
-        inline: "start",
-      });
-      return;
-    }
-    componentStore.setleftComDrawerStatus(false);
-    await router.replace({
-      path: "/",
-      query: { value: anchor },
-    });
-  } else {
-    componentStore.setleftComDrawerStatus(false);
-    await router.push({
-      path: "/",
-      query: { value: anchor },
-    });
-  }
-};
 const gotoAbout = () => {
   componentStore.setleftComDrawerStatus(false);
   router.push("about");
@@ -84,15 +54,8 @@ const gotoHome = async () => {
   componentStore.setleftComDrawerStatus(false);
   componentStore.setActiveCategory('');
 
-  const hasAnchorQuery = Boolean(route.query?.value);
-
-  if (route.path === '/' && !hasAnchorQuery) {
-    window.dispatchEvent(new CustomEvent('youngbar:home-top'));
-    return;
-  }
-
   if (route.path === '/') {
-    await router.replace({ path: '/', query: {} });
+    window.dispatchEvent(new CustomEvent('youngbar:home-top'));
     return;
   }
 
@@ -115,20 +78,13 @@ const updateActive = async () => {
   }
 
   if (path === "/") {
-    const q = route.query?.value as any;
-    const anchor = Array.isArray(q) ? q[0] : q;
+    defaultActive.value = toolsStore.cates.length ? `cate_${toolsStore.cates[0].id}` : '';
+    return;
+  }
 
-    // 如果有明确的query.value，使用它
-    if (typeof anchor === "string" && anchor) {
-      defaultActive.value = anchor;
-      hasInitializedDefaultCategory.value = true;
-    }
-    // 如果没有query.value，使用默认的第一个分类
-    else if (toolsStore.cates.length > 0) {
-      defaultActive.value = `cate_${toolsStore.cates[0].id}`;
-      hasInitializedDefaultCategory.value = true;
-    }
-
+  const categoryId = getCategoryId(path);
+  if (categoryId) {
+    defaultActive.value = `cate_${categoryId}`;
     return;
   }
 
@@ -172,13 +128,6 @@ watch(
     // 路由切换后确保「分类」子菜单保持展开
     await nextTick();
     menuRef.value?.open?.('cate');
-  }
-);
-watch(
-  () => route.query.value,
-  () => {
-    if (route.path !== "/") return;
-    updateActive();
   }
 );
 watch(
@@ -252,12 +201,15 @@ onMounted(async () => {
           </template>
           <el-menu-item-group>
             <el-menu-item
-              @click="gotoAnchor('cate_' + item.id)"
+              class="category-menu-item"
+              @click="componentStore.setleftComDrawerStatus(false)"
               :index="'cate_' + item.id"
               v-for="item in toolsStore.cates"
               :key="item.id"
             >
-              {{ item.title }}
+              <router-link :to="getCategoryPath(item.id)" class="flex h-full w-full items-center pl-10 pr-5">
+                {{ item.title }}
+              </router-link>
             </el-menu-item>
           </el-menu-item-group>
         </el-sub-menu>
@@ -527,4 +479,8 @@ onMounted(async () => {
   box-shadow: inset 3px 0 0 var(--warm-primary) !important;
   animation: none !important;
 }
+</style>
+
+<style scoped>
+.category-menu-item { padding: 0 !important; }
 </style>

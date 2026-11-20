@@ -10,6 +10,7 @@ import {
   getPageStructuredData, isIndexablePage, serializeStructuredData,
 } from '@/utils/pageSeo'
 import { recordToolVisit } from '@/utils/frequentTools'
+import { getLegacyCategoryPath, isToolDirectoryPath } from '@/utils/categoryRoutes'
 
 declare global {
   interface Window {
@@ -56,11 +57,11 @@ const router: Router = createRouter({
   history: createWebHistory(),
   routes: constantRoute,
   async scrollBehavior(to, from, savedPosition) {
-    if (to.path === '/' && (from.path !== '/' || from.matched.length === 0)) {
+    if (isToolDirectoryPath(to.path) && (from.path !== to.path || from.matched.length === 0)) {
       const historyState = router.options.history.state
       const returnPosition = historyState.homeReturnPosition
       const visit = from.matched.length > 0 ? getLastHomeVisit() : null
-      // 相同分类地址也可能存在于多条历史记录中，只使用当前记录的位置。
+      // 同一列表可能出现在多条历史记录中，只恢复当前记录的位置。
       const rememberedPosition = visit?.fullPath === to.fullPath
         && visit.historyPosition === historyState.position ? visit.position : null
       const position = rememberedPosition
@@ -70,12 +71,6 @@ const router: Router = createRouter({
       if (router.currentRoute.value !== to) return false
       if (position) return { left: position.left, top: position.top, behavior: 'instant' }
 
-      const value = to.query.value
-      const anchor = Array.isArray(value) ? value[0] : value
-      const element = anchor ? document.getElementById(anchor) : null
-      if (element) {
-        return { el: element, top: parseFloat(getComputedStyle(element).scrollMarginTop) || 0, behavior: 'instant' }
-      }
       return { left: 0, top: 0, behavior: 'instant' }
     }
     if (savedPosition) return savedPosition
@@ -85,12 +80,20 @@ const router: Router = createRouter({
 })
 
 router.beforeResolve((to, from) => {
-  if (to.path === '/' && (from.path !== '/' || from.matched.length === 0)) {
+  if (isToolDirectoryPath(to.path) && (from.path !== to.path || from.matched.length === 0)) {
     prepareHomeScroll()
   }
 })
 
 router.beforeEach((to, _from, next) => {
+  const value = Array.isArray(to.query.value) ? to.query.value[0] : to.query.value
+  const categoryPath = to.path === '/' ? getLegacyCategoryPath(value) : null
+  if (categoryPath) {
+    const { value: _value, ...query } = to.query
+    next({ path: categoryPath, query, hash: to.hash, replace: true })
+    return
+  }
+
   const unit = to.query.active
   if (to.path === '/unit' && typeof unit === 'string' &&
       ['length', 'area', 'weight', 'time', 'temperature', 'pressure', 'heat', 'power'].includes(unit)) {

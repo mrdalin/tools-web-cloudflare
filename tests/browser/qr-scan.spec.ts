@@ -115,7 +115,7 @@ test('releases the camera on tab switch, stop, permission delays, and page exit'
   await allow(3)
   await expect.poll(previewReady).toBe(true)
   await page.getByRole('button', { name: '返回', exact: true }).click()
-  await expect(page).toHaveURL(url => url.pathname === '/')
+  await expect(page).toHaveURL(url => url.pathname === '/image-tools')
   await expect.poll(tracks).toEqual(['ended', 'ended', 'ended', 'ended'])
   expect(errors).toEqual([])
 })
